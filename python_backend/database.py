@@ -1,12 +1,3 @@
-# =============================================================
-# python_backend/database.py — SQLAlchemy MySQL Connection Pool
-# =============================================================
-# Reads credentials from python_backend/.env
-# pool_size=10, max_overflow=10 = max 20 simultaneous connections
-# pool_pre_ping=True handles dropped connections automatically
-# =============================================================
-# python_backend/database.py
-
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -15,19 +6,21 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "3306")
-DB_USER = os.getenv("DB_USER", "root")
+DB_HOST     = os.getenv("DB_HOST", "localhost")
+DB_PORT     = os.getenv("DB_PORT", "4000")
+DB_USER     = os.getenv("DB_USER", "root")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
-DB_NAME = os.getenv("DB_NAME", "neet_db")
+DB_NAME     = os.getenv("DB_NAME", "ranksetu")
 
-if False:  # password check disabled for blank passwords
-    raise RuntimeError(
-        "MySQL password not configured. Edit python_backend/.env and set DB_PASSWORD "
-        "to your local MySQL root password (same as backend/.env)."
-    )
+# TiDB Cloud needs SSL
+ssl_params = ""
+if "tidbcloud.com" in DB_HOST:
+    ssl_params = "&ssl_verify_cert=true&ssl_verify_identity=true"
 
-DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
+DATABASE_URL = (
+    f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    f"?charset=utf8mb4{ssl_params}"
+)
 
 engine = create_engine(
     DATABASE_URL,
