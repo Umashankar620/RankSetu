@@ -1,0 +1,288 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Google Fonts ──────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
+/* ── Base Reset ────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* ── Design Tokens ─────────────────────────────────────────────────── */
+:root {
+  --color-primary:     #1A3C6E;   /* Navy Blue */
+  --color-interactive: #2563EB;   /* Royal Blue */
+  --color-accent:      #F0A500;   /* Amber Gold */
+  --color-text-body:   #4B5563;   /* Slate Gray */
+  --color-dark-bg:     #111827;   /* Dark Navy-Gray */
+
+  /* Surface tokens — light mode */
+  --surface-page:      #F9FAFB;
+  --surface-card:      #FFFFFF;
+  --surface-subtle:    #F3F4F6;
+  --border-default:    #E5E7EB;
+  --border-strong:     #D1D5DB;
+
+  /* Typography scale */
+  --text-display: 2rem;
+  --text-heading: 1.375rem;
+  --text-subhead: 1.0625rem;
+  --text-body:    0.9375rem;
+  --text-caption: 0.8125rem;
+  --text-label:   0.6875rem;
+}
+
+/* ── Dark Mode Tokens ──────────────────────────────────────────────── */
+.dark {
+  --surface-page:    #111827;
+  --surface-card:    #1F2937;
+  --surface-subtle:  #374151;
+  --border-default:  #374151;
+  --border-strong:   #4B5563;
+}
+
+/* ── Base Typography ───────────────────────────────────────────────── */
+html {
+  font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--surface-page);
+  color: var(--color-text-body);
+  line-height: 1.6;
+}
+
+/* ── Government Portal Component Classes ──────────────────────────── */
+
+/* Page wrapper — consistent container */
+.gov-container {
+  max-width: 80rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+@media (min-width: 640px)  { .gov-container { padding-inline: 1.5rem; } }
+@media (min-width: 1024px) { .gov-container { padding-inline: 2rem; } }
+
+/* Card — standard information block */
+.gov-card {
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+/* Section divider — subtle horizontal rule */
+.gov-divider {
+  border: none;
+  border-top: 1px solid var(--border-default);
+  margin-block: 1.5rem;
+}
+
+/* Info notice — used for data source callouts */
+.gov-notice {
+  border-left: 3px solid var(--color-primary);
+  background-color: #EFF6FF;
+  padding: 0.875rem 1.25rem;
+  border-radius: 0 0.375rem 0.375rem 0;
+  font-size: var(--text-caption);
+  color: var(--color-primary);
+}
+.dark .gov-notice {
+  background-color: rgba(37, 99, 235, 0.08);
+  border-left-color: #60A5FA;
+  color: #93C5FD;
+}
+
+/* Status badge */
+.gov-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--text-label);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.1875rem 0.625rem;
+  border-radius: 0.25rem;
+  border: 1px solid currentColor;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────── */
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Range Thumb ───────────────────────────────────────────────────── */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  border: 2px solid #fff;
+}
+
+/* ── Animations ─────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes hs-fadeIn    { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hs-imgScale  { from { transform: scale(1.04); } to { transform: scale(1); } }
+@keyframes hs-slideUp   { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes hs-slideRight {
+  from { opacity: 0; transform: translateX(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes hs-blink  { 0%, 100% { opacity: 1; } 45%, 55% { opacity: 0; } }
+@keyframes hs-pulse  { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.55; transform: scale(0.85); } }
+@keyframes hs-pip-grow { from { width: 8px; } to { width: 28px; } }
+
+/* Animation utility classes */
+.animate-fadeIn          { animation: fadeIn 0.3s ease both; }
+.ms-fade-up              { animation: fadeUp 0.6s ease both; }
+.hs-img-enter            { animation: hs-fadeIn 0.8s ease both, hs-imgScale 8s ease both; }
+.hs-content-enter        { animation: hs-slideUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.hs-card-enter           { animation: hs-slideRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.hs-dot-pulse            { animation: hs-pulse 2.2s ease-in-out infinite; }
+.hs-pip-active           { animation: hs-pip-grow 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.hs-cursor::after        { content: "|"; font-weight: 300; animation: hs-blink 0.9s ease-in-out infinite; margin-left: 1px; }
+
+/* ── Hero overlay ───────────────────────────────────────────────────── */
+/* NOTE: HeroSlider and Graphd are NOT modified — these classes remain unchanged */
+.hero-gradient-overlay {
+  background: linear-gradient(
+    to right,
+    rgba(11, 15, 25, 0.92) 0%,
+    rgba(11, 15, 25, 0.70) 50%,
+    rgba(11, 15, 25, 0.20) 100%
+  );
+}
+
+/* ── About page grid helpers ────────────────────────────────────────── */
+.au-hero-anim { animation: slideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.au-fade      { animation: fadeIn 1s ease both; }
+
+.au-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.au-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: start;
+}
+.au-founder-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 60px;
+  align-items: start;
+}
+@media (max-width: 1000px) {
+  .au-grid            { grid-template-columns: repeat(2, 1fr) !important; }
+  .au-two             { grid-template-columns: 1fr !important; gap: 40px !important; }
+  .au-founder-layout  { grid-template-columns: 1fr !important; gap: 40px !important; }
+}
+@media (max-width: 640px) {
+  .au-grid { grid-template-columns: 1fr !important; }
+  .au-wrap { padding: 28px 20px !important; }
+}
+
+/* ── Footer helpers ─────────────────────────────────────────────────── */
+.ms-footer * { box-sizing: border-box; }
+
+/* Updated glow line — navy blue palette */
+.ms-glow-line {
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(26, 60, 110, 0.4) 15%,
+    #1A3C6E 50%,
+    rgba(26, 60, 110, 0.4) 85%,
+    transparent 100%);
+}
+
+.ms-nl-input:focus {
+  outline: none;
+  border-color: rgba(26, 60, 110, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(26, 60, 110, 0.1);
+}
+@media (max-width: 640px) {
+  .ms-footer-grid       { grid-template-columns: 1fr 1fr !important; }
+  .ms-footer-brand      { grid-column: 1 / -1 !important; }
+  .ms-footer-newsletter { grid-column: 1 / -1 !important; }
+  .ms-footer-bottom     { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
+}
+
+/* ── Header helpers ─────────────────────────────────────────────────── */
+.ms-header * { box-sizing: border-box; font-family: 'DM Sans', sans-serif; }
+
+/* Updated nav pill hover — navy blue */
+.ms-navpill:hover {
+  background: rgba(26, 60, 110, 0.06) !important;
+  color: #1A3C6E !important;
+}
+.ms-iconbtn:hover { background: rgba(26, 60, 110, 0.06) !important; }
+
+@media (max-width: 768px) {
+  .ms-nav-center    { display: none !important; }
+  .ms-desktop-right { display: none !important; }
+  .ms-mobile-right  { display: flex !important; }
+}
+@media (min-width: 769px) {
+  .ms-mobile-right  { display: none !important; }
+  .ms-mobile-drawer { display: none !important; }
+}
+
+/* ── AIIMS modal animation ──────────────────────────────────────────── */
+@keyframes aimsSlideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Typing cursor ──────────────────────────────────────────────────── */
+.typing-cursor::after {
+  content: "|";
+  animation: hs-blink 0.9s step-end infinite;
+  margin-left: 1px;
+}
+
+/* ── Section header utility ─────────────────────────────────────────── */
+.ms-sec-hdr {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
