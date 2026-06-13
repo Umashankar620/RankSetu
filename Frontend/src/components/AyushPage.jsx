@@ -6,7 +6,7 @@
 // AYUSH Opening & Closing Ranks page.
 // Reuses the existing FilterBar and CutoffTable components exactly as-is.
 // Adds a "Counseling Type" sub-tab (MCC / Ayush) at the top.
-// Data comes from the `ayus` MySQL table via /api/ayush/* endpoints.
+// Data comes from the `ayush_cutoffs` MySQL table via /api/ayush/* endpoints.
 // =============================================================================
 
 import React, { useState, useCallback, useEffect } from 'react';
@@ -52,27 +52,12 @@ const EMPTY_FILTERS = {
 
 // Counseling type tab config
 const COUNSELING_TABS = [
-  {
-    key: '',            // '' = show all
-    label: 'All Types',
-    icon: null,
-    color: 'slate',
-  },
-  {
-    key: 'MCC',
-    label: 'MCC',
-    icon: MccIcon,
-    color: 'blue',
-  },
-  {
-    key: 'Ayush',
-    label: 'Ayush',
-    icon: LeafIcon,
-    color: 'green',
-  },
+  { key: '',      label: 'All Types', icon: null,    color: 'slate' },
+  { key: 'MCC',   label: 'MCC',       icon: MccIcon, color: 'blue'  },
+  { key: 'Ayush', label: 'Ayush',     icon: LeafIcon,color: 'green' },
 ];
 
-// ── Stats Overview (same style as ClientWrapper's StatsOverview) ─────────────
+// ── Stats Overview ───────────────────────────────────────────────────────────
 function StatsOverview({ metrics, darkMode: dm }) {
   if (!metrics) return null;
   return (
@@ -115,7 +100,7 @@ export default function AyushPage({ darkMode = false, showToast, setCurrentView 
   const [hasSearched, setHasSearched]     = useState(false);
 
   // ── Trend modal ──────────────────────────────────────────────────────────
-  const [isTrendOpen, setIsTrendOpen]               = useState(false);
+  const [isTrendOpen, setIsTrendOpen]                   = useState(false);
   const [selectedTrendCollege, setSelectedTrendCollege] = useState('');
 
   // ── Load Ayush filters on mount ──────────────────────────────────────────
@@ -153,13 +138,13 @@ export default function AyushPage({ darkMode = false, showToast, setCurrentView 
     setHasSearched(true);
     try {
       const payload = {
-        year:            formState.year      || undefined,
-        round:           formState.round     || undefined,
-        category:        formState.category  || undefined,
-        quota:           formState.quota     || undefined,
-        program:         formState.program   || undefined,
-        institute:       formState.institute || undefined,
-        counselingType:  activeCounselingType || undefined,
+        year:           formState.year      || undefined,
+        round:          formState.round     || undefined,
+        category:       formState.category  || undefined,
+        quota:          formState.quota     || undefined,
+        program:        formState.program   || undefined,
+        institute:      formState.institute || undefined,
+        counselingType: activeCounselingType || undefined,
         page,
       };
       const response = await fetchAyushCutoffs(payload);
@@ -309,7 +294,7 @@ export default function AyushPage({ darkMode = false, showToast, setCurrentView 
         )}
       </div>
 
-      {/* Filter Bar — identical props as MCC page */}
+      {/* Filter Bar */}
       <FilterBar
         filters={filters}
         formState={formState}
@@ -334,7 +319,7 @@ export default function AyushPage({ darkMode = false, showToast, setCurrentView 
         </div>
       )}
 
-      {/* Results Table — same CutoffTable, no changes needed */}
+      {/* Results Table */}
       <CutoffTable
         data={results}
         totalItems={totalItems}
@@ -358,13 +343,13 @@ export default function AyushPage({ darkMode = false, showToast, setCurrentView 
         onLearnMore={() => setCurrentView('counselling')}
       />
 
-      {/* Trend Modal — will fetch from ayush trends endpoint */}
+      {/* Trend Modal — source="ayush" → hits /api/ayush/trends endpoint */}
       <TrendModal
         isOpen={isTrendOpen}
         onClose={() => setIsTrendOpen(false)}
         instituteName={selectedTrendCollege}
-        allData={results}
         darkMode={dm}
+        source="ayush"
       />
     </div>
   );

@@ -1,0 +1,36 @@
+{
+    "version": 2,
+    "buildCommand": "npm run build",
+    "outputDirectory": ".next",
+    "framework": "nextjs",
+    "regions": ["bom1"],
+    "rewrites": [
+      {
+        "source": "/node-api/:path*",
+        "destination": "https://YOUR_RAILWAY_APP.railway.app/:path*"
+      },
+      {
+        "source": "/python-api/:path*",
+        "destination": "https://YOUR_RENDER_APP.onrender.com/:path*"
+      }
+    ],
+    "headers": [
+      {
+        "source": "/(.*)",
+        "headers": [
+          { "key": "X-Frame-Options",        "value": "SAMEORIGIN" },
+          { "key": "X-Content-Type-Options",  "value": "nosniff" },
+          { "key": "Referrer-Policy",         "value": "strict-origin-when-cross-origin" },
+          { "key": "X-DNS-Prefetch-Control",  "value": "on" },
+          { "key": "Permissions-Policy",      "value": "camera=(), microphone=(), geolocation=()" }
+        ]
+      },
+      {
+        "source": "/(.*)\\.(js|css|woff2|woff|ttf|png|jpg|jpeg|gif|ico|svg|webp|avif)",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        ]
+      }
+    ]
+  }
+  

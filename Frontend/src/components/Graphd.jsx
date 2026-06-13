@@ -6,7 +6,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { fetchInstituteTrends } from "@/utils/api";
+import { fetchInstituteTrends, fetchAyushInstituteTrends } from "@/utils/api";
 
 // ── Category Buttons ke liye Colors (Iska graph se ab koi lena-dena nahi hai) ──
 const CAT_COLORS = {
@@ -53,7 +53,7 @@ const CustomTooltip = ({ active, payload, label, darkMode }) => {
 };
 
 // ── Main Component ────────────────────────────────────────────
-export default function TrendModal({ isOpen, onClose, instituteName, darkMode }) {
+export default function TrendModal({ isOpen, onClose, instituteName, darkMode, source = 'mcc' }) {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
 
@@ -68,7 +68,8 @@ export default function TrendModal({ isOpen, onClose, instituteName, darkMode })
     setError("");
 
     try {
-      const res = await fetchInstituteTrends(instituteName, categoryToFetch);
+      const trendFetcher = source === 'ayush' ? fetchAyushInstituteTrends : fetchInstituteTrends;
+      const res = await trendFetcher(instituteName, categoryToFetch);
       
       if (res.data.success) {
         const { categories, chartData: newChartData, tableRecords: newTableRecords } = res.data.data;

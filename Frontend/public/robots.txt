@@ -1,20 +1,17 @@
 User-agent: *
 Allow: /
 
+# Block irrelevant paths
 Disallow: /api/
 Disallow: /_next/
 Disallow: /share-card
 Disallow: /sandbox
-Disallow: /choice-lab
 
+# Block all bots from these paths
 User-agent: GPTBot
 Disallow: /
 
 User-agent: ChatGPT-User
 Disallow: /
 
-User-agent: CCBot
-Disallow: /
-
-# Sitemap — update this URL after deploying to your actual domain
-Sitemap: https://ranksetu.vercel.app/sitemap.xml
+Sitemap: https://ranksetu.in/sitemap.xml
