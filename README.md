@@ -272,12 +272,12 @@ ranksetu/
 │   └── package.json
 │
 ├── python_backend/                 # Python FastAPI (Port 8000)
-│   ├── app/
-│   │   ├── main.py                 # FastAPI entry point
-│   │   ├── database.py             # SQLAlchemy connection
-│   │   ├── models.py                # ORM models
-│   │   ├── prediction_engine.py    # AI prediction engine
-│   │   └── upgrade_engine.py       # Upgrade probability engine
+│   ├
+│   ├── main.py                 # FastAPI entry point
+│   ├── database.py             # SQLAlchemy connection
+│   ├── models.py                # ORM models
+│   ├── prediction_engine.py    # AI prediction engine
+│   ├──upgrade_engine.py       # Upgrade probability engine
 │   └── requirements.txt
 │
 └── database/                       # SQL scripts
