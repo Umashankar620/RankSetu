@@ -326,16 +326,16 @@ const NAV_LINKS = {
 };
 
 const STATS = [
-  { value: "600+",  label: "Medical Colleges" },
+  { value: "700+",  label: "Medical Colleges" },
   { value: "15L+",  label: "NEET Records" },
   { value: "28",    label: "States Covered" },
   { value: "99.9%", label: "Data Accuracy" },
 ];
 
 const SOCIALS = [
-  { icon: "instagram", title: "Instagram", hoverColor: "#E1306C", url: "https://instagram.com" },
-  { icon: "linkedin",  title: "LinkedIn",  hoverColor: "#0A66C2", url: "https://linkedin.com" },
-  { icon: "youtube",   title: "YouTube",   hoverColor: "#FF0000", url: "https://youtube.com" },
+  { icon: "instagram", title: "Instagram", hoverColor: "#E1306C", url: "https://www.instagram.com/umash.ankar8?igsh=c2I5aGRwZzcydGI2" },
+  { icon: "linkedin",  title: "LinkedIn",  hoverColor: "#0A66C2", url: "https://www.linkedin.com/in/umashankar-kushwaha-2a06a02ba?utm_source=share_via&utm_content=profile&utm_medium=member_android" },
+  { icon: "youtube",   title: "YouTube",   hoverColor: "#FF0000", url: "https://youtube.com/@umashankarkushwaha-uc2jx?si=yPG6F6akpZdTOq_c" },
   { icon: "mail",      title: "Email",     hoverColor: "#2563EB", url: "mailto:hello@ranksetu.com" },
 ];
 
@@ -391,8 +391,8 @@ export default function Footer({ darkMode, showToast, setCurrentView }) {
             {/* Contact */}
             {[
               { icon: "mail",  text: "hello@ranksetu.com" },
-              { icon: "phone", text: "+91 98765 43210" },
-              { icon: "map",   text: "New Delhi, India" },
+              { icon: "phone", text: "+91 0000000000" },
+              { icon: "map",   text: "NIT Hamirpur, India" },
             ].map(({ icon, text }) => (
               <div key={text} className="flex items-center gap-2.5 mb-2.5">
                 <span className={`w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center border ${dm ? "bg-blue-500/10 border-blue-500/20" : "bg-blue-50 border-blue-200/60"}`}>
