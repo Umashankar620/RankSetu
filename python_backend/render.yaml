@@ -8,15 +8,14 @@ services:
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DB_HOST
-        value: YOUR_MYSQL_HOST
+        value: YOUR_TIDB_HOST
       - key: DB_PORT
-        value: "3306"
+        value: "4000"
       - key: DB_USER
-        value: YOUR_MYSQL_USER
+        value: YOUR_TIDB_USER
       - key: DB_PASSWORD
-        value: YOUR_MYSQL_PASSWORD
+        value: YOUR_TIDB_PASSWORD
       - key: DB_NAME
-        value: neet_db
+        value: ranksetu
       - key: ALLOWED_ORIGINS
-        value: https://ranksetu.vercel.app,https://ranksetu.in
-        
+        value: https://ranksetu.in,https://www.ranksetu.in,https://ranksetu.vercel.app

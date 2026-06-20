@@ -17,4 +17,4 @@ User-agent: CCBot
 Disallow: /
 
 # Sitemap — update this URL after deploying to your actual domain
-Sitemap: https://ranksetu.vercel.app/sitemap.xml
+Sitemap: https://ranksetu.in/sitemap.xml

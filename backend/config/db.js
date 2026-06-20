@@ -19,7 +19,7 @@ const pool = mysql.createPool({
   queueLimit:         500,
   enableKeepAlive:    true,
   keepAliveInitialDelay: 0,
-  connectTimeout:     10000,
+  connectTimeout:     20000,
   timezone: '+05:30',
 
   supportBigNumbers: true,
@@ -38,9 +38,15 @@ pool.getConnection()
     process.exit(1);
   });
 
+// TiDB Free Tier — har 4 min ping taaki sleep na aaye
 setInterval(async () => {
-  try { await pool.query('SELECT 1'); }
-  catch (err) { console.error('[DB KeepAlive Error]', err.message); }
-}, 30_000);
+  try {
+    const conn = await pool.getConnection();
+    await conn.query('SELECT 1');
+    conn.release();
+  } catch (err) {
+    console.error('[DB KeepAlive Error]', err.message);
+  }
+}, 4 * 60_000);
 
 module.exports = pool;

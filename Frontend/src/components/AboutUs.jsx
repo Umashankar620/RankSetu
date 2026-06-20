@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 
 // ─── Animated counter ─────────────────────────────────────────────────────────
 function useCountUp(target, active) {
@@ -266,8 +267,15 @@ export default function AboutUs({ darkMode: dm = false }) {
             <div className="au-founder-layout">
               {/* Photo column */}
               <div>
-                <div className={`rounded-lg overflow-hidden border shadow-sm mb-5 aspect-[3/3.5] ${dm ? 'border-slate-600' : 'border-slate-200'} bg-slate-100 dark:bg-slate-700 flex items-center justify-center`}>
-                  <img src="/pradeep.jpeg" alt="Umashankar - Founder of RankSetu" className="w-full h-full object-cover block" />
+                <div className={`relative rounded-lg overflow-hidden border shadow-sm mb-5 aspect-[3/3.5] ${dm ? 'border-slate-600' : 'border-slate-200'} bg-slate-100 dark:bg-slate-700`}>
+                  <Image
+                    src="/founder-umashankar-ranksetu.webp"
+                    alt="Umashankar, Founder and CEO of RankSetu - NEET UG Counselling Platform"
+                    fill
+                    sizes="(max-width: 768px) 90vw, 400px"
+                    className="object-cover"
+                    priority
+                  />
                 </div>
                 <div className={`p-4 rounded text-center border ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
                   <p className={`font-bold text-lg mb-1 ${dm ? 'text-white' : 'text-primary'}`}>UMASHANKAR</p>

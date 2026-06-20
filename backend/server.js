@@ -1,5 +1,5 @@
 // =============================================================================
-// server.js — MedSphere Backend Entry Point
+// server.js — RankSetu Backend Entry Point
 // =============================================================================
 const express     = require('express');
 const cors        = require('cors');
@@ -39,8 +39,8 @@ function createApp() {
   );
 
   // ── Routes ─────────────────────────────────────────────────
-  app.use('/api', require('./routes/cutoffRoutes'));          // MCC cutoffs (mcc_cutoffs table)
-  app.use('/api/ayush', require('./routes/ayushRoutes'));     // Ayush cutoffs (ayus table)
+  app.use('/api', require('./routes/cutoffRoutes'));       // MCC cutoffs (mcc_cutoffs table)
+  app.use('/api/ayush', require('./routes/ayushRoutes')); // Ayush cutoffs (ayush_cutoffs table)
 
   // Health check
   app.get('/health', (req, res) =>
@@ -72,7 +72,14 @@ if (useCluster && cluster.isMaster) {
   });
 } else {
   const server = createApp().listen(PORT, () => {
-    console.log(`✅ MedSphere backend running → http://localhost:${PORT}`);
+    console.log(`✅ RankSetu backend running → http://localhost:${PORT}`);
+
+    // ── TiDB Free Tier warm-up ping ──────────────────────────
+
+    const db = require('./config/db');
+    db.query('SELECT 1')
+      .then(() => console.log('✅ TiDB warm-up ping successful'))
+      .catch((err) => console.warn('[TiDB Warm-up]', err.message));
   });
 
   server.on('error', (err) => {

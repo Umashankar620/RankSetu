@@ -1,6 +1,3 @@
-
-
-
 'use client';
 
 import React, { useState } from 'react';
@@ -180,13 +177,13 @@ export default function CutoffTable({
             <tr className="border-b bg-primary text-white">
               <th className="px-3 py-3 text-center font-semibold w-12 border-r border-white/20">#</th>
               <th className="px-4 py-3 font-semibold min-w-[320px] border-r border-white/20">Institution Profile</th>
+              <th className="px-4 py-3 text-right font-semibold w-28 border-r border-white/20">Closing</th>
+              <th className="px-4 py-3 text-right font-semibold w-28 border-r border-white/20">Opening</th>
+              <th className="px-4 py-3 text-center font-semibold w-24 border-r border-white/20">Category</th>
+              <th className="px-4 py-3 font-semibold min-w-[140px] border-r border-white/20">Quota</th>
               <th className="px-4 py-3 text-center font-semibold w-20 border-r border-white/20">Year</th>
               <th className="px-4 py-3 text-center font-semibold w-24 border-r border-white/20">Round</th>
-              <th className="px-4 py-3 text-right font-semibold w-28 border-r border-white/20">Opening</th>
-              <th className="px-4 py-3 text-right font-semibold w-28 border-r border-white/20">Closing</th>
               <th className="px-4 py-3 text-center font-semibold w-24 border-r border-white/20">Course</th>
-              <th className="px-4 py-3 font-semibold min-w-[140px] border-r border-white/20">Quota</th>
-              <th className="px-4 py-3 text-center font-semibold w-24 border-r border-white/20">Category</th>
               <th className="px-4 py-3 text-center font-semibold w-36">AI Safety Status</th>
             </tr>
           </thead>
@@ -231,17 +228,23 @@ export default function CutoffTable({
                         </button>
                       </div>
                     </td>
+                    <td className="px-4 py-3 text-right font-bold border-r border-slate-200 dark:border-slate-600">
+                      {row.closeRank ? Number(row.closeRank).toLocaleString('en-IN') : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium border-r border-slate-200 dark:border-slate-600">
+                      {row.openRank ? Number(row.openRank).toLocaleString('en-IN') : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-center font-medium border-r border-slate-200 dark:border-slate-600">
+                      {row.category}
+                    </td>
+                    <td className="px-4 py-3 text-sm border-r border-slate-200 dark:border-slate-600" title={row.quota}>
+                      {row.quota}
+                    </td>
                     <td className="px-4 py-3 text-center border-r border-slate-200 dark:border-slate-600">
                       {row.year ?? '—'}
                     </td>
                     <td className="px-4 py-3 text-center border-r border-slate-200 dark:border-slate-600">
                       {row.round ?? '—'}
-                    </td>
-                    <td className="px-4 py-3 text-right font-medium border-r border-slate-200 dark:border-slate-600">
-                      {row.openRank ? Number(row.openRank).toLocaleString('en-IN') : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-right font-bold border-r border-slate-200 dark:border-slate-600">
-                      {row.closeRank ? Number(row.closeRank).toLocaleString('en-IN') : '—'}
                     </td>
                     <td className="px-4 py-3 text-center border-r border-slate-200 dark:border-slate-600">
                       <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -255,12 +258,6 @@ export default function CutoffTable({
                       }`}>
                         {row.program}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm border-r border-slate-200 dark:border-slate-600" title={row.quota}>
-                      {row.quota}
-                    </td>
-                    <td className="px-4 py-3 text-center font-medium border-r border-slate-200 dark:border-slate-600">
-                      {row.category}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium border ${safety.cls}`}>

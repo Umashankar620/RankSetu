@@ -1,6 +1,6 @@
 // =============================================================================
 // controllers/ayushCutoffController.js
-// Table: ayus
+// Table: ayush_cutoffs
 // Columns: id, year, round, quota, category, institute_name, course,
 //          opening_rank, closing_rank, fees, bond_years, counseling_type
 // =============================================================================
@@ -97,9 +97,10 @@ const getAyushCutoffs = async (req, res) => {
 
 // =============================================================================
 // GET /api/ayush/filters — distinct dropdown values (cached 10 min)
+// INCLUDES: quotaInstituteMap for dependent filtering on frontend
 // =============================================================================
 const getAyushFilterOptions = async (req, res) => {
-  const CACHE_KEY = 'ayush_filter_options_v1';
+  const CACHE_KEY = 'ayush_filter_options_v2'; // bumped to v2 — includes quotaInstituteMap
   const cached    = cache.get(CACHE_KEY);
   if (cached) return res.status(200).json({ success: true, filters: cached, fromCache: true });
 
@@ -112,22 +113,35 @@ const getAyushFilterOptions = async (req, res) => {
       `SELECT DISTINCT course           FROM ${TABLE} WHERE course           IS NOT NULL AND course           != '' ORDER BY course`,
       `SELECT DISTINCT institute_name   FROM ${TABLE} WHERE institute_name   IS NOT NULL AND institute_name   != '' ORDER BY institute_name`,
       `SELECT DISTINCT counseling_type  FROM ${TABLE} WHERE counseling_type  IS NOT NULL AND counseling_type  != '' ORDER BY counseling_type`,
+      // NEW: quota → institute mapping for dependent filtering (same as MCC controller)
+      `SELECT DISTINCT quota, institute_name
+         FROM ${TABLE}
+         WHERE quota          IS NOT NULL AND quota          != ''
+           AND institute_name IS NOT NULL AND institute_name != ''
+         ORDER BY quota, institute_name`,
     ];
 
     const results = await Promise.all(queries.map((q) => db.execute(q)));
 
+    // Build quotaInstituteMap: { "AIQ": ["AIIMS Delhi", ...], "State": [...], ... }
+    const quotaInstituteMap = {};
+    results[7][0].forEach(({ quota, institute_name }) => {
+      if (!quotaInstituteMap[quota]) quotaInstituteMap[quota] = [];
+      quotaInstituteMap[quota].push(institute_name);
+    });
+
     const filters = {
-      years:          results[0][0].map((r) => r.year),
-      rounds:         results[1][0].map((r) => r.round),
-      categories:     results[2][0].map((r) => r.category),
-      quotas:         results[3][0].map((r) => r.quota),
-      programs:       results[4][0].map((r) => r.course),
-      institutes:     results[5][0].map((r) => r.institute_name),
-      counselingTypes:results[6][0].map((r) => r.counseling_type),
-      // ayus table has no gender/type columns — return empty arrays
-      genders:        [],
-      types:          [],
-      quotaInstituteMap: {},
+      years:           results[0][0].map((r) => r.year),
+      rounds:          results[1][0].map((r) => r.round),
+      categories:      results[2][0].map((r) => r.category),
+      quotas:          results[3][0].map((r) => r.quota),
+      programs:        results[4][0].map((r) => r.course),
+      institutes:      results[5][0].map((r) => r.institute_name),
+      counselingTypes: results[6][0].map((r) => r.counseling_type),
+      quotaInstituteMap, // NEW — dependent filtering map
+      // ayush table has no gender/type columns — return empty arrays
+      genders:         [],
+      types:           [],
     };
 
     cache.set(CACHE_KEY, filters, FILTER_TTL);

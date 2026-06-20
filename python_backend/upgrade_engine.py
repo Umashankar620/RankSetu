@@ -1,10 +1,22 @@
 # =============================================================
-# upgrade_engine.py — v4
-# FIXED for mcc_cutoffs schema:
-#   - r.round_name  → r.round
-#   - r.institute   → r.institute_name
-#   - r.closeRank   → r.closing_rank
-#   - r.openRank    → r.opening_rank
+# upgrade_engine.py — v5 (PERFORMANCE REWRITE)
+# =============================================================
+# WHY v4 WAS SLOW (~5 min per request):
+#   For every institute in the "better colleges" scan (often 600+),
+#   the old code called _available_years() + _query_cutoffs() up to
+#   4-5 times EACH from different helper functions, and additionally
+#   ran ONE QUERY PER YEAR inside the `to_rows_exist` check.
+#   That's ~9,000–12,000+ separate DB round-trips for a single
+#   /api/upgrade-check call. On a cloud DB (TiDB) where each round
+#   trip costs ~20-40ms of network latency alone, that's exactly
+#   where the 5 minutes went.
+#
+# THE FIX:
+#   Fetch ALL rows for the given category/quota ONCE in a single
+#   query, group them in Python into {institute: {year: [rows]}},
+#   and do every subsequent lookup against that in-memory structure.
+#   Business logic / scoring formulas are UNCHANGED — only how the
+#   data gets to them has changed.
 # =============================================================
 
 from __future__ import annotations
@@ -20,11 +32,15 @@ from sqlalchemy.orm import Session
 from models import Cutoff
 
 _OUTLIER_FACTOR       = 3.5
-_MIN_YEARS_FOR_SELF   = 1   # FIX: was 2 — many colleges only have 1 year; still usable
+_MIN_YEARS_FOR_SELF   = 1
 _MIN_YEARS_FOR_BETTER = 1
 _MAX_UPGRADE_PCT      = 92.0
 _MIN_UPGRADE_PCT      = 5.0
 _REACH_MARGIN_CUTOFF  = -2000
+
+# institute -> year -> list[Cutoff]
+InstituteData = Dict[int, List[Cutoff]]
+AllData       = Dict[str, InstituteData]
 
 
 def _is_all(value: Optional[str]) -> bool:
@@ -46,37 +62,45 @@ def _round_priority(rname: str) -> int:
     return 99
 
 
-def _available_years(db, institute, category, quota) -> List[int]:
-    q = db.query(distinct(Cutoff.year)).filter(
-        Cutoff.institute_name == institute.strip(),   # FIXED
-        Cutoff.closing_rank.isnot(None),              # FIXED
-        Cutoff.closing_rank > 0,                      # FIXED
-    )
-    if not _is_all(category):
-        q = q.filter(Cutoff.category == category)
-    if not _is_all(quota):
-        q = q.filter(Cutoff.quota == quota)
-    return sorted(r[0] for r in q.all() if r[0])
-
-
-def _query_cutoffs(db, institute, category, quota, year=None) -> List[Cutoff]:
+# ─────────────────────────────────────────────────────────────
+# SINGLE BULK FETCH — replaces hundreds/thousands of per-institute
+# queries with exactly ONE database round-trip.
+# ─────────────────────────────────────────────────────────────
+def _load_all_data(db: Session, category: Optional[str], quota: Optional[str]) -> AllData:
     q = db.query(Cutoff).filter(
-        Cutoff.institute_name == institute.strip(),   # FIXED
-        Cutoff.closing_rank.isnot(None),              # FIXED
-        Cutoff.closing_rank > 0,                      # FIXED
+        Cutoff.institute_name.isnot(None),
+        Cutoff.institute_name != "",
+        Cutoff.closing_rank.isnot(None),
+        Cutoff.closing_rank > 0,
     )
     if not _is_all(category):
         q = q.filter(Cutoff.category == category)
     if not _is_all(quota):
         q = q.filter(Cutoff.quota == quota)
+
+    data: AllData = {}
+    for row in q.all():
+        inst = row.institute_name.strip()
+        data.setdefault(inst, {}).setdefault(row.year, []).append(row)
+    return data
+
+
+def _years_for(inst_data: InstituteData) -> List[int]:
+    return sorted(inst_data.keys())
+
+
+def _rows_for(inst_data: InstituteData, year: Optional[int] = None) -> List[Cutoff]:
     if year is not None:
-        q = q.filter(Cutoff.year == year)
-    return q.all()
+        return inst_data.get(year, [])
+    out: List[Cutoff] = []
+    for rows in inst_data.values():
+        out.extend(rows)
+    return out
 
 
 def _best_close_for_priority(rows: List[Cutoff], target_priority: int) -> Optional[int]:
-    matches = [r.closing_rank for r in rows              # FIXED
-               if _round_priority(r.round or "") == target_priority]  # FIXED
+    matches = [r.closing_rank for r in rows
+               if _round_priority(r.round or "") == target_priority]
     return min(matches) if matches else None
 
 
@@ -94,16 +118,16 @@ class YearShift:
     weight: float
 
 
-def _build_year_shifts(db, institute, category, quota, from_priority, to_priority) -> List[YearShift]:
-    years = _available_years(db, institute, category, quota)
+def _build_year_shifts(inst_data: InstituteData, from_priority: int, to_priority: int) -> List[YearShift]:
+    years = _years_for(inst_data)
     if not years:
         return []
 
     max_year = max(years)
-    records  = []
+    records: List[YearShift] = []
 
     for year in years:
-        rows       = _query_cutoffs(db, institute, category, quota, year)
+        rows       = _rows_for(inst_data, year)
         from_close = _best_close_for_priority(rows, from_priority)
         to_close   = _best_close_for_priority(rows, to_priority)
         if from_close is None or to_close is None:
@@ -135,16 +159,17 @@ def _weighted_median_shift(records: List[YearShift]) -> float:
     return float(statistics.median(expanded))
 
 
-def _predict_next_close(db, institute, category, quota, from_p, to_p, records) -> Optional[int]:
-    years = _available_years(db, institute, category, quota)
+def _predict_next_close(inst_data: InstituteData, from_p: int, to_p: int,
+                         records: List[YearShift]) -> Optional[int]:
+    years = _years_for(inst_data)
     if not years or not records:
         return None
     max_year = max(years)
-    rows     = _query_cutoffs(db, institute, category, quota, max_year)
+    rows     = _rows_for(inst_data, max_year)
     base     = _best_close_for_priority(rows, from_p)
     if base is None:
         for year in sorted(years, reverse=True):
-            rows = _query_cutoffs(db, institute, category, quota, year)
+            rows = _rows_for(inst_data, year)
             base = _best_close_for_priority(rows, from_p)
             if base is not None:
                 break
@@ -156,9 +181,9 @@ def _predict_next_close(db, institute, category, quota, from_p, to_p, records) -
     return max(1, round(base + shift))
 
 
-def _latest_from_close(db, institute, category, quota, from_p) -> Optional[int]:
-    for year in sorted(_available_years(db, institute, category, quota), reverse=True):
-        rows = _query_cutoffs(db, institute, category, quota, year)
+def _latest_from_close(inst_data: InstituteData, from_p: int) -> Optional[int]:
+    for year in sorted(_years_for(inst_data), reverse=True):
+        rows = _rows_for(inst_data, year)
         val  = _best_close_for_priority(rows, from_p)
         if val is not None:
             return val
@@ -284,9 +309,16 @@ def run_upgrade_check(db: Session, user_rank: int, current_institute: str,
     from_round, to_round, next_label = _round_labels(current_round, scenarios)
     from_p, to_p, _ = scenarios[0]
 
+    # ── ONE query for everything below. Everything after this line is
+    # pure in-memory Python — zero further DB round-trips. ──────────
+    all_data = _load_all_data(db, category, quota)
+
+    current_inst_key = current_institute.strip()
+    current_data      = all_data.get(current_inst_key, {})
+
     records: List[YearShift] = []
     for fp, tp, _ in scenarios:
-        records.extend(_build_year_shifts(db, current_institute, category, quota, fp, tp))
+        records.extend(_build_year_shifts(current_data, fp, tp))
 
     if len(records) < _MIN_YEARS_FOR_SELF:
         return {
@@ -301,34 +333,24 @@ def run_upgrade_check(db: Session, user_rank: int, current_institute: str,
     std_dev        = statistics.stdev(shifts) if len(shifts) > 1 else 0.0
     trend_word_val = _trend_word(records)
 
-    current_from_close = _latest_from_close(db, current_institute, category, quota, from_p)
+    current_from_close = _latest_from_close(current_data, from_p)
     if current_from_close is None:
         return {"success": False, "message": "Could not find current-round cutoff for this college."}
 
-    predicted_next = _predict_next_close(db, current_institute, category, quota, from_p, to_p, records)
+    predicted_next = _predict_next_close(current_data, from_p, to_p, records)
     if predicted_next is None:
         return {"success": False, "message": "Could not predict next-round cutoff from historical data."}
 
-    # Better colleges
-    inst_q = db.query(distinct(Cutoff.institute_name)).filter(  # FIXED
-        Cutoff.institute_name.isnot(None),
-        Cutoff.institute_name != "",
-    )
-    if not _is_all(category):
-        inst_q = inst_q.filter(Cutoff.category == category)
-    if not _is_all(quota):
-        inst_q = inst_q.filter(Cutoff.quota == quota)
-
-    all_institutes = [r[0] for r in inst_q.order_by(Cutoff.institute_name).all()]
-
+    # ── Better colleges scan — now operates on the in-memory dict,
+    # no DB hit per institute. ───────────────────────────────────
     better_colleges: List[Dict] = []
-    for inst in all_institutes:
-        if inst.strip() == current_institute.strip():
+    for inst, inst_data in all_data.items():
+        if inst == current_inst_key:
             continue
-        inst_from = _latest_from_close(db, inst, category, quota, from_p)
+        inst_from = _latest_from_close(inst_data, from_p)
         if inst_from is None or inst_from >= current_from_close:
             continue
-        inst_records = _build_year_shifts(db, inst, category, quota, from_p, to_p)
+        inst_records = _build_year_shifts(inst_data, from_p, to_p)
         if not inst_records:
             inst_predicted = inst_from
             conf           = 10.0
@@ -336,7 +358,7 @@ def run_upgrade_check(db: Session, user_rank: int, current_institute: str,
         else:
             if len(inst_records) < _MIN_YEARS_FOR_BETTER:
                 continue
-            inst_predicted = _predict_next_close(db, inst, category, quota, from_p, to_p, inst_records)
+            inst_predicted = _predict_next_close(inst_data, from_p, to_p, inst_records)
             if inst_predicted is None:
                 continue
             conf     = _college_confidence(user_rank, inst_predicted, inst_records)
@@ -346,12 +368,12 @@ def run_upgrade_check(db: Session, user_rank: int, current_institute: str,
         if reach_margin < _REACH_MARGIN_CUTOFF:
             continue
 
-        years    = _available_years(db, inst, category, quota)
-        fee_rows = _query_cutoffs(db, inst, category, quota, max(years) if years else None)
+        years    = _years_for(inst_data)
+        fee_rows = _rows_for(inst_data, max(years) if years else None)
         fees     = _avg_fees(fee_rows)
 
         to_rows_exist = any(
-            _best_close_for_priority(_query_cutoffs(db, inst, category, quota, y), to_p) is not None
+            _best_close_for_priority(_rows_for(inst_data, y), to_p) is not None
             for y in years
         )
 
@@ -416,10 +438,9 @@ def run_upgrade_check(db: Session, user_rank: int, current_institute: str,
 
 
 def get_upgrade_institutes(db: Session, category=None, quota=None) -> List[str]:
+    # Already a single query in v4 — left as-is, this was never the bottleneck.
     q = (db.query(distinct(Cutoff.institute_name))
          .filter(Cutoff.institute_name.isnot(None), Cutoff.institute_name != ""))
-    # Apply filters when provided so the dropdown only shows colleges
-    # that actually have data for the selected quota / category combo.
     if not _is_all(category):
         q = q.filter(Cutoff.category == category)
     if not _is_all(quota):
