@@ -260,7 +260,7 @@ function DetailModal({ item, dm, onClose }) {
           
           {item.campuses && (
             <div className={`p-3 rounded border ${dm ? 'border-primary/30 bg-primary/5' : 'border-primary/20 bg-primary/5'}`}>
-              <div className={`text-sm font-bold uppercase tracking-wide mb-2 text-primary`}>🏥 AIIMS Campuses (15 total)</div>
+              <div className={`text-sm font-bold uppercase tracking-wide mb-2 text-primary`}>🏥 AIIMS Campuses (24 total)</div>
               <div className="flex flex-wrap gap-1.5">
                 {item.campuses.map(c => (
                   <span key={c} className={`text-sm font-medium px-2 py-1 rounded-full border
@@ -443,7 +443,7 @@ export default function CounsellingGuidePage({ darkMode: dm = false, setCurrentV
           <div className={`rounded border overflow-hidden ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200'}`}>
             {[
               "15% All India Quota (AIQ) seats — MBBS/BDS in Government Medical Colleges across all states and UTs (J&K included from 2022).",
-              "100% MBBS/BDS seats — All 15 AIIMS campuses across India (Institutes of National Importance).",
+              "100% MBBS/BDS seats — All AIIMS campuses across India (Institutes of National Importance).",
               "100% seats — JIPMER Puducherry and JIPMER Karaikal (Institutes of National Importance).",
               "100% MBBS/BDS seats — Banaras Hindu University (BHU), Varanasi.",
               "100% MBBS/BDS seats — Aligarh Muslim University (AMU), Aligarh.",

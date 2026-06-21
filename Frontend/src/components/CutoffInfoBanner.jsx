@@ -101,7 +101,7 @@ export default function CutoffInfoBanner({ darkMode: dm = false, onLearnMore }) 
           <div className="flex flex-wrap gap-2">
             {[
               "📄 Source: mcc.nic.in",
-              "📅 Years 2020–2024",
+              "📅 Years 2020–2025",
               "🔄 All Rounds (R1,R2,R3,Stray)",
               "🏥 AIQ + AIIMS + JIPMER + Deemed",
               "✓ Zero manual estimation",

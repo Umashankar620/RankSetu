@@ -15,7 +15,7 @@ import CutoffTable from '@/components/CutoffTable';
 import UpgradeProbability from '@/components/UpgradeProbability';
 import TrendModal from '@/components/Graphd';
 import CutoffInfoBanner from '@/components/CutoffInfoBanner';
-import AyushPage from '@/components/AyushPage';   // ← NEW
+import AyushPage from '@/components/AyushPage';
 
 import ChoiceOptimizer from '@/components/ChoiceOptimizer';
 import CounsellingTimeline from '@/components/CounsellingTimeline';

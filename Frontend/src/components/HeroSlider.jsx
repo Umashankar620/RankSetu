@@ -1,32 +1,36 @@
-
 'use client';
 
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, ShieldCheck, Milestone, Zap } from "lucide-react";
 
-// ── Slide Data (all 8 slides, as originally provided) ──────────────────────
+// ── Slide Data — one slide per major site section (mirrors Header nav) ─────
+// Each slide carries a `view` key that matches the `currentView` values used
+// in Header.jsx, so the slide and its Telemetry Card can deep-link straight
+// to that page via setCurrentView(slide.view).
 const SLIDES = [
   {
     id: 0,
+    view: "home",
     isPureImage: false,
-    title: "NEET All India Cutoff",
-    titleAccent: "Predictive Matrix 2026",
-    desc: "Ditch messy government PDFs. Analyze opening and closing rank boundaries across premier medical institutions with real-time stream synchronization.",
-    tag: "LIVE ALLOCATION ENGINE",
-    badge: "v2.0 Active",
+    title: "Your Complete NEET Counselling",
+    titleAccent: "Command Center",
+    desc: "RankSetu brings MCC & AYUSH cutoffs, a smart Choice Optimizer, Round 2 Upgrade Checker, State & AIIMS seat data, a 600+ college database, a step-by-step Counselling Guide and a Rank Predictor — all onto one platform. No more hunting through scattered government PDFs.",
+    tag: "WELCOME TO RANKSETU",
+    badge: "All-In-One Platform",
     bgImage: "/banner1.jpg",
     theme: "emerald",
-    mockUi: { title: "AIIMS New Delhi", course: "MBBS (5.5 Years)", pool: "AIQ Pool", closing: "50", trend: "+4 Ranks Up" },
-    stats: [{ label: "Institutes", value: "160+" }, { label: "Records", value: "1.4L+" }],
+    mockUi: { title: "RankSetu Platform", course: "9 Specialized Tools", pool: "All-India Coverage", closing: "2026", trend: "Live & Updated" },
+    stats: [{ label: "Colleges Mapped", value: "600+" }, { label: "Aspirants Helped", value: "1.4L+" }],
   },
   {
     id: 1,
+    view: "analytics",
     isPureImage: false,
-    title: "NEET All India Cutoff",
-    titleAccent: "Predictive Matrix 2026",
-    desc: "Ditch messy government PDFs. Analyze opening and closing rank boundaries across premier medical institutions with real-time stream synchronization.",
-    tag: "LIVE ALLOCATION ENGINE",
-    badge: "v2.0 Active",
+    title: "MCC Opening & Closing",
+    titleAccent: "Rank Analysis",
+    desc: "Track All India Quota opening and closing ranks across every government and deemed medical college. Filter by category, round and year to see exactly where your rank stands in MCC counselling — updated the moment official data drops.",
+    tag: "OR CR · MCC COUNSELLING",
+    badge: "Updated",
     bgImage: "/img2.jpg",
     theme: "emerald",
     mockUi: { title: "AIIMS New Delhi", course: "MBBS (5.5 Years)", pool: "AIQ Pool", closing: "50", trend: "+4 Ranks Up" },
@@ -34,63 +38,68 @@ const SLIDES = [
   },
   {
     id: 2,
+    view: "ayush",
     isPureImage: false,
-    title: "NEET All India Cutoff",
-    titleAccent: "Predictive Matrix 2026",
-    desc: "Ditch messy government PDFs. Analyze opening and closing rank boundaries across premier medical institutions with real-time stream synchronization.",
-    tag: "LIVE ALLOCATION ENGINE",
-    badge: "v2.0 Active",
+    title: "AYUSH Opening & Closing",
+    titleAccent: "Cutoff Database",
+    desc: "Dedicated rank data for BAMS, BHMS, BUMS and BNYS counselling. Compare opening–closing trends across AYUSH colleges nationwide and plan your AYUSH counselling strategy with real historical confidence.",
+    tag: "OR CR · AYUSH COUNSELLING",
+    badge: "New",
     bgImage: "/img3.png",
     theme: "emerald",
-    mockUi: { title: "AIIMS New Delhi", course: "MBBS (5.5 Years)", pool: "AIQ Pool", closing: "50", trend: "+4 Ranks Up" },
-    stats: [{ label: "Institutes", value: "160+" }, { label: "Records", value: "1.4L+" }],
+    mockUi: { title: "NIA Jaipur", course: "BAMS (5.5 Years)", pool: "AYUSH Pool", closing: "310", trend: "Stable Demand" },
+    stats: [{ label: "AYUSH Colleges", value: "450+" }, { label: "Records", value: "80K+" }],
   },
   {
     id: 3,
+    view: "optimizer",
     isPureImage: false,
-    title: "NEET All India Cutoff",
-    titleAccent: "Predictive Matrix 2026",
-    desc: "Ditch messy government PDFs. Analyze opening and closing rank boundaries across premier medical institutions with real-time stream synchronization.",
-    tag: "LIVE ALLOCATION ENGINE",
-    badge: "v2.0 Active",
+    title: "Choice List",
+    titleAccent: "Optimizer",
+    desc: "Stop guessing your choice order. Enter your rank and category and let our optimizer rank colleges by your real admission probability — built from years of historical opening and closing rank patterns.",
+    tag: "INSTITUTE HUB · SMART TOOL",
+    badge: "AI Powered",
     bgImage: "/img4.png",
-    theme: "emerald",
-    mockUi: { title: "AIIMS New Delhi", course: "MBBS (5.5 Years)", pool: "AIQ Pool", closing: "50", trend: "+4 Ranks Up" },
-    stats: [{ label: "Institutes", value: "160+" }, { label: "Records", value: "1.4L+" }],
+    theme: "blue",
+    mockUi: { title: "Choice Optimizer", course: "Rank-Based Matching", pool: "Probability Engine", closing: "Top 25", trend: "High Accuracy" },
+    stats: [{ label: "Colleges Mapped", value: "600+" }, { label: "Match Accuracy", value: "95%+" }],
   },
   {
     id: 4,
+    view: "upgrade",
     isPureImage: false,
-    title: "AIIMS & Top Tier",
-    titleAccent: "Government Medical Hubs",
-    desc: "Exclusively modeled data parameters for continuous historical analysis. Safely map your absolute scores to your dream medical colleges.",
-    tag: "PREMIUM ANALYTICS LAB",
-    badge: "100% Verified",
+    title: "Upgrade Checker",
+    titleAccent: "Round 2 Probability",
+    desc: "Already allotted a seat? Find your realistic chances of upgrading to a better college or course in the next counselling round, based on previous years' seat-movement data across all rounds.",
+    tag: "INSTITUTE HUB · ROUND 2",
+    badge: "New",
     bgImage: "/img5.png",
     theme: "blue",
-    mockUi: { title: "MAMC New Delhi", course: "MBBS (5.5 Years)", pool: "Open Pool", closing: "90", trend: "Highly Competitive" },
-    stats: [{ label: "AIIMS Nodes", value: "21" }, { label: "Rounds", value: "5" }],
+    mockUi: { title: "Upgrade Checker", course: "Round 1 → Round 2", pool: "Movement Data", closing: "Live", trend: "+62% Avg Upgrade" },
+    stats: [{ label: "Rounds Tracked", value: "5" }, { label: "Data Points", value: "50K+" }],
   },
   {
     id: 5,
+    view: "state-analytics",
     isPureImage: false,
-    title: "AIIMS & Top Tier",
-    titleAccent: "Government Medical Hubs",
-    desc: "Exclusively modeled data parameters for continuous historical analysis. Safely map your absolute scores to your dream medical colleges.",
-    tag: "PREMIUM ANALYTICS LAB",
-    badge: "100% Verified",
+    title: "State Cutoffs",
+    titleAccent: "Quota Seat Data",
+    desc: "Explore state-wise NEET cutoffs for state quota, management and NRI seats across every state and union territory — with domicile rules and category-wise breakdowns built in.",
+    tag: "INSTITUTE HUB · STATE QUOTA",
+    badge: "Verified",
     bgImage: "/img6.png",
     theme: "blue",
-    mockUi: { title: "MAMC New Delhi", course: "MBBS (5.5 Years)", pool: "Open Pool", closing: "90", trend: "Highly Competitive" },
-    stats: [{ label: "AIIMS Nodes", value: "21" }, { label: "Rounds", value: "5" }],
+    mockUi: { title: "State Quota Pool", course: "85% State Seats", pool: "Domicile Based", closing: "Varies", trend: "State-Wise Trends" },
+    stats: [{ label: "States Covered", value: "28+" }, { label: "Colleges", value: "300+" }],
   },
   {
     id: 6,
+    view: "aiims-hub",
     isPureImage: false,
-    title: "AIIMS & Top Tier",
-    titleAccent: "Government Medical Hubs",
-    desc: "Exclusively modeled data parameters for continuous historical analysis. Safely map your absolute scores to your dream medical colleges.",
-    tag: "PREMIUM ANALYTICS LAB",
+    title: "National AIIMS",
+    titleAccent: "Seat Data Hub",
+    desc: "Deep-dive into seat allocation across all 21 AIIMS institutes nationwide. Exclusively modeled parameters for historical analysis, safely mapping your score to your dream AIIMS seat.",
+    tag: "INSTITUTE HUB · AIIMS NETWORK",
     badge: "100% Verified",
     bgImage: "/img7.png",
     theme: "blue",
@@ -99,16 +108,73 @@ const SLIDES = [
   },
   {
     id: 7,
+    view: "college-db",
     isPureImage: false,
-    title: "AIIMS & Top Tier",
-    titleAccent: "Government Medical Hubs",
-    desc: "Exclusively modeled data parameters for continuous historical analysis. Safely map your absolute scores to your dream medical colleges.",
-    tag: "PREMIUM ANALYTICS LAB",
-    badge: "100% Verified",
+    title: "College",
+    titleAccent: "Database",
+    desc: "Browse a complete directory of medical colleges across India — fees, seat matrix, NIRF ranking, infrastructure and affiliations, all in one searchable, regularly refreshed database.",
+    tag: "RESOURCES · DATABASE",
+    badge: "600+ Colleges",
     bgImage: "/img1.png",
+    theme: "emerald",
+    mockUi: { title: "College Directory", course: "Govt + Deemed + Private", pool: "Full India Map", closing: "600+", trend: "Regularly Refreshed" },
+    stats: [{ label: "Colleges Listed", value: "600+" }, { label: "Data Fields", value: "20+" }],
+  },
+  {
+    id: 8,
+    view: "counselling",
+    isPureImage: false,
+    title: "Counselling",
+    titleAccent: "Guide",
+    desc: "New to NEET counselling? Understand MCC, State and Deemed university rounds step by step — registration, choice filling, locking and seat acceptance, explained in plain language.",
+    tag: "RESOURCES · STEP-BY-STEP GUIDE",
+    badge: "Beginner Friendly",
+    bgImage: "/banner1.jpg",
+    theme: "emerald",
+    mockUi: { title: "Counselling Guide", course: "MCC · State · Deemed", pool: "All Rounds Covered", closing: "Step-by-Step", trend: "Beginner Friendly" },
+    stats: [{ label: "Guide Sections", value: "12+" }, { label: "FAQs Answered", value: "100+" }],
+  },
+  {
+    id: 9,
+    view: "predictor",
+    isPureImage: false,
+    title: "Rank",
+    titleAccent: "Predictor",
+    desc: "Enter your expected NEET score and instantly estimate your All India Rank using a model trained on multiple years of result and percentile data — no waiting for official scorecards.",
+    tag: "RESOURCES · SCORE TO RANK",
+    badge: "New",
+    bgImage: "/img2.jpg",
+    theme: "emerald",
+    mockUi: { title: "Score → Rank Engine", course: "AI Prediction Model", pool: "Multi-Year Trained", closing: "Instant", trend: "Live Calibration" },
+    stats: [{ label: "Years of Data", value: "5+" }, { label: "Prediction Accuracy", value: "90%+" }],
+  },
+  {
+    id: 10,
+    view: "about-us",
+    isPureImage: false,
+    title: "About",
+    titleAccent: "RankSetu",
+    desc: "\u201cRankSetu was born from my own confusion during NEET counselling \u2014 scattered PDFs, no clarity, and very high stakes. I built this platform so no aspirant has to navigate their future blindly. Every feature here exists because a student once genuinely needed it.\u201d \u2014 Founder, RankSetu",
+    tag: "RESOURCES · OUR STORY",
+    badge: "Our Mission",
+    bgImage: "/img3.png",
+    theme: "emerald",
+    mockUi: { title: "From the Founder", course: "\u201cClarity for every aspirant\u201d", pool: "Our Mission", closing: "2024", trend: "Built By Aspirants" },
+    stats: [{ label: "Aspirants Helped", value: "1.4L+" }, { label: "Founded", value: "2024" }],
+  },
+  {
+    id: 11,
+    view: "timeline",
+    isPureImage: false,
+    title: "NEET Counselling",
+    titleAccent: "Timeline 2026",
+    desc: "Never miss a deadline. Track registration dates, choice-filling windows, seat allotment results and reporting deadlines for MCC, State and AYUSH counselling — all on one live, auto-updating timeline.",
+    tag: "COUNSELLING TIMELINE",
+    badge: "Live Updates",
+    bgImage: "/img4.png",
     theme: "blue",
-    mockUi: { title: "MAMC New Delhi", course: "MBBS (5.5 Years)", pool: "Open Pool", closing: "90", trend: "Highly Competitive" },
-    stats: [{ label: "AIIMS Nodes", value: "21" }, { label: "Rounds", value: "5" }],
+    mockUi: { title: "Counselling Timeline", course: "All Rounds Tracked", pool: "MCC + State + AYUSH", closing: "Live", trend: "Auto-Updated" },
+    stats: [{ label: "Key Dates", value: "30+" }, { label: "Rounds Tracked", value: "5" }],
   },
 ];
 
@@ -156,7 +222,7 @@ const THEMES = {
   },
 };
 
-export default function HeroSlider({ darkMode }) {
+export default function HeroSlider({ darkMode, setCurrentView }) {
   const [current, setCurrent] = useState(0);
   const [displayedText, setDisplayedText] = useState("");
   const [displayedAccent, setDisplayedAccent] = useState("");
@@ -356,6 +422,17 @@ export default function HeroSlider({ darkMode }) {
                 ))}
               </div>
 
+              {/* CTA — deep-links straight to this slide's page */}
+              {slide.view && (
+                <button
+                  onClick={() => setCurrentView?.(slide.view)}
+                  className="group inline-flex items-center gap-2 text-sm font-bold px-4 py-2.5 rounded-lg border border-transparent bg-primary text-white transition-all duration-200 hover:bg-interactive hover:scale-[1.03] active:scale-95 cursor-pointer"
+                >
+                  Explore {slide.titleAccent || slide.title}
+                  <ChevronRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+                </button>
+              )}
+
               {/* Pip progress */}
               <div className="flex items-center gap-2 pt-2">
                 {SLIDES.map((_, i) => (
@@ -379,7 +456,12 @@ export default function HeroSlider({ darkMode }) {
             <div className="hidden lg:flex w-full lg:w-[300px] justify-center lg:justify-end">
               <div
                 key={`card-${cardKey}`}
-                className={`w-full max-w-[290px] rounded-md border overflow-hidden backdrop-blur-2xl shadow-2xl hs-card-enter
+                role={slide.view ? "button" : undefined}
+                tabIndex={slide.view ? 0 : undefined}
+                onClick={() => slide.view && setCurrentView?.(slide.view)}
+                onKeyDown={(e) => { if (slide.view && (e.key === "Enter" || e.key === " ")) setCurrentView?.(slide.view); }}
+                className={`w-full max-w-[290px] rounded-md border overflow-hidden backdrop-blur-2xl shadow-2xl hs-card-enter transition-transform duration-200
+                  ${slide.view ? "cursor-pointer hover:scale-[1.02] active:scale-[0.99]" : ""}
                   ${darkMode
                     ? `bg-slate-950/55 ${tc.cardBorder} shadow-black/50`
                     : "bg-white/70 border-slate-200/70 shadow-slate-300/40"
@@ -420,6 +502,12 @@ export default function HeroSlider({ darkMode }) {
                       </div>
                     ))}
                   </div>
+                  {slide.view && (
+                    <div className={`flex items-center justify-between pt-1 mt-1 border-t ${darkMode ? "border-white/6" : "border-slate-200/60"}`}>
+                      <span className={`text-xs font-bold uppercase tracking-wide ${darkMode ? "text-slate-500" : "text-slate-400"}`}>View Details</span>
+                      <ChevronRight className={`h-3.5 w-3.5 ${darkMode ? tc.accentText : tc.accentTextLight}`} />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
