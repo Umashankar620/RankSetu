@@ -61,12 +61,12 @@ export default function FilterBar({
 
   const inputCls = `w-full px-4 py-2.5 rounded border text-sm font-medium transition-all outline-none
     ${darkMode
-      ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500 focus:border-primary"
+      ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500 focus:border-blue-400"
       : "bg-white border-slate-300 text-slate-800 placeholder-slate-400 focus:border-primary"}`;
 
   const selectCls = `w-full px-3 py-2.5 rounded border text-sm font-medium outline-none transition-all
     ${darkMode
-      ? "bg-slate-800 border-slate-700 text-slate-200 focus:border-primary"
+      ? "bg-slate-800 border-slate-700 text-slate-200 focus:border-blue-400"
       : "bg-white border-slate-300 text-slate-800 focus:border-primary"}`;
 
   const pillBase = "flex-shrink-0 px-4 py-1.5 rounded text-sm font-bold transition-all duration-200 whitespace-nowrap";
@@ -86,7 +86,7 @@ export default function FilterBar({
       <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border-b
         ${darkMode ? "border-slate-700 bg-slate-800/60" : "border-slate-100 bg-slate-50/60"}`}>
         <div className="flex items-center gap-3">
-          <div className={`p-2 rounded ${darkMode ? "bg-primary/10 text-primary" : "bg-primary/10 text-primary"}`}>
+          <div className={`p-2 rounded ${darkMode ? "bg-blue-500/15 text-blue-300" : "bg-primary/10 text-primary"}`}>
             <SearchIcon />
           </div>
           <div>
@@ -108,7 +108,7 @@ export default function FilterBar({
 
           {/* Rank Input */}
           <div>
-            <label className={`flex items-center gap-2 text-sm font-bold uppercase tracking-wide mb-2 ${darkMode ? "text-primary" : "text-primary"}`}>
+            <label className={`flex items-center gap-2 text-sm font-bold uppercase tracking-wide mb-2 ${darkMode ? "text-blue-300" : "text-primary"}`}>
               <Trophy /> Target Rank (AIR)
             </label>
             <input
@@ -123,14 +123,14 @@ export default function FilterBar({
           {/* Cutoff Slider */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className={`flex items-center gap-2 text-sm font-bold uppercase tracking-wide ${darkMode ? "text-primary" : "text-primary"}`}>
+              <label className={`flex items-center gap-2 text-sm font-bold uppercase tracking-wide ${darkMode ? "text-blue-300" : "text-primary"}`}>
                 <Sliders /> Cutoff Shift Simulator
               </label>
               <span className={`text-sm font-bold px-2 py-0.5 rounded-full
                 ${cutoffShift > 0
                   ? darkMode ? "bg-accent/20 text-accent" : "bg-accent/10 text-accent"
                   : cutoffShift < 0
-                    ? darkMode ? "bg-primary/20 text-primary" : "bg-primary/10 text-primary"
+                    ? darkMode ? "bg-blue-500/20 text-blue-300" : "bg-primary/10 text-primary"
                     : darkMode ? "bg-slate-700 text-slate-300" : "bg-slate-200 text-slate-600"}`}>
                 {cutoffShift > 0 ? `+${cutoffShift}% Tougher` : cutoffShift < 0 ? `${cutoffShift}% Easier` : "Standard Base"}
               </span>
@@ -146,7 +146,7 @@ export default function FilterBar({
               onChange={(e) => setCutoffShift(Number(e.target.value))}
               className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
               style={{
-                background: `linear-gradient(to right, #1A3C6E 0%, #1A3C6E ${sliderPct}%, ${darkMode ? "#334155" : "#e2e8f0"} ${sliderPct}%, ${darkMode ? "#334155" : "#e2e8f0"} 100%)`
+                background: `linear-gradient(to right, ${darkMode ? "#3B82F6" : "#1A3C6E"} 0%, ${darkMode ? "#3B82F6" : "#1A3C6E"} ${sliderPct}%, ${darkMode ? "#334155" : "#e2e8f0"} ${sliderPct}%, ${darkMode ? "#334155" : "#e2e8f0"} 100%)`
               }}
             />
           </div>
@@ -263,7 +263,7 @@ export default function FilterBar({
               {/* Badge: shows count when list is narrowed by quota */}
               {instituteListIsFiltered && (
                 <span className={`ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full align-middle
-                  ${darkMode ? "bg-primary/20 text-primary" : "bg-primary/10 text-primary"}`}>
+                  ${darkMode ? "bg-blue-500/20 text-blue-300" : "bg-primary/10 text-primary"}`}>
                   {filteredInstitutes.length} in {formState.quota}
                 </span>
               )}

@@ -434,7 +434,7 @@ A `LICENSE.txt` file with standard **MIT License** text is included alongside th
 <div align="center">
 
 📧 **Email:** [hello@ranksetu.in](mailto:hello@ranksetu.in)
-🌐 **Website:** [ranksetu.vercel.app](https://ranksetu.vercel.app)
+🌐 **Website:** [ranksetu.vercel.app](https://rank-setu.vercel.app/)
 
 ### 💙 Made with care for NEET aspirants across India
 ### ⭐ If RankSetu is useful to you, consider starring the repo!

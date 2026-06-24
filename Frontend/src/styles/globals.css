@@ -32,6 +32,10 @@
   --text-body:    0.9375rem;
   --text-caption: 0.8125rem;
   --text-label:   0.6875rem;
+
+  /* Tailwind custom color shorthands */
+  --tw-color-primary:     #1A3C6E;
+  --tw-color-interactive: #2563EB;
 }
 
 /* ── Dark Mode Tokens ──────────────────────────────────────────────── */
@@ -57,9 +61,17 @@ body {
   line-height: 1.6;
 }
 
+/* ── Tailwind custom color utilities ───────────────────────────────── */
+.text-primary    { color: var(--color-primary);     }
+.text-interactive{ color: var(--color-interactive); }
+.text-text-body  { color: var(--color-text-body);   }
+.bg-primary      { background-color: var(--color-primary);     }
+.bg-interactive  { background-color: var(--color-interactive); }
+.hover\:bg-interactive:hover { background-color: var(--color-interactive) !important; }
+.border-primary  { border-color: var(--color-primary); }
+
 /* ── Government Portal Component Classes ──────────────────────────── */
 
-/* Page wrapper — consistent container */
 .gov-container {
   max-width: 80rem;
   margin-inline: auto;
@@ -68,7 +80,6 @@ body {
 @media (min-width: 640px)  { .gov-container { padding-inline: 1.5rem; } }
 @media (min-width: 1024px) { .gov-container { padding-inline: 2rem; } }
 
-/* Card — standard information block */
 .gov-card {
   background-color: var(--surface-card);
   border: 1px solid var(--border-default);
@@ -76,14 +87,12 @@ body {
   padding: 1.5rem;
 }
 
-/* Section divider — subtle horizontal rule */
 .gov-divider {
   border: none;
   border-top: 1px solid var(--border-default);
   margin-block: 1.5rem;
 }
 
-/* Info notice — used for data source callouts */
 .gov-notice {
   border-left: 3px solid var(--color-primary);
   background-color: #EFF6FF;
@@ -98,7 +107,6 @@ body {
   color: #93C5FD;
 }
 
-/* Status badge */
 .gov-badge {
   display: inline-flex;
   align-items: center;
@@ -179,7 +187,6 @@ input[type="range"]::-moz-range-thumb {
 .hs-cursor::after        { content: "|"; font-weight: 300; animation: hs-blink 0.9s ease-in-out infinite; margin-left: 1px; }
 
 /* ── Hero overlay ───────────────────────────────────────────────────── */
-/* NOTE: HeroSlider and Graphd are NOT modified — these classes remain unchanged */
 .hero-gradient-overlay {
   background: linear-gradient(
     to right,
@@ -223,7 +230,6 @@ input[type="range"]::-moz-range-thumb {
 /* ── Footer helpers ─────────────────────────────────────────────────── */
 .ms-footer * { box-sizing: border-box; }
 
-/* Updated glow line — navy blue palette */
 .ms-glow-line {
   height: 1px;
   background: linear-gradient(90deg,
@@ -249,7 +255,6 @@ input[type="range"]::-moz-range-thumb {
 /* ── Header helpers ─────────────────────────────────────────────────── */
 .ms-header * { box-sizing: border-box; font-family: 'DM Sans', sans-serif; }
 
-/* Updated nav pill hover — navy blue */
 .ms-navpill:hover {
   background: rgba(26, 60, 110, 0.06) !important;
   color: #1A3C6E !important;
@@ -286,3 +291,22 @@ input[type="range"]::-moz-range-thumb {
   text-transform: uppercase;
   letter-spacing: 0.12em;
 }
+
+/* ── Tailwind extensions for bg-primary/N ───────────────────────────── */
+/* These handle the opacity variants used throughout components */
+.bg-primary\/5  { background-color: rgba(26, 60, 110, 0.05);  }
+.bg-primary\/10 { background-color: rgba(26, 60, 110, 0.10);  }
+.bg-primary\/15 { background-color: rgba(26, 60, 110, 0.15);  }
+.bg-primary\/20 { background-color: rgba(26, 60, 110, 0.20);  }
+.bg-primary\/30 { background-color: rgba(26, 60, 110, 0.30);  }
+
+.border-primary\/10 { border-color: rgba(26, 60, 110, 0.10); }
+.border-primary\/15 { border-color: rgba(26, 60, 110, 0.15); }
+.border-primary\/20 { border-color: rgba(26, 60, 110, 0.20); }
+.border-primary\/30 { border-color: rgba(26, 60, 110, 0.30); }
+.border-primary\/40 { border-color: rgba(26, 60, 110, 0.40); }
+
+.ring-primary\/15 { --tw-ring-color: rgba(26, 60, 110, 0.15); }
+.ring-primary\/30 { --tw-ring-color: rgba(26, 60, 110, 0.30); }
+
+.text-primary\/80 { color: rgba(26, 60, 110, 0.80); }

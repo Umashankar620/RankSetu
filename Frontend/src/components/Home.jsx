@@ -1,341 +1,431 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from 'react';
 import {
-  BarChart3, Compass, Layers, Bell, ArrowUpRight, Stethoscope,
-  BookOpen, ExternalLink, AlertTriangle, CheckCircle2, Clock,
-  FileText, HelpCircle, Star, Users, TrendingUp, Shield, Lightbulb,
-  MapPin, Phone, Mail,
-} from "lucide-react";
+  BarChart2, Target, TrendingUp, BookOpen,
+  Layers, FlaskConical, Calendar, GraduationCap, Leaf,
+  ArrowRight, ShieldCheck, Database, Clock, MapPin,
+  CheckCircle, Star, Users, FileText, Zap, Info,
+} from 'lucide-react';
 
-function useCountUp(target, started, duration = 6000) {
-  const [val, setVal] = useState(0);
-  useEffect(() => {
-    if (!started) return;
-    const num = parseFloat(String(target).replace(/[^0-9.]/g, ""));
-    let start = null;
-    const run = (ts) => {
-      if (!start) start = ts;
-      const p = Math.min((ts - start) / duration, 1);
-      const e = 1 - Math.pow(1 - p, 4);
-      setVal(p < 1 ? Math.floor(e * num) : num);
-      if (p < 1) requestAnimationFrame(run);
-    };
-    requestAnimationFrame(run);
-  }, [started, target, duration]);
-  return val;
-}
+const PRIMARY     = '#1A3C6E';
+const INTERACTIVE = '#2563EB';
 
-function StatPill({ val, suffix, label, started, darkMode }) {
-  const count = useCountUp(val, started);
-  return (
-    <div className={`flex items-center gap-2 px-3 py-2 border text-xs transition
-      ${darkMode ? 'bg-slate-800/60 border-slate-600' : 'bg-white border-slate-200'}`}>
-      <span className="font-bold text-base text-primary">{count}{suffix}</span>
-      <span className={`font-medium ${darkMode ? 'text-slate-300' : 'text-text-body'}`}>{label}</span>
-    </div>
-  );
-}
+// ── Feature cards config ───────────────────────────────────────────────────
+const FEATURES = [
+  {
+    icon: BarChart2,
+    title: 'MCC Cutoff Explorer',
+    desc: 'Year-wise, round-wise opening & closing ranks for every MCC college — AIQ, AIIMS, JIPMER, and Deemed universities.',
+    howTo: 'Select year, round, and category. Filter by college or branch to see exact rank ranges.',
+    view: 'analytics',
+    badge: null,
+    badgeColor: null,
+    color: PRIMARY,
+    category: 'Cutoff Data',
+  },
+  {
+    icon: Leaf,
+    title: 'AYUSH Cutoffs',
+    desc: 'Opening & closing ranks for BAMS, BHMS, BUMS and BSMS programs under MCC and Ayush counselling.',
+    howTo: 'Choose AYUSH course type and filter by state or college to compare rank trends across years.',
+    view: 'ayush',
+    badge: null,
+    badgeColor: null,
+    color: '#16A34A',
+    category: 'Cutoff Data',
+  },
+  {
+    icon: Target,
+    title: 'Choice Optimizer',
+    desc: 'AI-powered tool that analyses your rank and recommends the optimal college ordering for your NEET UG choice filling.',
+    howTo: 'Enter your rank and category. The optimizer ranks colleges by your real admission probability from historical data.',
+    view: 'optimizer',
+    badge: 'AI',
+    badgeColor: INTERACTIVE,
+    color: INTERACTIVE,
+    category: 'Smart Tools',
+  },
+  {
+    icon: TrendingUp,
+    title: 'Upgrade Probability',
+    desc: 'Understand your chances of getting a better college in subsequent counselling rounds based on historical seat movement.',
+    howTo: 'Input your current allotted college and rank. See probability of upgrade in Round 2 based on seat-movement patterns.',
+    view: 'upgrade',
+    badge: 'Beta',
+    badgeColor: '#EA580C',
+    color: '#EA580C',
+    category: 'Smart Tools',
+  },
+  {
+    icon: Layers,
+    title: 'AI Choice Lab',
+    desc: 'Organise your final preference list, detect sequence conflicts, and export before submitting on the MCC portal.',
+    howTo: 'Build your list by dragging colleges. The AI flags risky orderings and helps you lock the safest sequence.',
+    view: 'lab',
+    badge: null,
+    badgeColor: null,
+    color: PRIMARY,
+    category: 'Smart Tools',
+  },
+  {
+    icon: FlaskConical,
+    title: 'Choice Sandbox',
+    desc: 'Simulate your counselling choice list in a risk-free environment and resolve ordering conflicts before the window opens.',
+    howTo: 'Add colleges to your sandbox list and run simulations to test different ordering strategies without risk.',
+    view: 'sandbox',
+    badge: null,
+    badgeColor: null,
+    color: INTERACTIVE,
+    category: 'Smart Tools',
+  },
+  {
+    icon: BookOpen,
+    title: 'Counselling Guide',
+    desc: 'Complete MCC UG counselling guide — quota codes, category benefits, round strategy and choice filling tips explained clearly.',
+    howTo: 'Browse sections by topic — from registration to reporting. Use it step-by-step during the actual counselling window.',
+    view: 'counselling',
+    badge: null,
+    badgeColor: null,
+    color: PRIMARY,
+    category: 'Resources',
+  },
+  {
+    icon: Calendar,
+    title: 'Counselling Timeline',
+    desc: 'Track every important MCC counselling date — registration, choice filling, allotment results and reporting deadlines.',
+    howTo: 'Check the timeline before each round. Never miss a registration or reporting deadline.',
+    view: 'timeline',
+    badge: null,
+    badgeColor: null,
+    color: '#D97706',
+    category: 'Resources',
+  },
+  {
+    icon: GraduationCap,
+    title: 'AIIMS Hub',
+    desc: 'Dedicated section for all AIIMS campus cutoff data — filter by round, category, and program across all AIIMS campuses.',
+    howTo: 'Select an AIIMS campus and category. Compare closing ranks across years to understand admission difficulty.',
+    view: 'aiims-hub',
+    badge: null,
+    badgeColor: null,
+    color: PRIMARY,
+    category: 'Cutoff Data',
+  },
+];
 
-function SectionHead({ tag, icon, title, subtitle, darkMode }) {
-  return (
-    <div className="mb-8 text-center">
-      <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide px-3 py-1 rounded-full border
-        ${darkMode ? 'border-primary/30 bg-primary/10 text-primary' : 'border-primary/30 bg-primary/5 text-primary'}`}>
-        {icon}
-        {tag}
-      </span>
-      <h2 className={`text-2xl sm:text-3xl font-bold tracking-tight mt-3 leading-tight
-        ${darkMode ? 'text-white' : 'text-primary'}`}>
-        {title}
-      </h2>
-      <div className="flex items-center justify-center gap-2 mt-2">
-        <div className="h-px w-10 bg-primary/50" />
-        <div className="h-1 w-1 rounded-full bg-primary" />
-        <div className="h-px w-10 bg-primary/50" />
-      </div>
-      {subtitle && (
-        <p className={`text-sm mt-3 max-w-lg mx-auto leading-relaxed ${darkMode ? 'text-slate-300' : 'text-text-body'}`}>
-          {subtitle}
-        </p>
-      )}
-    </div>
-  );
-}
+// ── Trust Indicators ────────────────────────────────────────────────────────
+const TRUST = [
+  { icon: Database,    label: '6 Lakh+',   sub: 'Rank Records'      },
+  { icon: ShieldCheck, label: '100%',       sub: 'Official MCC Data' },
+  { icon: Clock,       label: '2020–2025',  sub: 'Years Covered'     },
+  { icon: BarChart2,   label: 'All Rounds', sub: 'R1, R2, R3, Stray' },
+];
+
+// ── Platform Highlights ─────────────────────────────────────────────────────
+const HIGHLIGHTS = [
+  {
+    icon: CheckCircle,
+    title: 'No Login Needed',
+    desc: 'Access every tool and dataset instantly — no account, no sign-up required.',
+    color: '#16A34A',
+  },
+  {
+    icon: Zap,
+    title: '100% Free, Always',
+    desc: 'Every feature on RankSetu is free. No premium tiers, no paywalls.',
+    color: INTERACTIVE,
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Verified Official Data',
+    desc: 'All data sourced directly from MCC seat allotment PDFs on mcc.nic.in.',
+    color: PRIMARY,
+  },
+  {
+    icon: Users,
+    title: '1.4 Lakh+ Aspirants',
+    desc: 'Trusted by over 1.4 lakh NEET aspirants across India for counselling decisions.',
+    color: '#D97706',
+  },
+];
+
+// ── Quick How-To Steps ──────────────────────────────────────────────────────
+const HOW_TO = [
+  { num: '01', title: 'Enter Your NEET Rank', desc: 'Input your rank and category to instantly see your opportunities across all of India.' },
+  { num: '02', title: 'Explore Cutoffs & Colleges', desc: 'Browse year-wise, round-wise cutoffs and filter by college, category, or state.' },
+  { num: '03', title: 'Build Your Choice List', desc: 'Use the AI Choice Optimizer to create a ranked preference list in the safest order.' },
+  { num: '04', title: 'Track & Confirm', desc: 'Monitor the counselling timeline, check upgrade probability, and secure your seat.' },
+];
+
+// ── Category grouping ───────────────────────────────────────────────────────
+const CATEGORIES = ['All', 'Cutoff Data', 'Smart Tools', 'Resources'];
 
 export default function Home({ setCurrentView, showToast, darkMode }) {
-  const [statsStarted, setStatsStarted] = useState(false);
-  const statsRef = useRef(null);
+  const dm = darkMode;
+  const [activeCategory, setActiveCategory] = useState('All');
+  const [expandedCard, setExpandedCard] = useState(null);
 
-  useEffect(() => {
-    const el = statsRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) {
-        setStatsStarted(true);
-        obs.disconnect();
-      }
-    }, { threshold: 0.3 });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  const features = [
-    { id:1, title:"OR-CR Analytics Engine",    icon:<BarChart3 className="h-5 w-5"/>, desc:"Track Opening & Closing rank parameters with high-fidelity sorting algorithms.", action:"analytics", btnText:"Launch Analytics Core", badge:"POPULAR" },
-    { id:2, title:"Choice Optimizer Matrix",   icon:<Layers className="h-5 w-5"/>,      desc:"Apna NEET rank aur reservation pool fill karke direct Dream, Target aur Safe medical colleges ki dynamic tracking sequence generate karein.", action:"optimizer", btnText:"Open Optimizer Matrix" },
-    { id:3, title:"Choice Filling Simulator",  icon:<Compass className="h-5 w-5"/>,     desc:"Apni custom metrics lagakar up-to-date algorithms ke sath accurate cut-off range check karein.", action:"sandbox", btnText:"Launch Predictor Matrix" },
-    { id:4, title:"State Cutoff Matrix",       icon:<Compass className="h-5 w-5"/>,     desc:"Filter medical institutions based on State boundaries. Map opening and closing ranks specific to state counselings instantly.", action:"state-analytics", btnText:"Launch State Core" },
-    { id:5, title:"National AIIMS Gateway",    icon:<Stethoscope className="h-5 w-5"/>, desc:"भारत के सभी 24 AIIMS संस्थानों की सीटें, NIRF रैंकिंग और क्लोजिंग रेंक्स का लाइव डेटा स्नैपशॉट।", action:"aiims-hub", btnText:"Explore AIIMS Pool", badge:"POPULAR" },
-    { id:6, title:"Timeline Alerts Feed",      icon:<Bell className="h-5 w-5"/>,        desc:"Get high-priority alerts regarding counselling deadlines, seat matrix revisions, and registration windows.", action:null, btnText:"Explore Feature" },
-  ];
-
-  const directives = [
-    { icon:<AlertTriangle className="h-4 w-4"/>, tag:"CRITICAL", title:"Choice Locking is Irreversible", desc:"Once you lock your choices, no modifications are permitted under any circumstance." },
-    { icon:<CheckCircle2 className="h-4 w-4"/>,  tag:"RULE",     title:"Reporting Mandate After Allotment", desc:"Candidates must physically report to the allotted institute within the stipulated window." },
-    { icon:<Clock className="h-4 w-4"/>,         tag:"DEADLINE", title:"Document Verification Timeline", desc:"Original documents must be verified at designated centres within 24 hours of allotment." },
-    { icon:<FileText className="h-4 w-4"/>,      tag:"GUIDELINE",title:"Stray Vacancy Round Eligibility", desc:"Only candidates who were not allotted any seat in previous rounds, or those who surrendered their seat formally, are eligible." },
-  ];
-
-  const expertTips = [
-    { num:"01", title:"Register Early, Verify Documents First", desc:"Complete registration and document verification before the deadline." },
-    { num:"02", title:"Understand Seat Matrix Before Choice Filling", desc:"Analyze seat availability across categories and colleges." },
-    { num:"03", title:"Always Fill Maximum Choices in Preference List", desc:"More choices increase your chance of allotment." },
-    { num:"04", title:"Know Your Category & Quota Precisely", desc:"Select the correct category and quota to avoid rejection." },
-    { num:"05", title:"Track Round Schedules Without Missing Deadlines", desc:"Set reminders for choice filling, locking, and result declaration." },
-    { num:"06", title:"Verify Allotment Letter Before Reporting", desc:"Check all details on the allotment letter before reporting to the college." },
-  ];
-
-  const faqs = [
-    { q:"How many rounds does MCC NEET UG counselling have?", a:"MCC conducts 4 rounds: Round 1, Round 2, Round 3 (Mop-Up), and Stray Vacancy round." },
-    { q:"Can I change my choices after locking?", a:"No, once locked, choices cannot be modified under any circumstances." },
-    { q:"What documents are required at reporting?", a:"NEET scorecard, Class 10/12 certificates, category certificate (if applicable), ID proof, and passport-size photographs." },
-    { q:"Is RankSetu data updated in real-time?", a:"Yes, we update data immediately after MCC releases official PDFs." },
-  ];
-
-  const [openFaq, setOpenFaq] = useState(null);
+  const filteredFeatures = activeCategory === 'All'
+    ? FEATURES
+    : FEATURES.filter(f => f.category === activeCategory);
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-16">
-
-      {/* Hero Block */}
-      <div className={`relative rounded mb-12 border overflow-hidden
-        ${darkMode ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200'}`}>
-        <div className="relative z-10 px-6 sm:px-10 py-12 sm:py-16">
-          <div className="mb-5">
-            <span className={`inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide px-3 py-1 rounded-full border
-              ${darkMode ? 'border-primary/30 bg-primary/10 text-primary' : 'border-primary/30 bg-primary/5 text-primary'}`}>
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
-              </span>
-              About RankSetu
-            </span>
-          </div>
-          <h1 className={`text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight mb-2
-            ${darkMode ? 'text-white' : 'text-primary'}`}>
-            Making Medical
-          </h1>
-          <h1 className={`text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight mb-5
-            ${darkMode ? 'text-primary' : 'text-primary'}`}>
-            Admissions Simple.
-          </h1>
-          <div className="flex items-center gap-2 mb-5">
-            <div className="h-px w-8 bg-primary/50" />
-            <div className="h-1 w-1 rounded-full bg-primary" />
-            <div className="h-px w-8 bg-primary/50" />
-          </div>
-          <p className={`text-sm leading-relaxed max-w-xl mb-8 ${darkMode ? 'text-slate-300' : 'text-text-body'}`}>
-            India's most trusted NEET counselling platform — transparent, free, and built for every aspirant from every corner of the country.
-          </p>
-          <div ref={statsRef} className="flex flex-wrap gap-2">
-            <StatPill val={24} suffix="+" label="AIIMS Covered" started={statsStarted} darkMode={darkMode} />
-            <StatPill val={700} suffix="+" label="Medical Colleges" started={statsStarted} darkMode={darkMode} />
-            <StatPill val={15} suffix="" label="Rounds of Data" started={statsStarted} darkMode={darkMode} />
-            <StatPill val={100} suffix="%" label="Free Always" started={statsStarted} darkMode={darkMode} />
-          </div>
-        </div>
-      </div>
-
-      {/* Feature Tools */}
-      <SectionHead
-        tag="System Core Hub"
-        icon={<span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />}
-        title="Intelligent Counselling Suite"
-        subtitle="High-performance data modules engineered to optimize your medical university seat allocation strategy."
-        darkMode={darkMode}
-      />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-16">
-        {features.map(f => (
-          <button
-            key={f.id}
-            onClick={() => f.action ? setCurrentView(f.action) : showToast?.(f.title)}
-            className={`p-5 border text-left transition-all hover:border-primary group
-              ${darkMode ? 'bg-slate-800/50 border-slate-600 hover:bg-slate-700/50' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
-            <div className="flex items-center justify-between mb-3">
-              <div className={`p-2 rounded border ${darkMode ? 'border-primary/30 bg-primary/10 text-primary' : 'border-primary/30 bg-primary/5 text-primary'}`}>
-                {f.icon}
-              </div>
-              {f.badge && (
-                <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded bg-primary text-white">
-                  {f.badge}
-                </span>
-              )}
+    <div>
+      {/* ── Trust bar ──────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+        {TRUST.map(({ icon: Icon, label, sub }) => (
+          <div
+            key={sub}
+            className={`flex items-center gap-3 p-3.5 rounded-xl border ${
+              dm ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200 shadow-sm'
+            }`}
+          >
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+              style={{ backgroundColor: 'rgba(26,60,110,0.1)', color: PRIMARY }}
+            >
+              <Icon className="w-4 h-4" />
             </div>
-            <h3 className={`text-sm font-bold mb-1 flex items-center gap-1 ${darkMode ? 'text-white' : 'text-primary'}`}>
-              {f.title}
-              <ArrowUpRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition" />
-            </h3>
-            <p className={`text-xs leading-relaxed mb-4 ${darkMode ? 'text-slate-300' : 'text-text-body'}`}>{f.desc}</p>
-            <div className={`flex items-center justify-between pt-3 border-t text-xs font-medium
-              ${darkMode ? 'border-slate-600 text-slate-400' : 'border-slate-100 text-text-body'}`}>
-              <span>{f.btnText}</span>
-              <span className="text-primary group-hover:translate-x-1 transition">→</span>
+            <div>
+              <p className={`text-sm font-black leading-tight ${dm ? 'text-white' : 'text-slate-900'}`}>{label}</p>
+              <p className={`text-[10px] font-bold leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>{sub}</p>
             </div>
-          </button>
+          </div>
         ))}
       </div>
 
-      {/* Counselling Directive */}
-      <SectionHead
-        tag="Counselling Directive"
-        icon={<BookOpen className="h-3 w-3" />}
-        title="🎓 MCC Official Counselling Rules & Expert Guidance"
-        subtitle="Review these high-priority regulatory frameworks carefully before initiating choice-locking sequences to avoid forfeiture risks."
-        darkMode={darkMode}
-      />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-        {directives.map((d, i) => (
-          <div key={i}
-            className={`p-5 border transition-all hover:border-primary
-              ${darkMode ? 'bg-slate-800/50 border-slate-600' : 'bg-white border-slate-200'}`}>
-            <div className="flex items-start gap-3">
-              <div className={`p-2 rounded border shrink-0 ${darkMode ? 'border-primary/30 bg-primary/10 text-primary' : 'border-primary/30 bg-primary/5 text-primary'}`}>
-                {d.icon}
+      {/* ── Platform Highlights ──────────────────────────────────────── */}
+      <div className={`mb-8 p-5 rounded-2xl border ${dm ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+        <p
+          className="text-[11px] font-black uppercase tracking-[0.18em] mb-3"
+          style={{ color: PRIMARY }}
+        >
+          Why RankSetu
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {HIGHLIGHTS.map(({ icon: Icon, title, desc, color }) => (
+            <div key={title} className="flex items-start gap-3">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                style={{ backgroundColor: `${color}18`, color }}
+              >
+                <Icon className="w-4 h-4" />
               </div>
               <div>
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded ${darkMode ? 'bg-primary/10 text-primary' : 'bg-primary/5 text-primary'}`}>
-                    {d.tag}
-                  </span>
-                  <h3 className={`text-sm font-bold ${darkMode ? 'text-white' : 'text-primary'}`}>{d.title}</h3>
-                </div>
-                <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-300' : 'text-text-body'}`}>{d.desc}</p>
+                <p className={`text-sm font-black mb-0.5 ${dm ? 'text-white' : 'text-slate-900'}`}>{title}</p>
+                <p className={`text-xs leading-relaxed ${dm ? 'text-slate-400' : 'text-slate-500'}`}>{desc}</p>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-      <div className={`flex items-center justify-between flex-wrap gap-3 px-4 py-3 border text-xs font-medium mb-12
-        ${darkMode ? 'bg-primary/5 border-primary/20 text-primary' : 'bg-primary/5 border-primary/20 text-primary'}`}>
-        <span className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" /> For complete official rulebook, refer to MCC of India's published prospectus.</span>
-        <a href="https://mcc.nic.in" target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:underline text-primary">mcc.nic.in <ExternalLink className="h-3 w-3" /></a>
-      </div>
-
-      {/* Expert Strategy Tips */}
-      <SectionHead
-        tag="Expert Strategy"
-        icon={<Lightbulb className="h-3 w-3" />}
-        title="Pro Tips for Zero Errors in Counselling"
-        subtitle="Step-by-step guidance from NEET counselling experts — follow these rules to maximise your seat allocation outcome."
-        darkMode={darkMode}
-      />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-16">
-        {expertTips.map(t => (
-          <div key={t.num}
-            className={`relative p-5 border transition-all hover:border-primary
-              ${darkMode ? 'bg-slate-800/50 border-slate-600' : 'bg-white border-slate-200'}`}>
-            <div className="absolute top-2 right-3 text-4xl font-black opacity-5 select-none text-primary">{t.num}</div>
-            <div className="mb-3">
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${darkMode ? 'bg-primary/10 text-primary' : 'bg-primary/5 text-primary'}`}>
-                STEP {t.num}
-              </span>
-            </div>
-            <h3 className={`text-sm font-bold mb-1 ${darkMode ? 'text-white' : 'text-primary'}`}>{t.title}</h3>
-            <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-300' : 'text-text-body'}`}>{t.desc}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Why RankSetu */}
-      <SectionHead
-        tag="Why RankSetu"
-        icon={<Star className="h-3 w-3" />}
-        title="Built for Every NEET Aspirant"
-        subtitle="From rural aspirants to urban toppers — RankSetu provides equal access to data-driven counselling intelligence."
-        darkMode={darkMode}
-      />
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-16">
-        {[
-          { icon:<Shield className="h-5 w-5"/>, title:"100% Free, Always", desc:"No hidden fees, no premium tiers. Every feature is free for every student." },
-          { icon:<Users className="h-5 w-5"/>,   title:"Trusted by Thousands", desc:"Lakhs of NEET aspirants use RankSetu every counselling season for accurate data." },
-          { icon:<TrendingUp className="h-5 w-5"/>, title:"Real-Time Data Accuracy", desc:"Our datasets are sourced directly from MCC, state councils, and NIRF — updated each round." },
-        ].map((w, i) => (
-          <div key={i}
-            className={`p-5 border text-center transition-all hover:border-primary
-              ${darkMode ? 'bg-slate-800/50 border-slate-600' : 'bg-white border-slate-200'}`}>
-            <div className={`inline-flex p-3 rounded-full mb-3 border ${darkMode ? 'border-primary/30 bg-primary/10 text-primary' : 'border-primary/30 bg-primary/5 text-primary'}`}>
-              {w.icon}
-            </div>
-            <h3 className={`text-sm font-bold mb-1 ${darkMode ? 'text-white' : 'text-primary'}`}>{w.title}</h3>
-            <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-300' : 'text-text-body'}`}>{w.desc}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* FAQ */}
-      <SectionHead
-        tag="FAQ"
-        icon={<HelpCircle className="h-3 w-3" />}
-        title="Frequently Asked Questions"
-        subtitle="Common queries about NEET counselling process and RankSetu platform — answered clearly."
-        darkMode={darkMode}
-      />
-      <div className="max-w-3xl mx-auto space-y-3 mb-16">
-        {faqs.map((faq, i) => (
-          <div key={i}
-            className={`border overflow-hidden ${darkMode ? 'bg-slate-800/50 border-slate-600' : 'bg-white border-slate-200'}`}>
-            <button
-              onClick={() => setOpenFaq(openFaq === i ? null : i)}
-              className={`w-full flex items-center justify-between px-4 py-3 text-left text-sm font-bold transition
-                ${darkMode ? 'text-white hover:text-primary' : 'text-primary hover:text-primary'}`}>
-              <span>{faq.q}</span>
-              <span className={`ml-3 text-lg font-black transition-transform ${openFaq === i ? 'rotate-45' : ''} text-primary`}>+</span>
-            </button>
-            {openFaq === i && (
-              <div className={`px-4 pb-4 text-xs leading-relaxed border-t ${darkMode ? 'border-slate-600 text-slate-300' : 'border-slate-100 text-text-body'}`}>
-                {faq.a}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Contact CTA */}
-      <div className={`relative rounded border overflow-hidden ${darkMode ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200'}`}>
-        <div className="relative z-10 px-6 py-12 text-center">
-          <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide px-3 py-1 rounded-full border mb-4
-            ${darkMode ? 'border-primary/30 bg-primary/10 text-primary' : 'border-primary/30 bg-primary/5 text-primary'}`}>
-            <Mail className="h-3 w-3" /> Get in Touch
-          </span>
-          <h2 className={`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-primary'}`}>Have a Question or Suggestion?</h2>
-          <p className={`text-sm max-w-md mx-auto mb-6 leading-relaxed ${darkMode ? 'text-slate-300' : 'text-text-body'}`}>
-            We're constantly improving RankSetu. Reach out to our team for feedback, data corrections, or collaboration.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <a href="mailto:support@ranksetu.in"
-              className="inline-flex items-center gap-2 px-5 py-2 rounded bg-primary text-white text-xs font-bold uppercase tracking-wide hover:bg-interactive transition">
-              <Mail className="h-3.5 w-3.5" /> Email Us
-            </a>
-            <button
-              onClick={() => showToast?.("Contact form coming soon!")}
-              className={`inline-flex items-center gap-2 px-5 py-2 rounded border text-xs font-bold uppercase tracking-wide transition
-                ${darkMode ? 'border-slate-500 text-slate-200 hover:border-primary' : 'border-slate-300 text-text-body hover:border-primary'}`}>
-              <Phone className="h-3.5 w-3.5" /> Contact Form
-            </button>
-          </div>
+          ))}
         </div>
       </div>
 
+      {/* ── How it works ────────────────────────────────────────────── */}
+      <div className="mb-8">
+        <p
+          className="text-[11px] font-black uppercase tracking-[0.18em] mb-3"
+          style={{ color: PRIMARY }}
+        >
+          How It Works
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {HOW_TO.map((step, idx) => (
+            <div
+              key={step.num}
+              className={`relative p-4 rounded-xl border ${
+                dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'
+              }`}
+            >
+              {idx < HOW_TO.length - 1 && (
+                <ArrowRight
+                  className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 hidden lg:block"
+                  style={{ color: PRIMARY, opacity: 0.35 }}
+                />
+              )}
+              <p
+                className="text-2xl font-black mb-2 leading-none"
+                style={{ color: `${PRIMARY}30` }}
+              >
+                {step.num}
+              </p>
+              <p className={`text-sm font-black mb-1 ${dm ? 'text-white' : 'text-slate-900'}`}>{step.title}</p>
+              <p className={`text-xs leading-relaxed ${dm ? 'text-slate-400' : 'text-slate-500'}`}>{step.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Section heading + category filter ───────────────────────── */}
+      <div className="mb-5 flex flex-col sm:flex-row sm:items-end gap-4">
+        <div className="flex-1">
+          <p
+            className="text-[11px] font-black uppercase tracking-[0.18em] mb-1"
+            style={{ color: PRIMARY }}
+          >
+            All Tools
+          </p>
+          <h2 className={`text-2xl font-black tracking-tight ${dm ? 'text-white' : 'text-slate-900'}`}>
+            What would you like to do?
+          </h2>
+          <p className={`text-sm mt-1 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+            Select any tool below to get started with your NEET UG counselling preparation.
+          </p>
+        </div>
+        {/* Category filter pills */}
+        <div className="flex gap-2 flex-wrap">
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`text-xs font-black px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
+                activeCategory === cat
+                  ? 'border-transparent text-white'
+                  : dm
+                    ? 'border-slate-600 text-slate-300 hover:border-slate-500 bg-transparent'
+                    : 'border-slate-200 text-slate-500 hover:border-slate-300 bg-white'
+              }`}
+              style={activeCategory === cat ? { backgroundColor: PRIMARY } : {}}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Feature grid ────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredFeatures.map((f) => {
+          const Icon = f.icon;
+          const isExpanded = expandedCard === f.view;
+          return (
+            <div
+              key={f.view}
+              className={`group text-left rounded-2xl border transition-all duration-200 overflow-hidden ${
+                dm
+                  ? 'bg-slate-800/50 border-slate-700 hover:border-slate-500 hover:bg-slate-800'
+                  : 'bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300'
+              }`}
+            >
+              <button
+                onClick={() => setCurrentView(f.view)}
+                className="w-full text-left p-5 cursor-pointer"
+              >
+                {/* Icon + badge */}
+                <div className="flex items-start justify-between mb-3">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center border"
+                    style={{
+                      backgroundColor: `${f.color}14`,
+                      borderColor: `${f.color}28`,
+                      color: f.color,
+                    }}
+                  >
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {/* Category tag */}
+                    <span className={`text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded border ${
+                      dm ? 'border-slate-600 text-slate-400 bg-slate-700/50' : 'border-slate-200 text-slate-400 bg-slate-50'
+                    }`}>
+                      {f.category}
+                    </span>
+                    {f.badge && (
+                      <span
+                        className="text-[10px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border"
+                        style={{
+                          backgroundColor: `${f.badgeColor}12`,
+                          borderColor: `${f.badgeColor}28`,
+                          color: f.badgeColor,
+                        }}
+                      >
+                        {f.badge}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Text */}
+                <h3
+                  className={`text-sm font-black mb-1.5 group-hover:underline decoration-2 underline-offset-2 ${dm ? 'text-white' : 'text-slate-900'}`}
+                  style={{ textDecorationColor: f.color }}
+                >
+                  {f.title}
+                </h3>
+                <p className={`text-xs leading-relaxed ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {f.desc}
+                </p>
+
+                {/* Arrow */}
+                <div
+                  className="mt-3 flex items-center gap-1 text-xs font-black transition-all group-hover:gap-2"
+                  style={{ color: f.color }}
+                >
+                  Open <ArrowRight className="w-3.5 h-3.5" />
+                </div>
+              </button>
+
+              {/* How-to expand toggle */}
+              <div className={`border-t px-5 py-2.5 flex items-center justify-between ${
+                dm ? 'border-slate-700' : 'border-slate-100'
+              }`}>
+                <button
+                  onClick={() => setExpandedCard(isExpanded ? null : f.view)}
+                  className={`flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer ${
+                    dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  <Info className="w-3 h-3" />
+                  {isExpanded ? 'Hide' : 'How to use'}
+                </button>
+              </div>
+
+              {/* How-to panel */}
+              {isExpanded && (
+                <div
+                  className={`px-5 pb-4 text-xs leading-relaxed border-t ${
+                    dm ? 'border-slate-700 text-slate-300 bg-slate-800/60' : 'border-slate-100 text-slate-600 bg-slate-50/80'
+                  }`}
+                  style={{ borderTopWidth: 0 }}
+                >
+                  <p className={`pt-3 ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{f.howTo}</p>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Quick Stats Banner ───────────────────────────────────────── */}
+      <div className={`mt-8 grid grid-cols-3 gap-3 p-5 rounded-2xl border ${
+        dm ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200 shadow-sm'
+      }`}>
+        {[
+          { value: '600+', label: 'Medical Colleges Mapped', icon: MapPin },
+          { value: '1.4L+', label: 'Students Guided', icon: Users },
+          { value: '5 Yrs', label: 'Historical Cutoff Data', icon: FileText },
+        ].map(({ value, label, icon: Icon }) => (
+          <div key={label} className="text-center">
+            <Icon className="w-4 h-4 mx-auto mb-1.5" style={{ color: PRIMARY, opacity: 0.6 }} />
+            <p className={`text-lg font-black ${dm ? 'text-white' : 'text-slate-900'}`}>{value}</p>
+            <p className={`text-[10px] font-bold leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>{label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Data source note ─────────────────────────────────────────── */}
+      <div
+        className={`mt-4 p-4 rounded-xl border flex items-start gap-3 ${
+          dm ? 'border-slate-700 bg-slate-800/30' : 'border-slate-200 bg-slate-50'
+        }`}
+      >
+        <ShieldCheck className="w-5 h-5 shrink-0 mt-0.5" style={{ color: '#16A34A' }} />
+        <p className={`text-sm ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+          <strong className={dm ? 'text-white' : 'text-slate-900'}>100% Authentic Data:</strong>{' '}
+          All Opening & Closing Rank data is extracted directly from official MCC seat allotment result PDFs
+          published on <strong>mcc.nic.in</strong>. No estimates, no approximations.
+        </p>
+      </div>
     </div>
   );
 }

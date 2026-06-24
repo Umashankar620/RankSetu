@@ -16,52 +16,55 @@ import UpgradeProbability from '@/components/UpgradeProbability';
 import TrendModal from '@/components/Graphd';
 import CutoffInfoBanner from '@/components/CutoffInfoBanner';
 import AyushPage from '@/components/AyushPage';
-
+import PageHeader from '@/components/PageHeader';
 import ChoiceOptimizer from '@/components/ChoiceOptimizer';
 import CounsellingTimeline from '@/components/CounsellingTimeline';
 import ChoiceSandbox from '@/components/ChoiceSandbox';
 import ShareCard from '@/components/ShareCard';
-
 import Home from '@/components/Home';
 import AboutUsFull from '@/components/AboutUs';
+import {
+  BarChart2, BookOpen, TrendingUp, GraduationCap,
+  Layers, Calendar, FlaskConical, Target, Leaf,
+} from 'lucide-react';
 
 import { fetchCutoffs, fetchFilters } from '@/utils/api';
 
 // ── Route <-> View mapping ─────────────────────────────────────────────────
 const SLUG_TO_VIEW = {
-  '':                 'home',
-  'analytics':        'analytics',
-  'state-analytics':  'state-analytics',
-  'optimizer':        'optimizer',
-  'aiims-hub':        'aiims-hub',
-  'counselling':      'counselling',
-  'about-us':         'about-us',
-  'upgrade':          'upgrade',
-  'choice-lab':       'lab',
-  'sandbox':          'sandbox',
-  'college-db':       'college-db',
-  'predictor':        'predictor',
-  'timeline':         'timeline',
-  'share-card':       'share-card',
-  'ayush':            'ayush',     // ← NEW
+  '':                'home',
+  'analytics':       'analytics',
+  'state-analytics': 'state-analytics',
+  'optimizer':       'optimizer',
+  'aiims-hub':       'aiims-hub',
+  'counselling':     'counselling',
+  'about-us':        'about-us',
+  'upgrade':         'upgrade',
+  'choice-lab':      'lab',
+  'sandbox':         'sandbox',
+  'college-db':      'college-db',
+  'predictor':       'predictor',
+  'timeline':        'timeline',
+  'share-card':      'share-card',
+  'ayush':           'ayush',
 };
 
 const VIEW_TO_PATH = {
-  'home':             '/',
-  'analytics':        '/analytics',
-  'state-analytics':  '/state-analytics',
-  'optimizer':        '/optimizer',
-  'aiims-hub':        '/aiims-hub',
-  'counselling':      '/counselling',
-  'about-us':         '/about-us',
-  'upgrade':          '/upgrade',
-  'lab':              '/choice-lab',
-  'sandbox':          '/sandbox',
-  'college-db':       '/college-db',
-  'predictor':        '/predictor',
-  'timeline':         '/timeline',
-  'share-card':       '/share-card',
-  'ayush':            '/ayush',    // ← NEW
+  'home':            '/',
+  'analytics':       '/analytics',
+  'state-analytics': '/state-analytics',
+  'optimizer':       '/optimizer',
+  'aiims-hub':       '/aiims-hub',
+  'counselling':     '/counselling',
+  'about-us':        '/about-us',
+  'upgrade':         '/upgrade',
+  'lab':             '/choice-lab',
+  'sandbox':         '/sandbox',
+  'college-db':      '/college-db',
+  'predictor':       '/predictor',
+  'timeline':        '/timeline',
+  'share-card':      '/share-card',
+  'ayush':           '/ayush',
 };
 
 const INITIAL_FORM = {
@@ -70,17 +73,12 @@ const INITIAL_FORM = {
 };
 
 const EMPTY_FILTERS = {
-  years:             [],
-  rounds:            [],
-  categories:        [],
-  quotas:            [],
-  programs:          [],
-  institutes:        [],
-  genders:           [],
-  types:             [],
+  years: [], rounds: [], categories: [], quotas: [],
+  programs: [], institutes: [], genders: [], types: [],
   quotaInstituteMap: {},
 };
 
+// ── Stats Overview ─────────────────────────────────────────────────────────
 function StatsOverview({ metrics, darkMode: dm }) {
   if (!metrics) return null;
   return (
@@ -99,6 +97,7 @@ function StatsOverview({ metrics, darkMode: dm }) {
   );
 }
 
+// ── Main ClientWrapper ─────────────────────────────────────────────────────
 export default function ClientWrapper({ initialView }) {
   const router   = useRouter();
   const pathname = usePathname();
@@ -128,24 +127,23 @@ export default function ClientWrapper({ initialView }) {
     if (typeof window !== 'undefined') window.scrollTo(0, 0);
   }, [currentView]);
 
-  const [shareCardData, setShareCardData]   = useState(null);
-  const [filters, setFilters]               = useState(EMPTY_FILTERS);
-  const [filtersLoading, setFiltersLoading] = useState(true);
-  const [formState, setFormState]           = useState(INITIAL_FORM);
-  const [userRank, setUserRank]             = useState('');
-  const [cutoffShift, setCutoffShift]       = useState(0);
-  const [results, setResults]               = useState([]);
-  const [totalItems, setTotalItems]         = useState(0);
-  const [totalPages, setTotalPages]         = useState(0);
-  const [currentPage, setCurrentPage]       = useState(1);
-  const [searchLoading, setSearchLoading]   = useState(false);
-  const [searchError, setSearchError]       = useState('');
-  const [hasSearched, setHasSearched]       = useState(false);
+  const [shareCardData, setShareCardData]       = useState(null);
+  const [filters, setFilters]                   = useState(EMPTY_FILTERS);
+  const [filtersLoading, setFiltersLoading]     = useState(true);
+  const [formState, setFormState]               = useState(INITIAL_FORM);
+  const [userRank, setUserRank]                 = useState('');
+  const [cutoffShift, setCutoffShift]           = useState(0);
+  const [results, setResults]                   = useState([]);
+  const [totalItems, setTotalItems]             = useState(0);
+  const [totalPages, setTotalPages]             = useState(0);
+  const [currentPage, setCurrentPage]           = useState(1);
+  const [searchLoading, setSearchLoading]       = useState(false);
+  const [searchError, setSearchError]           = useState('');
+  const [hasSearched, setHasSearched]           = useState(false);
   const [selectedColleges, setSelectedColleges] = useState([]);
-  const [isTrendOpen, setIsTrendOpen]       = useState(false);
+  const [isTrendOpen, setIsTrendOpen]           = useState(false);
   const [selectedTrendCollege, setSelectedTrendCollege] = useState('');
 
-  // Load MCC filters once on mount
   useEffect(() => {
     const loadFilters = async () => {
       try {
@@ -166,9 +164,7 @@ export default function ClientWrapper({ initialView }) {
   }, []);
 
   const handleShareCard = (data) => {
-    try {
-      sessionStorage.setItem('ranksetu_share_data', JSON.stringify(data));
-    } catch (_) {}
+    try { sessionStorage.setItem('ranksetu_share_data', JSON.stringify(data)); } catch (_) {}
     setShareCardData(data);
     navigate('share-card');
   };
@@ -248,12 +244,16 @@ export default function ClientWrapper({ initialView }) {
     totalOptions: totalItems,
   };
 
-  const noSliderViews  = ['share-card'];
-  const analyticsViews = ['analytics', 'state-analytics'];
   const dm = darkMode;
+
+  // Pages that do NOT show the hero slider
+  const noSliderViews = ['share-card', 'analytics', 'state-analytics', 'optimizer',
+    'aiims-hub', 'counselling', 'about-us', 'upgrade', 'lab', 'sandbox',
+    'college-db', 'predictor', 'timeline', 'ayush'];
 
   const renderPage = () => {
     switch (currentView) {
+      // ── Home ──────────────────────────────────────────────────────────────
       case 'home':
         return (
           <Home
@@ -263,18 +263,33 @@ export default function ClientWrapper({ initialView }) {
           />
         );
 
+      // ── About Us ──────────────────────────────────────────────────────────
       case 'about-us':
         return <AboutUsFull darkMode={dm} />;
 
+      // ── Choice Optimizer ──────────────────────────────────────────────────
       case 'optimizer':
         return (
-          <ChoiceOptimizer
-            darkMode={dm}
-            showToast={showToast}
-            onShareCard={handleShareCard}
-          />
+          <>
+            <PageHeader
+              icon={Target}
+              eyebrow="AI-Powered"
+              title="Choice"
+              accent="Optimizer"
+              description="Enter your NEET rank and preferences — our algorithm analyses historical MCC cutoffs to recommend the optimal college ordering for your choice filling, maximising your allotment probability."
+              darkMode={dm}
+              onBack={() => navigate('home')}
+              badge={{ text: 'AI Active', tone: 'live' }}
+            />
+            <ChoiceOptimizer
+              darkMode={dm}
+              showToast={showToast}
+              onShareCard={handleShareCard}
+            />
+          </>
         );
 
+      // ── College DB ────────────────────────────────────────────────────────
       case 'college-db':
         return (
           <ComingSoon
@@ -284,6 +299,7 @@ export default function ClientWrapper({ initialView }) {
           />
         );
 
+      // ── Rank Predictor ────────────────────────────────────────────────────
       case 'predictor':
         return (
           <ComingSoon
@@ -293,18 +309,77 @@ export default function ClientWrapper({ initialView }) {
           />
         );
 
+      // ── Counselling Timeline ──────────────────────────────────────────────
       case 'timeline':
-        return <CounsellingTimeline darkMode={dm} />;
+        return (
+          <>
+            <PageHeader
+              icon={Calendar}
+              eyebrow="MCC 2025"
+              title="Counselling"
+              accent="Timeline"
+              description="Track every important date — registration windows, choice filling periods, seat allotment results, and reporting deadlines — for all MCC NEET UG counselling rounds."
+              darkMode={dm}
+              onBack={() => navigate('home')}
+              badge={{ text: 'Live Schedule', tone: 'live' }}
+            />
+            <CounsellingTimeline darkMode={dm} />
+          </>
+        );
 
+      // ── Sandbox ───────────────────────────────────────────────────────────
       case 'sandbox':
-        return <ChoiceSandbox darkMode={dm} />;
+        return (
+          <>
+            <PageHeader
+              icon={FlaskConical}
+              eyebrow="Practice Tool"
+              title="Choice Filling"
+              accent="Sandbox"
+              description="Simulate your NEET counselling choice list in a risk-free environment. Add colleges, reorder preferences, and detect sequence conflicts before the real choice filling window opens."
+              darkMode={dm}
+              onBack={() => navigate('home')}
+            />
+            <ChoiceSandbox darkMode={dm} />
+          </>
+        );
 
+      // ── AIIMS Hub ─────────────────────────────────────────────────────────
       case 'aiims-hub':
-        return <AiimsHub darkMode={dm} />;
+        return (
+          <>
+            <PageHeader
+              icon={GraduationCap}
+              eyebrow="Specialised Data"
+              title="AIIMS"
+              accent="Hub"
+              description="Dedicated section for all AIIMS campus cutoffs — opening and closing ranks for every AIIMS across India, filtered by round, category, and program."
+              darkMode={dm}
+              onBack={() => navigate('home')}
+              badge={{ text: 'AIIMS Only', tone: 'new' }}
+            />
+            <AiimsHub darkMode={dm} />
+          </>
+        );
 
+      // ── Counselling Guide ─────────────────────────────────────────────────
       case 'counselling':
-        return <CounsellingGuidePage darkMode={dm} setCurrentView={(v) => navigate(v)} />;
+        return (
+          <>
+            <PageHeader
+              icon={BookOpen}
+              eyebrow="Complete Guide"
+              title="MCC Counselling"
+              accent="Guide"
+              description="Everything you need to know about NEET UG counselling — quota codes explained, category benefits, round-by-round strategy, choice filling tips, and what happens during seat allotment."
+              darkMode={dm}
+              onBack={() => navigate('home')}
+            />
+            <CounsellingGuidePage darkMode={dm} setCurrentView={navigate} />
+          </>
+        );
 
+      // ── Share Card ────────────────────────────────────────────────────────
       case 'share-card':
         return (
           <ShareCard
@@ -315,41 +390,72 @@ export default function ClientWrapper({ initialView }) {
           />
         );
 
+      // ── Choice Lab ────────────────────────────────────────────────────────
       case 'lab':
         return (
-          <ChoiceLab
-            treeList={selectedColleges}
-            setTreeList={setSelectedColleges}
-            setCurrentView={(v) => navigate(v)}
-            darkMode={dm}
-          />
+          <>
+            <PageHeader
+              icon={Layers}
+              eyebrow="Choice Filling"
+              title="AI Choice"
+              accent="Lab"
+              description="Organise and audit your final choice list. Drag to reorder, detect sequence conflicts automatically, and export your preference list before submitting on the MCC portal."
+              darkMode={dm}
+              onBack={() => navigate('analytics')}
+              backLabel="Back to Cutoffs"
+            />
+            <ChoiceLab
+              treeList={selectedColleges}
+              setTreeList={setSelectedColleges}
+              setCurrentView={navigate}
+              darkMode={dm}
+            />
+          </>
         );
 
+      // ── Upgrade Probability ───────────────────────────────────────────────
       case 'upgrade':
-        return <UpgradeProbability darkMode={dm} showToast={showToast} />;
+        return (
+          <>
+            <PageHeader
+              icon={TrendingUp}
+              eyebrow="Round Analysis"
+              title="Upgrade"
+              accent="Probability"
+              description="Analyse the likelihood of getting an upgraded allotment in subsequent MCC counselling rounds. Based on historical seat movement patterns across all NEET UG rounds."
+              darkMode={dm}
+              onBack={() => navigate('home')}
+              badge={{ text: 'Beta', tone: 'new' }}
+            />
+            <UpgradeProbability darkMode={dm} showToast={showToast} />
+          </>
+        );
 
-      // ── NEW: Ayush page ─────────────────────────────────────────────────
+      // ── AYUSH ─────────────────────────────────────────────────────────────
       case 'ayush':
         return (
           <AyushPage
             darkMode={dm}
             showToast={showToast}
-            setCurrentView={(v) => navigate(v)}
+            setCurrentView={navigate}
           />
         );
 
-      // ── MCC analytics + state-analytics (default case handles both) ─────
+      // ── Analytics (MCC Cutoffs) — default ────────────────────────────────
       default:
         return (
           <div>
-            {analyticsViews.includes(currentView) && (
-              <button
-                onClick={() => navigate('home')}
-                className="mb-4 text-xs font-bold uppercase text-indigo-500 hover:underline cursor-pointer flex items-center gap-1"
-              >
-                ← Back to Dashboard
-              </button>
-            )}
+            <PageHeader
+              icon={BarChart2}
+              eyebrow="MCC Official Data"
+              title="Opening & Closing"
+              accent="Ranks"
+              description="Search year-wise, round-wise NEET UG cutoff data for all MCC colleges — AIIMS, JIPMER, government & deemed universities. Filter by category, quota, and gender to find ranks relevant to your profile."
+              darkMode={dm}
+              variant="explore"
+              onBack={() => navigate('home')}
+              badge={{ text: '2020–2025 Data', tone: 'success' }}
+            />
             <FilterBar
               filters={filters}
               formState={formState}
@@ -383,7 +489,7 @@ export default function ClientWrapper({ initialView }) {
               onOpenTrendModal={openTrendModal}
               selectedColleges={selectedColleges}
               setSelectedColleges={setSelectedColleges}
-              setCurrentView={(v) => navigate(v)}
+              setCurrentView={navigate}
             />
             <CutoffInfoBanner
               darkMode={dm}
@@ -409,7 +515,7 @@ export default function ClientWrapper({ initialView }) {
     >
       <Header
         currentView={currentView}
-        setCurrentView={(v) => navigate(v)}
+        setCurrentView={navigate}
         darkMode={dm}
         setDarkMode={setDarkMode}
         showToast={showToast}
@@ -417,14 +523,15 @@ export default function ClientWrapper({ initialView }) {
 
       <main className="flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {!noSliderViews.includes(currentView) && (
-            <HeroSlider darkMode={dm} />
+          {/* Hero Slider — ONLY on Home page */}
+          {currentView === 'home' && (
+            <HeroSlider darkMode={dm} setCurrentView={navigate} />
           )}
           {renderPage()}
         </div>
       </main>
 
-      <Footer darkMode={dm} showToast={showToast} setCurrentView={(v) => navigate(v)} />
+      <Footer darkMode={dm} showToast={showToast} setCurrentView={navigate} />
     </div>
   );
 }

@@ -3,231 +3,300 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ArrowUpCircle } from "lucide-react";
 
-// ── RankSetu Logo — redrawn: sharp bridge, clear SMG badge ────────────────────
-const CYCLE = 4800, BUILD = 3200;
+// ── RankSetu Logo — Living 3D Helix-Bridge mark ───────────────────────────────
+// The helix is the centerpiece: a 3D-shaded double spine with depth-scaled
+// rungs, a slow combined rotation+drift+float motion (not a single-axis spin),
+// a soft pulse traveling through the strands, and small particles riding the
+// strand paths via native SVG animateMotion — read as "data/insight flowing
+// through the structure" rather than decoration. Bridge deck is fused through
+// the helix core. CSS drives the outer motion (GPU, cheap); SVG-native
+// animateMotion drives the particles (no JS per-frame work either way).
 
-function rsDrawLogo(ctx, dark, p, W = 220, H = 56) {
-  ctx.clearRect(0, 0, W, H);
-  ctx.save();
-
-  const cl  = v => Math.min(1, Math.max(0, v));
-  const seg = (s, e) => cl((p - s) / (e - s));
-  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
-  function bounce(t) {
-    if (t < 1/2.75)  return 7.5625*t*t;
-    if (t < 2/2.75) { t -= 1.5/2.75;  return 7.5625*t*t + 0.75; }
-    if (t < 2.5/2.75){ t -= 2.25/2.75; return 7.5625*t*t + 0.9375; }
-    t -= 2.625/2.75; return 7.5625*t*t + 0.984375;
-  }
-
-  function rr(x, y, w, h, r, fill, stroke, sw) {
-    ctx.beginPath();
-    ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y);
-    ctx.arcTo(x+w, y,   x+w, y+r,   r); ctx.lineTo(x+w, y+h-r);
-    ctx.arcTo(x+w, y+h, x+w-r, y+h, r); ctx.lineTo(x+r, y+h);
-    ctx.arcTo(x,   y+h, x,   y+h-r, r); ctx.lineTo(x,   y+r);
-    ctx.arcTo(x,   y,   x+r, y,     r); ctx.closePath();
-    if (fill)   { ctx.fillStyle = fill; ctx.fill(); }
-    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = sw || 1; ctx.stroke(); }
-  }
-
-  // Bridge geometry
-  const BX=0, BY=5, BS=46;          // icon box
-  const DY  = BY+38;                 // deck y
-  const TX1 = BX+13, TX2 = BX+33;   // tower x positions
-  const APX = BX+23, APY = BY+13;   // arch apex
-  const TWH = DY - (BY+20);         // tower height (top at BY+20)
-  const TTY = BY+20;                 // tower top y
-
-  // ── Icon box ──────────────────────────────────────────────────────
-  rr(BX, BY, BS, BS, 11, '#1A3C6E');
-  ctx.beginPath();
-  ctx.moveTo(BX+11, BY+1); ctx.lineTo(BX+BS-11, BY+1);
-  ctx.strokeStyle = 'rgba(255,255,255,0.10)'; ctx.lineWidth = 1; ctx.stroke();
-
-  // ── 1. Deck (p 0→0.22) ───────────────────────────────────────────
-  const dP = seg(0, 0.22);
-  if (dP > 0) {
-    const x0 = BX+4, x1 = BX+4 + (BS-8)*dP;
-    ctx.beginPath(); ctx.moveTo(x0, DY); ctx.lineTo(x1, DY);
-    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2.5; ctx.lineCap = 'butt'; ctx.stroke();
-  }
-
-  // ── 2. Towers (p 0.10→0.26) ──────────────────────────────────────
-  const tP = seg(0.10, 0.26);
-  if (tP > 0) {
-    [TX1, TX2].forEach(tx => {
-      const topY = DY - TWH*tP;
-      ctx.beginPath(); ctx.moveTo(tx, DY); ctx.lineTo(tx, topY);
-      ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2.8; ctx.lineCap = 'butt'; ctx.stroke();
-      if (tP > 0.7) {
-        const ca = (tP-0.7)/0.3;
-        ctx.fillStyle = `rgba(255,255,255,${ca})`;
-        ctx.fillRect(tx-3, topY-3, 6, 3);
-      }
-    });
-  }
-
-  // ── 3. Main cables (p 0.20→0.52) ─────────────────────────────────
-  const aP = seg(0.20, 0.52);
-  if (aP > 0) {
-    [
-      { x0:TX1, y0:TTY, cx:BX+5,  cy:TTY-3, x1:APX, y1:APY },
-      { x0:TX2, y0:TTY, cx:BX+41, cy:TTY-3, x1:APX, y1:APY },
-    ].forEach(({ x0, y0, cx, cy, x1, y1 }) => {
-      const steps = 40, endI = Math.round(aP*steps);
-      ctx.beginPath();
-      for (let i = 0; i <= endI; i++) {
-        const t=i/steps, mt=1-t;
-        const px=mt*mt*x0+2*mt*t*cx+t*t*x1;
-        const py=mt*mt*y0+2*mt*t*cy+t*t*y1;
-        i===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
-      }
-      ctx.strokeStyle='#FFFFFF'; ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke();
-    });
-  }
-
-  // ── 4. Hangers (p 0.36→0.58) ─────────────────────────────────────
-  [BX+8, TX1, APX, TX2, BX+38].forEach((hx, i) => {
-    const hp = seg(0.36+i*0.022, 0.52+i*0.022);
-    if (hp > 0) {
-      const norm = Math.abs(hx-APX)/(TX2-APX);
-      const cabY = APY + (TTY-APY)*norm*norm;
-      ctx.beginPath(); ctx.moveTo(hx, cabY); ctx.lineTo(hx, cabY+(DY-cabY)*hp);
-      ctx.strokeStyle='#7DD3FC'; ctx.lineWidth=1.2; ctx.lineCap='butt'; ctx.stroke();
+let __rsLogoStyleInjected = false;
+function ensureRsLogoStyles() {
+  if (__rsLogoStyleInjected || typeof document === 'undefined') return;
+  __rsLogoStyleInjected = true;
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes rsHelixSpin3D {
+      0%   { transform: rotateY(-18deg) rotateX(5deg)  translateZ(0px); }
+      28%  { transform: rotateY(6deg)   rotateX(-3deg) translateZ(4px); }
+      52%  { transform: rotateY(20deg)  rotateX(2deg)  translateZ(0px); }
+      76%  { transform: rotateY(-4deg)  rotateX(4deg)  translateZ(-3px); }
+      100% { transform: rotateY(-18deg) rotateX(5deg)  translateZ(0px); }
     }
-  });
-
-  // ── 5. SMG badge (p 0.48→0.64) — clear, readable ─────────────────
-  const smgP = seg(0.48, 0.64);
-  if (smgP > 0) {
-    const ea = easeOut(smgP);
-    ctx.save(); ctx.globalAlpha = ea;
-    // pill: 34×11, bottom-center of icon box
-    const PW=34, PH=11, PX=BX+(BS-PW)/2, PY=BY+BS-PH-2;
-    rr(PX, PY, PW, PH, 4, '#0A1E3D');      // dark navy fill
-    rr(PX, PY, PW, PH, 4, null, '#2563EB', 1.2); // blue border
-    // letters — spaced clearly
-    ctx.font = '700 7px "Segoe UI",Arial,sans-serif';
-    ctx.fillStyle = '#BFDBFE';             // light blue — high contrast on dark bg
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    const mY = PY + PH/2 + 0.5;
-    ctx.fillText('S', PX+6,    mY);
-    ctx.fillText('M', PX+17,   mY);
-    ctx.fillText('G', PX+28,   mY);
-    ctx.restore();
-  }
-
-  // ── 6. Apex star (p 0.50→0.66) ───────────────────────────────────
-  const sp = seg(0.50, 0.66);
-  if (sp > 0) {
-    const eb = bounce(sp);
-    ctx.save(); ctx.translate(APX, APY); ctx.scale(eb, eb);
-    ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI*2);
-    ctx.fillStyle='#3B82F6'; ctx.fill();
-    ctx.font='bold 7px Arial'; ctx.fillStyle='#FFFFFF';
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('★', 0, 0.5);
-    ctx.restore();
-  }
-
-  // ── 7. Orbit dot (p 0.62→1.0) ────────────────────────────────────
-  const op = seg(0.62, 1.0);
-  if (op > 0) {
-    const angle = -Math.PI/2 + op*Math.PI*3.5;
-    for (let t = 4; t >= 0; t--) {
-      const ta = angle - t*0.16;
-      const ox = APX+8*Math.cos(ta), oy = APY+8*Math.sin(ta);
-      const al = t===0 ? Math.max(0.75, 0.75+0.25*Math.sin(op*Math.PI*10)) : (0.32-t*0.07)*op;
-      ctx.save(); ctx.globalAlpha=Math.max(0,al);
-      ctx.beginPath(); ctx.arc(ox, oy, t===0?2:1.2-t*0.2, 0, Math.PI*2);
-      ctx.fillStyle='#93C5FD'; ctx.fill(); ctx.restore();
+    @keyframes rsFloat {
+      0%, 100% { transform: translateY(0px) scale(1); }
+      50%      { transform: translateY(-3px) scale(1.008); }
     }
-  }
-
-  // ── 8. "Rank" (p 0.64→0.76) ──────────────────────────────────────
-  const rankP = seg(0.64, 0.76);
-  if (rankP > 0) {
-    const e = easeOut(rankP);
-    ctx.save(); ctx.globalAlpha=e; ctx.translate((e-1)*8, 0);
-    ctx.font='800 24px "Arial Black","Syne",Arial,sans-serif';
-    ctx.fillStyle = dark ? '#F1F5F9' : '#111827';
-    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
-    ctx.fillText('Rank', BX+BS+8, BY+31);
-    ctx.restore();
-  }
-
-  // ── 9. Dot divider (p 0.72→0.80) ─────────────────────────────────
-  const dotP = seg(0.72, 0.80);
-  if (dotP > 0) {
-    ctx.save(); ctx.globalAlpha=dotP;
-    ctx.beginPath(); ctx.arc(BX+BS+73, BY+24, 2.2, 0, Math.PI*2);
-    ctx.fillStyle = dark ? '#3B82F6' : '#1A3C6E'; ctx.fill();
-    ctx.restore();
-  }
-
-  // ── 10. "Setu" (p 0.72→0.84) ─────────────────────────────────────
-  const setuP = seg(0.72, 0.84);
-  if (setuP > 0) {
-    const e = easeOut(setuP);
-    ctx.save(); ctx.globalAlpha=e; ctx.translate((e-1)*8, 0);
-    ctx.font='800 24px "Arial Black","Syne",Arial,sans-serif';
-    ctx.fillStyle = dark ? '#60A5FA' : '#1A3C6E';
-    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
-    ctx.fillText('Setu', BX+BS+82, BY+31);
-    ctx.restore();
-  }
-
-  // ── 11. Tagline (p 0.84→0.94) ────────────────────────────────────
-  const tagP = seg(0.84, 0.94);
-  if (tagP > 0) {
-    ctx.save(); ctx.globalAlpha=easeOut(tagP);
-    ctx.font='600 7px "Segoe UI",Arial,sans-serif';
-    ctx.fillStyle = dark ? '#3B82F6' : '#94a3b8';
-    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
-    ctx.fillText('NEET COUNSELLING', BX+BS+8, BY+43);
-    ctx.restore();
-  }
-
-  ctx.restore();
+    @keyframes rsLightSweep {
+      0%   { transform: translate(-14%, -10%) rotate(0deg);  opacity: 0.5; }
+      50%  { transform: translate(14%, 10%)  rotate(8deg);  opacity: 0.85; }
+      100% { transform: translate(-14%, -10%) rotate(0deg);  opacity: 0.5; }
+    }
+    @keyframes rsGlowPulse {
+      0%, 100% { opacity: 0.42; transform: scale(1); }
+      50%      { opacity: 0.78; transform: scale(1.08); }
+    }
+    @keyframes rsStrandPulse {
+      0%   { stroke-opacity: 0.65; }
+      50%  { stroke-opacity: 1; }
+      100% { stroke-opacity: 0.65; }
+    }
+    .rs-logo-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      transition: transform 320ms cubic-bezier(.2,.8,.2,1);
+    }
+    .rs-logo-wrap:hover {
+      transform: scale(1.05);
+    }
+    .rs-logo-icon {
+      position: relative;
+      width: 46px;
+      height: 46px;
+      flex-shrink: 0;
+      perspective: 280px;
+    }
+    .rs-logo-glow {
+      position: absolute;
+      inset: -10px;
+      border-radius: 18px;
+      background: radial-gradient(circle, rgba(37,99,235,0.40) 0%, rgba(37,99,235,0) 70%);
+      filter: blur(6px);
+      animation: rsGlowPulse 4.2s ease-in-out infinite;
+      transition: opacity 320ms ease, filter 320ms ease;
+      pointer-events: none;
+    }
+    .rs-logo-wrap:hover .rs-logo-glow {
+      opacity: 1 !important;
+      filter: blur(10px);
+    }
+    .rs-logo-float {
+      width: 100%;
+      height: 100%;
+      animation: rsFloat 6.4s ease-in-out infinite;
+    }
+    .rs-logo-box {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 13px;
+      box-shadow:
+        0 4px 14px rgba(8,16,32,0.32),
+        inset 0 1px 0 rgba(255,255,255,0.10),
+        inset 0 -9px 18px rgba(0,0,0,0.20);
+      overflow: hidden;
+      transition: box-shadow 320ms ease;
+    }
+    .rs-logo-wrap:hover .rs-logo-box {
+      box-shadow:
+        0 6px 20px rgba(8,16,32,0.40),
+        inset 0 1px 0 rgba(255,255,255,0.14),
+        inset 0 -9px 18px rgba(0,0,0,0.22);
+    }
+    .rs-logo-spin3d {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+      animation: rsHelixSpin3D 12s ease-in-out infinite;
+      transition: filter 320ms ease;
+    }
+    .rs-logo-wrap:hover .rs-logo-spin3d {
+      filter: drop-shadow(0 0 4px rgba(91,156,255,0.65));
+    }
+    .rs-logo-strand-front {
+      animation: rsStrandPulse 3.4s ease-in-out infinite;
+    }
+    .rs-logo-sheen {
+      position: absolute;
+      inset: -25%;
+      background: radial-gradient(ellipse 55% 40% at 50% 50%, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0) 65%);
+      animation: rsLightSweep 7s ease-in-out infinite;
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+    .rs-logo-particle {
+      transition: opacity 320ms ease;
+    }
+    .rs-logo-wrap:hover .rs-logo-particle {
+      opacity: 1 !important;
+    }
+    .rs-wordmark-rank, .rs-wordmark-setu {
+      font-family: 'Poppins','Inter',Arial,sans-serif;
+      font-weight: 800;
+      font-size: 22px;
+      letter-spacing: 0.15px;
+      line-height: 1;
+    }
+    .rs-wordmark-tag {
+      font-family: 'Inter',Arial,sans-serif;
+      font-weight: 600;
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      margin-top: 3px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .rs-logo-float, .rs-logo-spin3d, .rs-logo-glow, .rs-logo-sheen,
+      .rs-logo-strand-front { animation: none !important; }
+    }
+  `;
+  document.head.appendChild(style);
 }
 
-// ── HiDPI-aware hook ──────────────────────────────────────────────────────────
-function useRsLogo(dark) {
-  const ref      = useRef(null);
-  const rafRef   = useRef(null);
-  const startRef = useRef(null);
-
-  useEffect(() => {
-    const cv = ref.current;
-    if (!cv) return;
-
-    // Setup HiDPI once
-    const dpr = window.devicePixelRatio || 1;
-    const W = 220, H = 56;
-    cv.width  = W * dpr;
-    cv.height = H * dpr;
-    cv.style.width  = W + 'px';
-    cv.style.height = H + 'px';
-    const ctx = cv.getContext('2d');
-    ctx.scale(dpr, dpr);
-
-    function tick(ts) {
-      if (!startRef.current) startRef.current = ts;
-      const elapsed = (ts - startRef.current) % CYCLE;
-      const p = elapsed < BUILD ? elapsed / BUILD : 1;
-      rsDrawLogo(ctx, dark, p, W, H);
-      rafRef.current = requestAnimationFrame(tick);
-    }
-    rafRef.current = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(rafRef.current); };
-  }, [dark]);
-
-  return ref;
+// Perspective-scaled helix rungs: depth parameter drives x-swing, ellipse
+// width and opacity, so near rungs read wide/bright and far rungs read
+// narrow/dim — the thing that actually sells "3D" rather than a flat ribbon.
+function buildHelixRungs() {
+  const N = 7;
+  const rungs = [];
+  for (let i = 0; i < N; i++) {
+    const t = i / (N - 1);
+    const depth = Math.sin(t * Math.PI * 2.1);
+    const cx = 23 + depth * 7.2;
+    const cy = 11 + t * 24;
+    const rx = 8.2 - Math.abs(depth) * 2.4;
+    const front = depth > 0;
+    rungs.push({ cx, cy, rx, front, depth, i });
+  }
+  return rungs;
 }
 
-const RankSetuLogo     = () => { const ref = useRsLogo(false); return <canvas ref={ref} width={220} height={56} aria-label="RankSetu" style={{display:'block'}} />; };
-const RankSetuLogoDark = () => { const ref = useRsLogo(true);  return <canvas ref={ref} width={220} height={56} aria-label="RankSetu" style={{display:'block'}} />; };
+function RsHelixBridgeLogo({ dark }) {
+  useEffect(() => { ensureRsLogoStyles(); }, []);
+
+  const rungs = buildHelixRungs();
+  const gid = dark ? 'd' : 'l';
+  const spinePath = `M ${rungs.map(r => `${r.cx} ${r.cy}`).join(' L ')}`;
+
+  const navyTop    = dark ? '#16335E' : '#22507F';
+  const navyBase   = dark ? '#0A0F19' : '#1A3C6E';
+  const cableFront  = '#2563EB';
+  const cableBack   = dark ? '#5B86D6' : '#9DB7E8';
+  const particleCol = '#5B9CFF';
+
+  return (
+    <div className="rs-logo-wrap">
+      <div className="rs-logo-icon">
+        <div className="rs-logo-glow" />
+        <div className="rs-logo-float">
+          <div className="rs-logo-box" style={{
+            background: `linear-gradient(150deg, ${navyTop} 0%, ${navyBase} 65%)`,
+          }}>
+            <div className="rs-logo-sheen" />
+
+            <div className="rs-logo-spin3d">
+              <svg width="46" height="46" viewBox="0 0 46 46" style={{ position: 'absolute', inset: 0 }}>
+                <defs>
+                  <linearGradient id={`rsSpineBack-${gid}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"  stopColor={cableBack} stopOpacity="0.85" />
+                    <stop offset="100%" stopColor={navyBase} stopOpacity="0.85" />
+                  </linearGradient>
+                  <linearGradient id={`rsSpineFront-${gid}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"  stopColor="#5B9CFF" />
+                    <stop offset="55%" stopColor={cableFront} />
+                    <stop offset="100%" stopColor="#163E8F" />
+                  </linearGradient>
+                  <radialGradient id={`rsRungShine-${gid}`} cx="35%" cy="30%" r="75%">
+                    <stop offset="0%"  stopColor="#FFFFFF" stopOpacity="0.9" />
+                    <stop offset="40%" stopColor="#BFDBFE" stopOpacity="0.55" />
+                    <stop offset="100%" stopColor={cableFront} stopOpacity="0.15" />
+                  </radialGradient>
+                  <radialGradient id={`rsParticleGlow-${gid}`} cx="50%" cy="50%" r="50%">
+                    <stop offset="0%"  stopColor="#FFFFFF" stopOpacity="1" />
+                    <stop offset="55%" stopColor={particleCol} stopOpacity="0.9" />
+                    <stop offset="100%" stopColor={particleCol} stopOpacity="0" />
+                  </radialGradient>
+                </defs>
+
+                {/* Back spine — drawn behind the rungs */}
+                <path
+                  id={`rsSpinePathBack-${gid}`}
+                  d={spinePath}
+                  fill="none" stroke={`url(#rsSpineBack-${gid})`} strokeWidth="2.3"
+                  strokeLinecap="round" strokeLinejoin="round" opacity="0.55"
+                />
+
+                {/* Bridge deck — fused straight through the helix core */}
+                <line x1="6" y1="35.5" x2="40" y2="35.5"
+                  stroke="#FFFFFF" strokeOpacity="0.85" strokeWidth="2.4" strokeLinecap="round" />
+                <line x1="10" y1="35.5" x2="10" y2="23" stroke={cableBack} strokeOpacity="0.5" strokeWidth="1.6" strokeLinecap="round" />
+                <line x1="36" y1="35.5" x2="36" y2="23" stroke={cableBack} strokeOpacity="0.5" strokeWidth="1.6" strokeLinecap="round" />
+
+                {/* Front spine — the path particles ride, bright + pulsing */}
+                <path
+                  id={`rsSpinePathFront-${gid}`}
+                  className="rs-logo-strand-front"
+                  d={spinePath}
+                  fill="none" stroke={`url(#rsSpineFront-${gid})`} strokeWidth="2.6"
+                  strokeLinecap="round" strokeLinejoin="round"
+                />
+
+                {/* Depth-scaled rungs */}
+                {rungs.map((r) => (
+                  <ellipse
+                    key={r.i}
+                    cx={r.cx} cy={r.cy}
+                    rx={Math.max(1.4, r.rx)} ry="1.55"
+                    fill={r.front ? `url(#rsRungShine-${gid})` : cableBack}
+                    opacity={r.front ? 0.95 : 0.45}
+                    transform={`rotate(${r.depth * 18} ${r.cx} ${r.cy})`}
+                  />
+                ))}
+
+                {/* Apex highlight — where "Rank" enters the structure */}
+                <circle cx={rungs[0].cx} cy={rungs[0].cy} r="2.1" fill="#FFFFFF" opacity="0.9" />
+                <circle cx={rungs[0].cx} cy={rungs[0].cy} r="3.6" fill="#5B9CFF" opacity="0.22" />
+
+                {/* ── Data-flow particles — travel along the front spine path ── */}
+                <circle r="1.6" fill={`url(#rsParticleGlow-${gid})`} className="rs-logo-particle" opacity="0.85">
+                  <animateMotion dur="2.6s" repeatCount="indefinite" rotate="auto">
+                    <mpath href={`#rsSpinePathFront-${gid}`} />
+                  </animateMotion>
+                  <animate attributeName="opacity" values="0;0.9;0.9;0" keyTimes="0;0.15;0.85;1" dur="2.6s" repeatCount="indefinite" />
+                </circle>
+                <circle r="1.3" fill={`url(#rsParticleGlow-${gid})`} className="rs-logo-particle" opacity="0.7">
+                  <animateMotion dur="2.6s" begin="0.9s" repeatCount="indefinite" rotate="auto">
+                    <mpath href={`#rsSpinePathFront-${gid}`} />
+                  </animateMotion>
+                  <animate attributeName="opacity" values="0;0.75;0.75;0" keyTimes="0;0.15;0.85;1" dur="2.6s" begin="0.9s" repeatCount="indefinite" />
+                </circle>
+                <circle r="1.1" fill={`url(#rsParticleGlow-${gid})`} className="rs-logo-particle" opacity="0.55">
+                  <animateMotion dur="2.6s" begin="1.8s" repeatCount="indefinite" rotate="auto">
+                    <mpath href={`#rsSpinePathFront-${gid}`} />
+                  </animateMotion>
+                  <animate attributeName="opacity" values="0;0.6;0.6;0" keyTimes="0;0.15;0.85;1" dur="2.6s" begin="1.8s" repeatCount="indefinite" />
+                </circle>
+              </svg>
+            </div>
+
+            {/* SMG badge pill */}
+            <svg width="46" height="46" viewBox="0 0 46 46" style={{ position: 'absolute', inset: 0 }}>
+              <rect x="6" y="38.3" width="34" height="11" rx="4" fill="#0A1428" />
+              <rect x="6" y="38.3" width="34" height="11" rx="4" fill="none" stroke="#2563EB" strokeWidth="1.1" />
+              <text x="23" y="45" textAnchor="middle" fontFamily="Segoe UI, Arial, sans-serif"
+                fontSize="7" fontWeight="700" fill="#BFDBFE">SMG</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline' }}>
+          <span className="rs-wordmark-rank" style={{ color: dark ? '#F9FAFC' : '#0A0F19' }}>Rank</span>
+          <span className="rs-wordmark-setu" style={{ color: dark ? '#5B9CFF' : '#1A3C6E', marginLeft: '1px' }}>Setu</span>
+        </div>
+        <span className="rs-wordmark-tag" style={{ color: dark ? '#2563EB' : '#5C7AA8' }}>
+          NEET COUNSELLING
+        </span>
+      </div>
+    </div>
+  );
+}
+
+const RankSetuLogo     = () => <RsHelixBridgeLogo dark={false} />;
+const RankSetuLogoDark = () => <RsHelixBridgeLogo dark={true} />;
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const SvgIcon = ({ name, color, size = 16 }) => {
@@ -261,38 +330,50 @@ const SvgIcon = ({ name, color, size = 16 }) => {
 };
 
 // ── Nav Data ──────────────────────────────────────────────────────────────────
+// Tools dropdown — ye sab counselling decisions ke tools hain
 const HUB_ITEMS = [
-  { view: "optimizer",       icon: "sliders", color: "#2563EB", label: "Choice Optimizer",  sub: "Find your best college match" },
-  { view: "upgrade",         lucideIcon: ArrowUpCircle, color: "#7C3AED", label: "Upgrade Checker", sub: "Round 2 upgrade probability", badge: "New" },
-  { view: "state-analytics", icon: "pin",     color: "#0369A1", label: "State Cutoffs",     sub: "State quota seat data" },
-  { view: "aiims-hub",       icon: "award",   color: "#B45309", label: "National AIIMS",    sub: "Top AIIMS seat data" },
+  { view: "optimizer",       icon: "sliders", color: "#1A3C6E", label: "Choice Optimizer",  sub: "Best college order for your rank" },
+  { view: "upgrade",         lucideIcon: ArrowUpCircle, color: "#1A3C6E", label: "Upgrade Checker", sub: "Round 2 seat upgrade probability", badge: "New" },
+  { view: "state-analytics", icon: "pin",     color: "#1A3C6E", label: "State Quota Cutoffs", sub: "State seat allotment rank data" },
+  
 ];
 
+// OR-CR dropdown — previous year rank data
 const OR_CR_ITEMS = [
   {
     view: "analytics",
     icon: "bar",
     color: "#1A3C6E",
-    label: "MCC Opening & Closing",
-    sub: "NEET AIQ rank cutoffs — MCC counselling",
+    label: "MCC Counselling Ranks",
+    sub: "AIQ opening & closing ranks, all rounds",
     badge: "Updated",
   },
   {
     view: "ayush",
     icon: "leaf",
-    color: "#15803D",
-    label: "Ayush Opening & Closing",
-    sub: "AYUSH counselling rank data",
+    color: "#1A3C6E",
+    label: "Ayush Counselling Ranks",
+    sub: "BAMS, BHMS & BUMS seat cutoff data",
     badge: "New",
   },
+  { view: "aiims-hub",       icon: "award",   color: "#1A3C6E", label: "AIIMS Cutoffs",    sub: "All-India AIIMS campus rank data" },
 ];
 
+// Resources dropdown
 const RESOURCE_ITEMS = [
-  { view: "college-db",   icon: "file",     color: "#B45309", label: "College Database",  sub: "600+ medical colleges" },
-  { view: "counselling",  icon: "users",    color: "#7C3AED", label: "Counselling Guide", sub: "MCC, State, Deemed rounds" },
-  { view: "predictor",    icon: "activity", color: "#047857", label: "Rank Predictor",    sub: "Estimate your NEET rank", badge: "New" },
-  { view: "about-us",     icon: "heart",    color: "#BE185D", label: "About Us",          sub: "Our mission & founder story" },
+  { view: "college-db",   icon: "file",     color: "#1A3C6E", label: "College Directory",  sub: "600+ medical colleges, fees & seats" },
+  { view: "counselling",  icon: "users",    color: "#1A3C6E", label: "Counselling Process", sub: "Round-wise allotment & joining steps" },
+  { view: "predictor",    icon: "activity", color: "#047857", label: "Rank Predictor",      sub: "Expected NEET rank from your score", badge: "New" },
+  { view: "about-us",     icon: "heart",    color: "#1A3C6E", label: "About RankSetu",      sub: "Our mission & the team" },
 ];
+
+// Category label text shown in the dropdown's official header strip
+const GROUP_INFO = {
+  "OR CR":     "Previous Year Cutoffs",
+  "Tools":     "Smart Counselling Tools",
+  "Resources": "Guides & College Data",
+};
+
 
 // ── Live Dot ──────────────────────────────────────────────────────────────────
 const LiveDot = ({ darkMode }) => (
@@ -303,51 +384,78 @@ const LiveDot = ({ darkMode }) => (
 const DropdownItem = ({ item, darkMode, setCurrentView, onClose }) => (
   <div
     onClick={() => { setCurrentView(item.view); onClose(); }}
-    className={`flex items-center gap-3 px-2.5 py-2.5 rounded-xl cursor-pointer transition-colors duration-150 ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-100"}`}
+    className={`group flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all duration-100 border-b last:border-b-0 ${
+      darkMode
+        ? "border-white/5 hover:bg-[#1A3C6E]/20"
+        : "border-slate-100 hover:bg-[#EEF2F8]"
+    }`}
   >
-    <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 border ${darkMode ? "border-white/8 bg-white/4" : "border-black/8 bg-slate-50"}`}
-      style={{ color: item.color }}>
+    <div className={`w-7 h-7 rounded flex items-center justify-center flex-shrink-0 ${
+      darkMode ? "bg-[#1A3C6E]/40" : "bg-[#1A3C6E]/8"
+    }`}>
       {item.lucideIcon
-        ? <item.lucideIcon size={16} color={item.color} strokeWidth={2} />
-        : <SvgIcon name={item.icon} color={item.color} size={16} />
+        ? <item.lucideIcon size={14} color={darkMode ? "#93C5FD" : "#1A3C6E"} strokeWidth={2} />
+        : <SvgIcon name={item.icon} color={darkMode ? "#93C5FD" : "#1A3C6E"} size={14} />
       }
     </div>
     <div className="flex-1 min-w-0">
-      <div className={`text-[13px] font-semibold leading-tight ${darkMode ? "text-slate-100" : "text-slate-800"}`}>{item.label}</div>
-      <div className="text-sm text-slate-500 mt-0.5">{item.sub}</div>
+      <div className={`text-[12.5px] font-semibold leading-tight tracking-tight ${darkMode ? "text-slate-100" : "text-[#0F1C33]"}`}>{item.label}</div>
+      <div className={`text-[11px] mt-0.5 leading-snug ${darkMode ? "text-slate-500" : "text-slate-500"}`}>{item.sub}</div>
     </div>
     {item.badge && (
-      <span className="text-sm font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 flex-shrink-0">{item.badge}</span>
+      <span className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded-sm flex-shrink-0 tracking-wider uppercase ${
+        darkMode ? "bg-blue-500/20 text-blue-300 border border-blue-500/30" : "bg-[#1A3C6E]/10 text-[#1A3C6E] border border-[#1A3C6E]/20"
+      }`}>{item.badge}</span>
     )}
   </div>
 );
 
 // ── Desktop Dropdown ──────────────────────────────────────────────────────────
-const DesktopDropdown = ({ label, items, darkMode, setCurrentView, currentView, activeViews }) => {
+const DesktopDropdown = ({ label, description, items, darkMode, setCurrentView, currentView, activeViews }) => {
   const [open, setOpen] = useState(false);
   const timerRef = useRef(null);
   const isActive = activeViews.includes(currentView);
 
   const handleMouseEnter = () => { clearTimeout(timerRef.current); setOpen(true); };
-  const handleMouseLeave = () => { timerRef.current = setTimeout(() => setOpen(false), 80); };
+  const handleMouseLeave = () => { timerRef.current = setTimeout(() => setOpen(false), 100); };
   useEffect(() => () => clearTimeout(timerRef.current), []);
 
   return (
     <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-      <button className={`ms-navpill flex items-center gap-1.5 h-9 px-3.5 rounded-lg text-[13px] font-semibold cursor-pointer border-none font-sans transition-all duration-150 ${
+      <button className={`ms-navpill flex items-center gap-1 h-9 px-4 text-[13px] font-semibold cursor-pointer border-none font-sans transition-all duration-100 tracking-tight ${
         isActive
-          ? darkMode ? "bg-blue-500/10 text-blue-400" : "bg-blue-50 text-primary"
-          : darkMode ? "bg-transparent text-slate-400" : "bg-transparent text-slate-600"
-      } hover:${darkMode ? "bg-white/5 text-white" : "bg-slate-100 text-slate-900"}`}>
+          ? darkMode
+            ? "text-blue-400 border-b-2 border-blue-400 rounded-none bg-transparent"
+            : "text-[#1A3C6E] border-b-2 border-[#1A3C6E] rounded-none bg-transparent"
+          : darkMode
+            ? open
+              ? "text-white border-b-2 border-white/30 rounded-none bg-transparent"
+              : "text-slate-400 rounded-none bg-transparent hover:text-slate-200 border-b-2 border-transparent"
+            : open
+              ? "text-[#1A3C6E] border-b-2 border-[#1A3C6E]/40 rounded-none bg-transparent"
+              : "text-slate-600 rounded-none bg-transparent hover:text-[#1A3C6E] border-b-2 border-transparent"
+      }`}>
         {label}
-        <SvgIcon name="chevron" size={12} color={isActive ? (darkMode ? "#60A5FA" : "#1A3C6E") : (darkMode ? "#94a3b8" : "#64748b")} />
+        <SvgIcon
+          name="chevron"
+          size={11}
+          color={isActive ? (darkMode ? "#60A5FA" : "#1A3C6E") : (darkMode ? "#64748b" : "#94a3b8")}
+        />
       </button>
 
       {open && (
-        <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 w-72 rounded-2xl border shadow-xl z-50 overflow-hidden ${
-          darkMode ? "bg-[#141824] border-white/10" : "bg-white border-slate-200"
-        }`}>
-          <div className="p-2 flex flex-col gap-0.5">
+        <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 rounded border z-50 overflow-hidden ${
+          darkMode
+            ? "bg-[#10151F] border-[#1A3C6E]/40 shadow-[0_6px_24px_rgba(0,0,0,0.6)]"
+            : "bg-white border-[#C5D4E8] shadow-[0_4px_20px_rgba(26,60,110,0.15)]"
+        }`} style={{width: '272px'}}>
+          {/* Official header bar */}
+          <div className={`px-3.5 py-2 border-b ${
+            darkMode ? "bg-[#1A3C6E]/25 border-[#1A3C6E]/30" : "bg-[#1A3C6E] border-[#1A3C6E]"
+          }`}>
+            <span className={`text-[10.5px] font-bold uppercase tracking-widest ${darkMode ? "text-blue-300" : "text-white"}`}>{label}</span>
+          </div>
+          <div className="flex flex-col">
             {items.map((item) => (
               <DropdownItem
                 key={item.view}
@@ -370,7 +478,7 @@ const MobileLink = ({ icon, iconColor, label, badge, darkMode, onClick }) => (
     className={`flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-colors ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-100"}`}>
     <SvgIcon name={icon} color={iconColor} size={17} />
     <span className={`text-sm font-semibold flex-1 ${darkMode ? "text-slate-200" : "text-slate-800"}`}>{label}</span>
-    {badge && <span className="text-sm font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700">{badge}</span>}
+    {badge && <span className={`text-sm font-bold px-2 py-0.5 rounded ${darkMode ? "bg-blue-500/15 text-blue-300" : "bg-blue-50 text-blue-700"}`}>{badge}</span>}
   </div>
 );
 
@@ -381,7 +489,7 @@ export default function Header({ currentView, setCurrentView, darkMode, setDarkM
 
   return (
     <header className={`sticky top-0 z-40 w-full border-b transition-colors duration-300 ${
-      dm ? "bg-[#0B0F19]/95 border-white/7 backdrop-blur-md" : "bg-white/95 border-black/8 backdrop-blur-md"
+      dm ? "bg-[#0B0F19]/98 border-[#1A3C6E]/30 backdrop-blur-sm" : "bg-white border-[#C5D4E8]"
     }`}>
       <nav className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
 
@@ -391,21 +499,22 @@ export default function Header({ currentView, setCurrentView, darkMode, setDarkM
         </div>
 
         {/* ── DESKTOP CENTER NAV ── */}
-        <div className="ms-nav-center absolute left-1/2 -translate-x-1/2 flex items-center gap-0.5">
+        <div className="ms-nav-center absolute left-1/2 -translate-x-1/2 flex items-center gap-1">
           <button
-            className={`ms-navpill flex items-center gap-1.5 h-9 px-3.5 rounded-lg text-[13px] font-semibold border-none font-sans cursor-pointer transition-all duration-150 ${
+            className={`ms-navpill flex items-center gap-1 h-9 px-4 text-[13px] font-semibold border-none font-sans cursor-pointer transition-all duration-100 tracking-tight border-b-2 ${
               currentView === "home"
-                ? dm ? "bg-blue-500/10 text-blue-400" : "bg-blue-50 text-primary"
-                : dm ? "text-slate-400 hover:bg-white/5 hover:text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                ? dm ? "text-blue-400 border-blue-400 bg-transparent rounded-none" : "text-[#1A3C6E] border-[#1A3C6E] bg-transparent rounded-none"
+                : dm ? "text-slate-400 border-transparent bg-transparent rounded-none hover:text-slate-200" : "text-slate-600 border-transparent bg-transparent rounded-none hover:text-[#1A3C6E]"
             }`}
             onClick={() => setCurrentView("home")}
           >
-            <SvgIcon name="home" size={14} />
+            <SvgIcon name="home" size={13} />
             Home
           </button>
 
           <DesktopDropdown
-            label="OR CR"
+            label="OR-CR"
+            description={GROUP_INFO["OR CR"]}
             items={OR_CR_ITEMS}
             darkMode={dm}
             setCurrentView={setCurrentView}
@@ -414,7 +523,8 @@ export default function Header({ currentView, setCurrentView, darkMode, setDarkM
           />
 
           <DesktopDropdown
-            label="Institute Hub"
+            label="Tools"
+            description={GROUP_INFO["Tools"]}
             items={HUB_ITEMS}
             darkMode={dm}
             setCurrentView={setCurrentView}
@@ -424,6 +534,7 @@ export default function Header({ currentView, setCurrentView, darkMode, setDarkM
 
           <DesktopDropdown
             label="Resources"
+            description={GROUP_INFO["Resources"]}
             items={RESOURCE_ITEMS}
             darkMode={dm}
             setCurrentView={setCurrentView}
@@ -432,14 +543,14 @@ export default function Header({ currentView, setCurrentView, darkMode, setDarkM
           />
 
           <button
-            className={`ms-navpill flex items-center gap-1.5 h-9 px-3.5 rounded-lg text-[13px] font-semibold border-none font-sans cursor-pointer transition-all duration-150 ${
+            className={`ms-navpill flex items-center gap-1 h-9 px-4 text-[13px] font-semibold border-none font-sans cursor-pointer transition-all duration-100 tracking-tight border-b-2 ${
               currentView === "timeline"
-                ? dm ? "bg-blue-500/10 text-blue-400" : "bg-blue-50 text-primary"
-                : dm ? "text-slate-400 hover:bg-white/5 hover:text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                ? dm ? "text-blue-400 border-blue-400 bg-transparent rounded-none" : "text-[#1A3C6E] border-[#1A3C6E] bg-transparent rounded-none"
+                : dm ? "text-slate-400 border-transparent bg-transparent rounded-none hover:text-slate-200" : "text-slate-600 border-transparent bg-transparent rounded-none hover:text-[#1A3C6E]"
             }`}
             onClick={() => setCurrentView("timeline")}
           >
-            <SvgIcon name="clock" size={14} />
+            <SvgIcon name="clock" size={13} />
             Timeline
           </button>
         </div>
@@ -457,7 +568,7 @@ export default function Header({ currentView, setCurrentView, darkMode, setDarkM
           </button>
 
           <button
-            className="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary hover:bg-interactive text-white text-[13px] font-semibold border-none font-sans cursor-pointer transition-colors duration-150 whitespace-nowrap"
+            className="flex items-center gap-1.5 h-9 px-4 rounded-sm bg-[#1A3C6E] hover:bg-[#0F2952] text-white text-[12.5px] font-semibold border-none font-sans cursor-pointer transition-colors duration-150 whitespace-nowrap tracking-tight"
             onClick={() => showToast?.("Connecting with live medical counselling support...")}
           >
             <LiveDot darkMode={dm} />
@@ -490,12 +601,13 @@ export default function Header({ currentView, setCurrentView, darkMode, setDarkM
 
       {/* ── MOBILE DRAWER ── */}
       {mobileOpen && (
-        <div className={`ms-mobile-drawer px-4 pb-6 pt-3 border-t ${dm ? "border-white/7" : "border-black/8"}`}>
+        <div className={`ms-mobile-drawer px-4 pb-6 pt-3 border-t ${dm ? "border-[#1A3C6E]/30" : "border-[#C5D4E8]"}`}>
           <MobileLink icon="home"  iconColor={dm ? "#94a3b8" : "#64748b"} label="Home"     darkMode={dm} onClick={() => { setCurrentView("home"); setMobileOpen(false); }} />
           <MobileLink icon="clock" iconColor={dm ? "#94a3b8" : "#64748b"} label="Timeline" darkMode={dm} onClick={() => { setCurrentView("timeline"); setMobileOpen(false); }} />
 
           <div className="mt-2">
-            <div className={`text-sm font-bold uppercase tracking-widest px-3 py-1.5 ${dm ? "text-slate-500" : "text-slate-400"}`}>OR CR</div>
+            <div className={`text-[10px] font-bold uppercase tracking-widest px-3 pt-2 pb-1 ${dm ? "text-slate-500" : "text-slate-400"}`}>OR-CR</div>
+
             <div className={`pl-1 border-l-2 ml-3 ${dm ? "border-white/7" : "border-black/8"}`}>
               {OR_CR_ITEMS.map(item => (
                 <MobileLink key={item.view} icon={item.icon} iconColor={item.color}
@@ -507,7 +619,8 @@ export default function Header({ currentView, setCurrentView, darkMode, setDarkM
           </div>
 
           <div className="mt-2">
-            <div className={`text-sm font-bold uppercase tracking-widest px-3 py-1.5 ${dm ? "text-slate-500" : "text-slate-400"}`}>Institute Hub</div>
+            <div className={`text-[10px] font-bold uppercase tracking-widest px-3 pt-2 pb-1 ${dm ? "text-slate-500" : "text-slate-400"}`}>Tools</div>
+
             <div className={`pl-1 border-l-2 ml-3 ${dm ? "border-white/7" : "border-black/8"}`}>
               {HUB_ITEMS.map(item => (
                 item.lucideIcon ? (
@@ -515,7 +628,7 @@ export default function Header({ currentView, setCurrentView, darkMode, setDarkM
                     className={`flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-colors ${dm ? "hover:bg-white/5" : "hover:bg-slate-100"}`}>
                     <item.lucideIcon size={17} color={item.color} strokeWidth={2} />
                     <span className={`text-sm font-semibold flex-1 ${dm ? "text-slate-200" : "text-slate-800"}`}>{item.label}</span>
-                    {item.badge && <span className="text-sm font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700">{item.badge}</span>}
+                    {item.badge && <span className={`text-sm font-bold px-2 py-0.5 rounded ${dm ? "bg-blue-500/15 text-blue-300" : "bg-blue-50 text-blue-700"}`}>{item.badge}</span>}
                   </div>
                 ) : (
                   <MobileLink key={item.view} icon={item.icon} iconColor={item.color}
@@ -528,7 +641,8 @@ export default function Header({ currentView, setCurrentView, darkMode, setDarkM
           </div>
 
           <div className="mt-2">
-            <div className={`text-sm font-bold uppercase tracking-widest px-3 py-1.5 ${dm ? "text-slate-500" : "text-slate-400"}`}>Resources</div>
+            <div className={`text-[10px] font-bold uppercase tracking-widest px-3 pt-2 pb-1 ${dm ? "text-slate-500" : "text-slate-400"}`}>Resources</div>
+
             <div className={`pl-1 border-l-2 ml-3 ${dm ? "border-white/7" : "border-black/8"}`}>
               {RESOURCE_ITEMS.map(item => (
                 <MobileLink key={item.view} icon={item.icon} iconColor={item.color}
@@ -540,7 +654,7 @@ export default function Header({ currentView, setCurrentView, darkMode, setDarkM
           </div>
 
           <button
-            className="w-full flex items-center justify-center gap-2 h-12 rounded-xl mt-4 bg-primary hover:bg-interactive text-white text-sm font-semibold border-none font-sans cursor-pointer transition-colors"
+            className="w-full flex items-center justify-center gap-2 h-11 rounded-sm mt-4 bg-[#1A3C6E] hover:bg-[#0F2952] text-white text-sm font-semibold border-none font-sans cursor-pointer transition-colors tracking-tight"
             onClick={() => { setMobileOpen(false); showToast?.("Connecting with live medical counselling support..."); }}
           >
             <LiveDot darkMode={dm} />

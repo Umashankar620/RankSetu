@@ -14,6 +14,8 @@ import FilterBar from '@/components/FilterBar';
 import CutoffTable from '@/components/CutoffTable';
 import TrendModal from '@/components/Graphd';
 import CutoffInfoBanner from '@/components/CutoffInfoBanner';
+import PageHeader from '@/components/PageHeader';
+import { Leaf } from 'lucide-react';
 import { fetchAyushCutoffs, fetchAyushFilters } from '@/utils/api';
 
 // ── Icons ────────────────────────────────────────────────────────────────────
@@ -38,23 +40,15 @@ const INITIAL_FORM = {
 };
 
 const EMPTY_FILTERS = {
-  years:             [],
-  rounds:            [],
-  categories:        [],
-  quotas:            [],
-  programs:          [],
-  institutes:        [],
-  genders:           [],
-  types:             [],
-  counselingTypes:   [],
-  quotaInstituteMap: {},
+  years: [], rounds: [], categories: [], quotas: [],
+  programs: [], institutes: [], genders: [], types: [],
+  counselingTypes: [], quotaInstituteMap: {},
 };
 
-// Counseling type tab config
 const COUNSELING_TABS = [
-  { key: '',      label: 'All Types', icon: null,    color: 'slate' },
-  { key: 'MCC',   label: 'MCC',       icon: MccIcon, color: 'blue'  },
-  { key: 'Ayush', label: 'Ayush',     icon: LeafIcon,color: 'green' },
+  { key: '',      label: 'All Types', icon: null,    colorActive: '#1A3C6E' },
+  { key: 'MCC',   label: 'MCC',       icon: MccIcon, colorActive: '#2563EB' },
+  { key: 'Ayush', label: 'Ayush',     icon: LeafIcon,colorActive: '#16A34A' },
 ];
 
 // ── Stats Overview ───────────────────────────────────────────────────────────
@@ -80,30 +74,22 @@ function StatsOverview({ metrics, darkMode: dm }) {
 export default function AyushPage({ darkMode = false, showToast, setCurrentView }) {
   const dm = darkMode;
 
-  // ── Counseling type sub-tab ──────────────────────────────────────────────
   const [activeCounselingType, setActiveCounselingType] = useState('');
-
-  // ── Filters ──────────────────────────────────────────────────────────────
   const [filters, setFilters]               = useState(EMPTY_FILTERS);
   const [filtersLoading, setFiltersLoading] = useState(true);
-
-  // ── Form / search state ──────────────────────────────────────────────────
-  const [formState, setFormState]         = useState(INITIAL_FORM);
-  const [userRank, setUserRank]           = useState('');
-  const [cutoffShift, setCutoffShift]     = useState(0);
-  const [results, setResults]             = useState([]);
-  const [totalItems, setTotalItems]       = useState(0);
-  const [totalPages, setTotalPages]       = useState(0);
-  const [currentPage, setCurrentPage]     = useState(1);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError]     = useState('');
-  const [hasSearched, setHasSearched]     = useState(false);
-
-  // ── Trend modal ──────────────────────────────────────────────────────────
-  const [isTrendOpen, setIsTrendOpen]                   = useState(false);
+  const [formState, setFormState]           = useState(INITIAL_FORM);
+  const [userRank, setUserRank]             = useState('');
+  const [cutoffShift, setCutoffShift]       = useState(0);
+  const [results, setResults]               = useState([]);
+  const [totalItems, setTotalItems]         = useState(0);
+  const [totalPages, setTotalPages]         = useState(0);
+  const [currentPage, setCurrentPage]       = useState(1);
+  const [searchLoading, setSearchLoading]   = useState(false);
+  const [searchError, setSearchError]       = useState('');
+  const [hasSearched, setHasSearched]       = useState(false);
+  const [isTrendOpen, setIsTrendOpen]       = useState(false);
   const [selectedTrendCollege, setSelectedTrendCollege] = useState('');
 
-  // ── Load Ayush filters on mount ──────────────────────────────────────────
   useEffect(() => {
     const loadFilters = async () => {
       try {
@@ -118,7 +104,6 @@ export default function AyushPage({ darkMode = false, showToast, setCurrentView 
     loadFilters();
   }, []);
 
-  // ── Reset results when counseling type tab changes ───────────────────────
   useEffect(() => {
     setResults([]);
     setTotalItems(0);
@@ -128,7 +113,6 @@ export default function AyushPage({ darkMode = false, showToast, setCurrentView 
     setSearchError('');
   }, [activeCounselingType]);
 
-  // ── Handlers ─────────────────────────────────────────────────────────────
   const handleFormChange = (field, value) =>
     setFormState((prev) => ({ ...prev, [field]: value }));
 
@@ -208,90 +192,70 @@ export default function AyushPage({ darkMode = false, showToast, setCurrentView 
     totalOptions: totalItems,
   };
 
-  // ── Tab styling helpers ──────────────────────────────────────────────────
-  const getTabCls = (tab) => {
-    const isActive = activeCounselingType === tab.key;
-    if (tab.key === 'MCC') {
-      return isActive
-        ? dm
-          ? 'bg-blue-600/20 text-blue-400 border-blue-500/50'
-          : 'bg-blue-600 text-white border-blue-600'
-        : dm
-          ? 'bg-slate-800 text-slate-400 border-slate-700 hover:border-blue-600/50 hover:text-blue-400'
-          : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400 hover:text-blue-600';
-    }
-    if (tab.key === 'Ayush') {
-      return isActive
-        ? dm
-          ? 'bg-green-600/20 text-green-400 border-green-500/50'
-          : 'bg-green-600 text-white border-green-600'
-        : dm
-          ? 'bg-slate-800 text-slate-400 border-slate-700 hover:border-green-600/50 hover:text-green-400'
-          : 'bg-white text-slate-600 border-slate-300 hover:border-green-400 hover:text-green-600';
-    }
-    // All Types
-    return isActive
-      ? dm
-        ? 'bg-primary/20 text-primary border-primary/50'
-        : 'bg-primary text-white border-primary'
-      : dm
-        ? 'bg-slate-800 text-slate-400 border-slate-700 hover:border-primary/50 hover:text-primary'
-        : 'bg-white text-slate-600 border-slate-300 hover:border-primary/40 hover:text-primary';
-  };
-
   return (
     <div>
-      {/* Back link */}
-      <button
-        onClick={() => setCurrentView('home')}
-        className="mb-4 text-xs font-bold uppercase text-indigo-500 hover:underline cursor-pointer flex items-center gap-1"
-      >
-        ← Back to Dashboard
-      </button>
+      {/* Professional Page Header */}
+      <PageHeader
+        icon={Leaf}
+        eyebrow="AYUSH Counselling"
+        title="Opening & Closing"
+        accent="Ranks"
+        description="Explore BAMS, BHMS, BUMS, and BSMS opening and closing ranks from MCC and Ayush counselling rounds. Filter by program, category, quota, and counselling type to find cutoffs relevant to your profile."
+        darkMode={dm}
+        onBack={() => setCurrentView('home')}
+        badge={{ text: 'AYUSH Data', tone: 'success' }}
+      />
 
-      {/* Page header */}
+      {/* Counseling Type Tabs */}
       <div className={`mb-5 p-4 rounded-xl border ${dm ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className={`p-2.5 rounded-lg ${dm ? 'bg-green-500/10 text-green-400' : 'bg-green-50 text-green-700'}`}>
-              <LeafIcon />
-            </div>
-            <div>
-              <h1 className={`text-lg font-black ${dm ? 'text-white' : 'text-slate-900'}`}>
-                AYUSH Opening &amp; Closing Ranks
-              </h1>
-              <p className={`text-xs font-medium mt-0.5 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
-                MCC &amp; Ayush counselling cutoff data from the Ayush database
-              </p>
-            </div>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <p className={`text-xs font-black uppercase tracking-wider ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+            Counselling Type
+          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            {COUNSELING_TABS.map((tab) => {
+              const isActive = activeCounselingType === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveCounselingType(tab.key)}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg border text-sm font-bold transition-all duration-150 cursor-pointer
+                    ${isActive
+                      ? dm ? 'text-white border-transparent' : 'text-white border-transparent'
+                      : dm ? 'bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-500' : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
+                    }`}
+                  style={isActive ? { backgroundColor: tab.colorActive } : {}}
+                >
+                  {tab.icon && <tab.icon />}
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Counseling Type Tabs */}
-          <div className="flex items-center gap-2">
-            {COUNSELING_TABS.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveCounselingType(tab.key)}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg border text-sm font-bold transition-all duration-150 ${getTabCls(tab)}`}
-              >
-                {tab.icon && <tab.icon />}
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          {/* Active indicator */}
+          {activeCounselingType && (
+            <div
+              className="ml-auto flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-lg"
+              style={{
+                backgroundColor: activeCounselingType === 'MCC'
+                  ? (dm ? 'rgba(37,99,235,0.12)' : 'rgba(37,99,235,0.08)')
+                  : (dm ? 'rgba(22,163,74,0.12)' : 'rgba(22,163,74,0.08)'),
+                color: activeCounselingType === 'MCC'
+                  ? (dm ? '#60A5FA' : '#1D4ED8')
+                  : (dm ? '#4ADE80' : '#15803D'),
+              }}
+            >
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{
+                  backgroundColor: activeCounselingType === 'MCC' ? '#2563EB' : '#16A34A',
+                }}
+              />
+              Showing {activeCounselingType === 'MCC' ? 'MCC counselling' : 'Ayush counselling'} data only
+            </div>
+          )}
         </div>
-
-        {/* Active type indicator */}
-        {activeCounselingType && (
-          <div className={`mt-3 flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-lg w-fit
-            ${activeCounselingType === 'MCC'
-              ? dm ? 'bg-blue-600/10 text-blue-400' : 'bg-blue-50 text-blue-700'
-              : dm ? 'bg-green-600/10 text-green-400' : 'bg-green-50 text-green-700'
-            }`}>
-            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${activeCounselingType === 'MCC' ? 'bg-blue-400' : 'bg-green-400'}`} />
-            Showing {activeCounselingType === 'MCC' ? 'MCC counselling' : 'Ayush counselling'} data only
-          </div>
-        )}
       </div>
 
       {/* Filter Bar */}
@@ -343,7 +307,7 @@ export default function AyushPage({ darkMode = false, showToast, setCurrentView 
         onLearnMore={() => setCurrentView('counselling')}
       />
 
-      {/* Trend Modal — source="ayush" → hits /api/ayush/trends endpoint */}
+      {/* Trend Modal */}
       <TrendModal
         isOpen={isTrendOpen}
         onClose={() => setIsTrendOpen(false)}

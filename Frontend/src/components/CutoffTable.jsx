@@ -158,7 +158,7 @@ export default function CutoffTable({
         <div className="flex items-center gap-3 text-sm">
           <span className={`px-2.5 py-0.5 rounded-full font-medium border ${
             darkMode 
-              ? 'bg-primary/20 text-primary border-primary/40' 
+              ? 'bg-blue-500/20 text-blue-300 border-blue-400/40' 
               : 'bg-primary text-white border-primary'
           }`}>
             Total: {totalItems.toLocaleString('en-IN')} records
@@ -275,7 +275,7 @@ export default function CutoffTable({
                             <span className={`text-xs font-medium flex items-center gap-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                               <RupeeIcon /> Annual Tuition Fees
                             </span>
-                            <span className={`text-base font-semibold ${darkMode ? 'text-primary' : 'text-slate-900'}`}>
+                            <span className={`text-base font-semibold ${darkMode ? 'text-blue-300' : 'text-slate-900'}`}>
                               ₹{row.fees ? Number(row.fees).toLocaleString('en-IN') : '—'}
                               <span className={`text-xs font-normal ml-1 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>/yr</span>
                             </span>

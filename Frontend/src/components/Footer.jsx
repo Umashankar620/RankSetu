@@ -334,7 +334,7 @@ const STATS = [
 
 const SOCIALS = [
   { icon: "instagram", title: "Instagram", hoverColor: "#E1306C", url: "https://www.instagram.com/umash.ankar8?igsh=c2I5aGRwZzcydGI2" },
-  { icon: "linkedin",  title: "LinkedIn",  hoverColor: "#0A66C2", url: "https://www.linkedin.com/in/umashankar-kushwaha-2a06a02ba?utm_source=share_via&utm_content=profile&utm_medium=member_android" },
+  { icon: "linkedin",  title: "LinkedIn",  hoverColor: "#0A66C2", url: "https://www.linkedin.com/in/umashankar-kushwaha-2a06a02ba" },
   { icon: "youtube",   title: "YouTube",   hoverColor: "#FF0000", url: "https://youtube.com/@umashankarkushwaha-uc2jx?si=yPG6F6akpZdTOq_c" },
   { icon: "mail",      title: "Email",     hoverColor: "#2563EB", url: "mailto:hello@ranksetu.com" },
 ];
