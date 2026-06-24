@@ -86,7 +86,7 @@ RankSetu replaces all of that with one platform:
 
 ---
 
-## 🧩 The Hardest Problem I Solved: Deduplicating 600+ College Names
+## 🧩 The Hardest Problem I Solved: Deduplicating 700+ College Names
 
 This is the part of the project I'd most want to talk through in an interview — it's an unglamorous, very real data-engineering problem, and it's the kind of bug that **doesn't crash your app, it just quietly makes your predictions wrong.**
 

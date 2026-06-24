@@ -3,14 +3,68 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ArrowUpCircle } from "lucide-react";
 
-// ── RankSetu Logo — Living 3D Helix-Bridge mark ───────────────────────────────
-// The helix is the centerpiece: a 3D-shaded double spine with depth-scaled
-// rungs, a slow combined rotation+drift+float motion (not a single-axis spin),
-// a soft pulse traveling through the strands, and small particles riding the
-// strand paths via native SVG animateMotion — read as "data/insight flowing
-// through the structure" rather than decoration. Bridge deck is fused through
-// the helix core. CSS drives the outer motion (GPU, cheap); SVG-native
-// animateMotion drives the particles (no JS per-frame work either way).
+// ── RankSetu Logo — Living DNA Helix-Bridge mark ──────────────────────────────
+// A REAL two-strand double helix: two sine-wave paths 180° out of phase
+// (the actual shape everyone recognizes as DNA), rendered as smooth curves
+// (Catmull-Rom → cubic Bézier, not straight segments) with continuous
+// depth-based shading per point and base-pair rungs at every crossing.
+// The twist phase animates frame-by-frame via requestAnimationFrame so the
+// strands visibly rotate through each other. Bridge deck fuses through the
+// helix base. Small particles drift along a strand for a "data flow" read.
+
+function buildStrandPoints(phase, amp = 7.6, cx = 23, top = 7, bottom = 39, steps = 36) {
+  const pts = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const y = top + t * (bottom - top);
+    const angle = t * Math.PI * 2.4 + phase;
+    const x = cx + amp * Math.sin(angle);
+    const z = Math.cos(angle); // -1 (back) .. 1 (front) — continuous depth
+    pts.push({ x, y, z, t });
+  }
+  return pts;
+}
+
+// Smooth a point array into a cubic-Bézier SVG path (Catmull-Rom derived
+// control points) instead of straight `L` segments — this single change is
+// what takes the strand from "jagged zig-zag" to "smooth flowing curve".
+function smoothPath(pts) {
+  if (pts.length < 2) return '';
+  if (pts.length === 2) return `M ${pts[0].x.toFixed(2)} ${pts[0].y.toFixed(2)} L ${pts[1].x.toFixed(2)} ${pts[1].y.toFixed(2)}`;
+  let d = `M ${pts[0].x.toFixed(2)} ${pts[0].y.toFixed(2)} `;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] || p2;
+    const c1x = p1.x + (p2.x - p0.x) / 6;
+    const c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6;
+    const c2y = p2.y - (p3.y - p1.y) / 6;
+    d += `C ${c1x.toFixed(2)} ${c1y.toFixed(2)}, ${c2x.toFixed(2)} ${c2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} `;
+  }
+  return d.trim();
+}
+
+// Break a strand into contiguous front (z>0) / back (z<=0) runs so the
+// "in front of the other strand" run can be drawn brighter and on top —
+// include one point of overlap on each side so the smoothed curve joins
+// seamlessly at the transition instead of leaving a visible gap.
+function splitByDepth(pts) {
+  const segments = [];
+  let current = null;
+  pts.forEach((p, i) => {
+    const isFront = p.z > 0;
+    if (!current || current.front !== isFront) {
+      const seed = current ? [current.pts[current.pts.length - 1]] : [];
+      current = { front: isFront, pts: [...seed, p] };
+      segments.push(current);
+    } else {
+      current.pts.push(p);
+    }
+  });
+  return segments;
+}
 
 let __rsLogoStyleInjected = false;
 function ensureRsLogoStyles() {
@@ -18,16 +72,9 @@ function ensureRsLogoStyles() {
   __rsLogoStyleInjected = true;
   const style = document.createElement('style');
   style.textContent = `
-    @keyframes rsHelixSpin3D {
-      0%   { transform: rotateY(-18deg) rotateX(5deg)  translateZ(0px); }
-      28%  { transform: rotateY(6deg)   rotateX(-3deg) translateZ(4px); }
-      52%  { transform: rotateY(20deg)  rotateX(2deg)  translateZ(0px); }
-      76%  { transform: rotateY(-4deg)  rotateX(4deg)  translateZ(-3px); }
-      100% { transform: rotateY(-18deg) rotateX(5deg)  translateZ(0px); }
-    }
     @keyframes rsFloat {
-      0%, 100% { transform: translateY(0px) scale(1); }
-      50%      { transform: translateY(-3px) scale(1.008); }
+      0%, 100% { transform: translateY(0px); }
+      50%      { transform: translateY(-3px); }
     }
     @keyframes rsLightSweep {
       0%   { transform: translate(-14%, -10%) rotate(0deg);  opacity: 0.5; }
@@ -37,11 +84,6 @@ function ensureRsLogoStyles() {
     @keyframes rsGlowPulse {
       0%, 100% { opacity: 0.42; transform: scale(1); }
       50%      { opacity: 0.78; transform: scale(1.08); }
-    }
-    @keyframes rsStrandPulse {
-      0%   { stroke-opacity: 0.65; }
-      50%  { stroke-opacity: 1; }
-      100% { stroke-opacity: 0.65; }
     }
     .rs-logo-wrap {
       display: inline-flex;
@@ -57,7 +99,6 @@ function ensureRsLogoStyles() {
       width: 46px;
       height: 46px;
       flex-shrink: 0;
-      perspective: 280px;
     }
     .rs-logo-glow {
       position: absolute;
@@ -96,18 +137,13 @@ function ensureRsLogoStyles() {
         inset 0 1px 0 rgba(255,255,255,0.14),
         inset 0 -9px 18px rgba(0,0,0,0.22);
     }
-    .rs-logo-spin3d {
+    .rs-logo-helix-svg {
       position: absolute;
       inset: 0;
-      transform-style: preserve-3d;
-      animation: rsHelixSpin3D 12s ease-in-out infinite;
       transition: filter 320ms ease;
     }
-    .rs-logo-wrap:hover .rs-logo-spin3d {
+    .rs-logo-wrap:hover .rs-logo-helix-svg {
       filter: drop-shadow(0 0 4px rgba(91,156,255,0.65));
-    }
-    .rs-logo-strand-front {
-      animation: rsStrandPulse 3.4s ease-in-out infinite;
     }
     .rs-logo-sheen {
       position: absolute;
@@ -138,43 +174,61 @@ function ensureRsLogoStyles() {
       margin-top: 3px;
     }
     @media (prefers-reduced-motion: reduce) {
-      .rs-logo-float, .rs-logo-spin3d, .rs-logo-glow, .rs-logo-sheen,
-      .rs-logo-strand-front { animation: none !important; }
+      .rs-logo-float, .rs-logo-glow, .rs-logo-sheen { animation: none !important; }
     }
   `;
   document.head.appendChild(style);
 }
 
-// Perspective-scaled helix rungs: depth parameter drives x-swing, ellipse
-// width and opacity, so near rungs read wide/bright and far rungs read
-// narrow/dim — the thing that actually sells "3D" rather than a flat ribbon.
-function buildHelixRungs() {
-  const N = 7;
-  const rungs = [];
-  for (let i = 0; i < N; i++) {
-    const t = i / (N - 1);
-    const depth = Math.sin(t * Math.PI * 2.1);
-    const cx = 23 + depth * 7.2;
-    const cy = 11 + t * 24;
-    const rx = 8.2 - Math.abs(depth) * 2.4;
-    const front = depth > 0;
-    rungs.push({ cx, cy, rx, front, depth, i });
-  }
-  return rungs;
-}
-
 function RsHelixBridgeLogo({ dark }) {
   useEffect(() => { ensureRsLogoStyles(); }, []);
 
-  const rungs = buildHelixRungs();
   const gid = dark ? 'd' : 'l';
-  const spinePath = `M ${rungs.map(r => `${r.cx} ${r.cy}`).join(' L ')}`;
+  const [phase, setPhase] = useState(0);
+  const rafRef = useRef(null);
 
-  const navyTop    = dark ? '#16335E' : '#22507F';
-  const navyBase   = dark ? '#0A0F19' : '#1A3C6E';
-  const cableFront  = '#2563EB';
-  const cableBack   = dark ? '#5B86D6' : '#9DB7E8';
+  useEffect(() => {
+    let last = performance.now();
+    const SPEED = 0.5; // radians/sec — slow, deliberate twist
+    const tick = (now) => {
+      const dt = (now - last) / 1000;
+      last = now;
+      setPhase((p) => (p + dt * SPEED) % (Math.PI * 2));
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  // Strand A and Strand B are 180° out of phase — the defining trait of a
+  // double helix: where one strand is at its rightmost, the other is at its
+  // leftmost, and they continuously cross.
+  const strandA = buildStrandPoints(phase);
+  const strandB = buildStrandPoints(phase + Math.PI);
+
+  const segA = splitByDepth(strandA);
+  const segB = splitByDepth(strandB);
+
+  // Base-pair rungs: denser sampling, with width/opacity driven continuously
+  // by how far forward (max z of the pair) the rung sits — near rungs read
+  // thick and bright, far rungs thin and faint, exactly like a real helix
+  // diagram rendered with perspective.
+  const rungCount = 11;
+  const rungs = Array.from({ length: rungCount }, (_, k) => {
+    const idx = Math.round((k / (rungCount - 1)) * (strandA.length - 1));
+    return { a: strandA[idx], b: strandB[idx], i: idx };
+  });
+
+  const navyTop     = dark ? '#16335E' : '#22507F';
+  const navyBase    = dark ? '#0A0F19' : '#1A3C6E';
+  const backCol     = dark ? '#3D5C99' : '#7E9BCB';
+  const frontCol    = '#2563EB';
   const particleCol = '#5B9CFF';
+
+  const particleStrand = strandA.filter((p) => p.z > 0).length >= strandB.filter((p) => p.z > 0).length
+    ? strandA : strandB;
+  const frontPathD = smoothPath(particleStrand);
+  const apex = strandA[0].y <= strandB[0].y ? strandA[0] : strandB[0];
 
   return (
     <div className="rs-logo-wrap">
@@ -186,90 +240,83 @@ function RsHelixBridgeLogo({ dark }) {
           }}>
             <div className="rs-logo-sheen" />
 
-            <div className="rs-logo-spin3d">
-              <svg width="46" height="46" viewBox="0 0 46 46" style={{ position: 'absolute', inset: 0 }}>
-                <defs>
-                  <linearGradient id={`rsSpineBack-${gid}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%"  stopColor={cableBack} stopOpacity="0.85" />
-                    <stop offset="100%" stopColor={navyBase} stopOpacity="0.85" />
-                  </linearGradient>
-                  <linearGradient id={`rsSpineFront-${gid}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%"  stopColor="#5B9CFF" />
-                    <stop offset="55%" stopColor={cableFront} />
-                    <stop offset="100%" stopColor="#163E8F" />
-                  </linearGradient>
-                  <radialGradient id={`rsRungShine-${gid}`} cx="35%" cy="30%" r="75%">
-                    <stop offset="0%"  stopColor="#FFFFFF" stopOpacity="0.9" />
-                    <stop offset="40%" stopColor="#BFDBFE" stopOpacity="0.55" />
-                    <stop offset="100%" stopColor={cableFront} stopOpacity="0.15" />
-                  </radialGradient>
-                  <radialGradient id={`rsParticleGlow-${gid}`} cx="50%" cy="50%" r="50%">
-                    <stop offset="0%"  stopColor="#FFFFFF" stopOpacity="1" />
-                    <stop offset="55%" stopColor={particleCol} stopOpacity="0.9" />
-                    <stop offset="100%" stopColor={particleCol} stopOpacity="0" />
-                  </radialGradient>
-                </defs>
+            <svg className="rs-logo-helix-svg" width="46" height="46" viewBox="0 0 46 46">
+              <defs>
+                <linearGradient id={`rsFrontGrad-${gid}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"  stopColor="#8FC1FF" />
+                  <stop offset="45%" stopColor={frontCol} />
+                  <stop offset="100%" stopColor="#163E8F" />
+                </linearGradient>
+                <linearGradient id={`rsBackGrad-${gid}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"  stopColor={backCol} stopOpacity="0.7" />
+                  <stop offset="100%" stopColor={navyBase} stopOpacity="0.7" />
+                </linearGradient>
+                <radialGradient id={`rsRungShine-${gid}`} cx="35%" cy="30%" r="80%">
+                  <stop offset="0%"  stopColor="#FFFFFF" stopOpacity="0.98" />
+                  <stop offset="50%" stopColor="#BFDBFE" stopOpacity="0.7" />
+                  <stop offset="100%" stopColor={frontCol} stopOpacity="0.15" />
+                </radialGradient>
+                <radialGradient id={`rsParticleGlow-${gid}`} cx="50%" cy="50%" r="50%">
+                  <stop offset="0%"  stopColor="#FFFFFF" stopOpacity="1" />
+                  <stop offset="55%" stopColor={particleCol} stopOpacity="0.9" />
+                  <stop offset="100%" stopColor={particleCol} stopOpacity="0" />
+                </radialGradient>
+              </defs>
 
-                {/* Back spine — drawn behind the rungs */}
-                <path
-                  id={`rsSpinePathBack-${gid}`}
-                  d={spinePath}
-                  fill="none" stroke={`url(#rsSpineBack-${gid})`} strokeWidth="2.3"
-                  strokeLinecap="round" strokeLinejoin="round" opacity="0.55"
-                />
+              {/* Bridge deck — fused through the helix base, reads as the
+                  "Setu" the strands rise out of */}
+              <line x1="6" y1="36.5" x2="40" y2="36.5"
+                stroke="#FFFFFF" strokeOpacity="0.85" strokeWidth="2.3" strokeLinecap="round" />
+              <line x1="10" y1="36.5" x2="10" y2="30" stroke={backCol} strokeOpacity="0.45" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="36" y1="36.5" x2="36" y2="30" stroke={backCol} strokeOpacity="0.45" strokeWidth="1.5" strokeLinecap="round" />
 
-                {/* Bridge deck — fused straight through the helix core */}
-                <line x1="6" y1="35.5" x2="40" y2="35.5"
-                  stroke="#FFFFFF" strokeOpacity="0.85" strokeWidth="2.4" strokeLinecap="round" />
-                <line x1="10" y1="35.5" x2="10" y2="23" stroke={cableBack} strokeOpacity="0.5" strokeWidth="1.6" strokeLinecap="round" />
-                <line x1="36" y1="35.5" x2="36" y2="23" stroke={cableBack} strokeOpacity="0.5" strokeWidth="1.6" strokeLinecap="round" />
+              {/* Back-facing segments — smooth curves, dim, drawn first */}
+              {[...segA, ...segB].filter((s) => !s.front).map((s, i) => (
+                <path key={`back-${i}`} d={smoothPath(s.pts)} fill="none"
+                  stroke={`url(#rsBackGrad-${gid})`} strokeWidth="2"
+                  strokeLinecap="round" strokeLinejoin="round" />
+              ))}
 
-                {/* Front spine — the path particles ride, bright + pulsing */}
-                <path
-                  id={`rsSpinePathFront-${gid}`}
-                  className="rs-logo-strand-front"
-                  d={spinePath}
-                  fill="none" stroke={`url(#rsSpineFront-${gid})`} strokeWidth="2.6"
-                  strokeLinecap="round" strokeLinejoin="round"
-                />
-
-                {/* Depth-scaled rungs */}
-                {rungs.map((r) => (
-                  <ellipse
-                    key={r.i}
-                    cx={r.cx} cy={r.cy}
-                    rx={Math.max(1.4, r.rx)} ry="1.55"
-                    fill={r.front ? `url(#rsRungShine-${gid})` : cableBack}
-                    opacity={r.front ? 0.95 : 0.45}
-                    transform={`rotate(${r.depth * 18} ${r.cx} ${r.cy})`}
+              {/* Base-pair rungs — width/brightness scale continuously with
+                  depth, exactly like real DNA rendered with perspective */}
+              {rungs.map((r) => {
+                const depth = Math.max(r.a.z, r.b.z); // -1..1
+                const w = 0.9 + Math.max(0, depth) * 1.1;
+                const op = 0.32 + Math.max(0, depth) * 0.62;
+                const bright = depth > 0.05;
+                return (
+                  <line key={`rung-${r.i}`}
+                    x1={r.a.x} y1={r.a.y} x2={r.b.x} y2={r.b.y}
+                    stroke={bright ? `url(#rsRungShine-${gid})` : backCol}
+                    strokeWidth={w}
+                    strokeOpacity={op}
+                    strokeLinecap="round"
                   />
-                ))}
+                );
+              })}
 
-                {/* Apex highlight — where "Rank" enters the structure */}
-                <circle cx={rungs[0].cx} cy={rungs[0].cy} r="2.1" fill="#FFFFFF" opacity="0.9" />
-                <circle cx={rungs[0].cx} cy={rungs[0].cy} r="3.6" fill="#5B9CFF" opacity="0.22" />
+              {/* Front-facing segments — smooth, bright, on top: this is the
+                  silhouette that should read instantly as "DNA" */}
+              {[...segA, ...segB].filter((s) => s.front).map((s, i) => (
+                <path key={`front-${i}`} d={smoothPath(s.pts)} fill="none"
+                  stroke={`url(#rsFrontGrad-${gid})`} strokeWidth="2.7"
+                  strokeLinecap="round" strokeLinejoin="round" />
+              ))}
 
-                {/* ── Data-flow particles — travel along the front spine path ── */}
-                <circle r="1.6" fill={`url(#rsParticleGlow-${gid})`} className="rs-logo-particle" opacity="0.85">
-                  <animateMotion dur="2.6s" repeatCount="indefinite" rotate="auto">
-                    <mpath href={`#rsSpinePathFront-${gid}`} />
-                  </animateMotion>
-                  <animate attributeName="opacity" values="0;0.9;0.9;0" keyTimes="0;0.15;0.85;1" dur="2.6s" repeatCount="indefinite" />
-                </circle>
-                <circle r="1.3" fill={`url(#rsParticleGlow-${gid})`} className="rs-logo-particle" opacity="0.7">
-                  <animateMotion dur="2.6s" begin="0.9s" repeatCount="indefinite" rotate="auto">
-                    <mpath href={`#rsSpinePathFront-${gid}`} />
-                  </animateMotion>
-                  <animate attributeName="opacity" values="0;0.75;0.75;0" keyTimes="0;0.15;0.85;1" dur="2.6s" begin="0.9s" repeatCount="indefinite" />
-                </circle>
-                <circle r="1.1" fill={`url(#rsParticleGlow-${gid})`} className="rs-logo-particle" opacity="0.55">
-                  <animateMotion dur="2.6s" begin="1.8s" repeatCount="indefinite" rotate="auto">
-                    <mpath href={`#rsSpinePathFront-${gid}`} />
-                  </animateMotion>
-                  <animate attributeName="opacity" values="0;0.6;0.6;0" keyTimes="0;0.15;0.85;1" dur="2.6s" begin="1.8s" repeatCount="indefinite" />
-                </circle>
-              </svg>
-            </div>
+              {/* Apex highlight at the very top of the helix */}
+              <circle cx={apex.x} cy={apex.y} r="1.9" fill="#FFFFFF" opacity="0.92" />
+              <circle cx={apex.x} cy={apex.y} r="3.6" fill="#5B9CFF" opacity="0.22" />
+
+              {/* Data-flow particles riding the front strand path */}
+              <circle r="1.5" fill={`url(#rsParticleGlow-${gid})`} className="rs-logo-particle" opacity="0.85">
+                <animateMotion path={frontPathD} dur="3.2s" repeatCount="indefinite" rotate="auto" />
+                <animate attributeName="opacity" values="0;0.9;0.9;0" keyTimes="0;0.15;0.85;1" dur="3.2s" repeatCount="indefinite" />
+              </circle>
+              <circle r="1.2" fill={`url(#rsParticleGlow-${gid})`} className="rs-logo-particle" opacity="0.65">
+                <animateMotion path={frontPathD} dur="3.2s" begin="1.1s" repeatCount="indefinite" rotate="auto" />
+                <animate attributeName="opacity" values="0;0.7;0.7;0" keyTimes="0;0.15;0.85;1" dur="3.2s" begin="1.1s" repeatCount="indefinite" />
+              </circle>
+            </svg>
 
             {/* SMG badge pill */}
             <svg width="46" height="46" viewBox="0 0 46 46" style={{ position: 'absolute', inset: 0 }}>

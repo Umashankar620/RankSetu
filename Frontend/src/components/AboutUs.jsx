@@ -157,10 +157,12 @@ function SectionTitle({ eyebrow, title, highlight, subtitle, dm, center = false 
 // ─── Story Timeline (moved from HeroSlider) ───────────────────────────────────
 const STORY_STEPS = [
   {
-    year: "2023",
+    year: "2025",
     label: "The Problem",
-    heading: "Confusion During Counselling",
-    body: "Like thousands of NEET aspirants, the founder faced a wall of scattered government PDFs, contradictory advice, and zero clarity on which college to choose — at the highest-stakes moment of his life.",
+
+    heading: "The Same Confusion Every Aspirant Faces",
+    body: "While helping a friend navigate NEET counselling, I realized that even the most basic questions had no clear answers. Information was scattered across PDFs, websites, and WhatsApp groups, making informed decisions unnecessarily difficult.",  
+    
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
@@ -168,7 +170,7 @@ const STORY_STEPS = [
     ),
   },
   {
-    year: "2024",
+    year: "2025",
     label: "The Decision",
     heading: "Building the Bridge",
     body: "Instead of accepting the chaos, he decided to build what didn't exist — a single, reliable platform that aggregates MCC cutoffs, AYUSH data, college databases, and counselling guidance in one place.",
@@ -179,7 +181,7 @@ const STORY_STEPS = [
     ),
   },
   {
-    year: "2024",
+    year: "2026",
     label: "The Launch",
     heading: "RankSetu Goes Live",
     body: "RankSetu launched with real MCC Opening & Closing rank data, a Choice Optimizer, and an Upgrade Checker. Within months, over 1.4 lakh aspirants used it to make informed counselling decisions.",
@@ -190,10 +192,10 @@ const STORY_STEPS = [
     ),
   },
   {
-    year: "2025–26",
+    year: "2026–27",
     label: "The Mission",
     heading: "Clarity for Every Aspirant",
-    body: "Today RankSetu covers 600+ colleges, 21 AIIMS, state quotas across 28 states, AYUSH counselling, a rank predictor, and a live timeline — 100% free. Every feature exists because a student genuinely needed it.",
+    body: "Today RankSetu covers 700+ colleges, 21 AIIMS, state quotas across 28 states, AYUSH counselling, a rank predictor, and a live timeline — 100% free. Every feature exists because a student genuinely needed it.",
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
@@ -290,7 +292,7 @@ function StorySection({ dm }) {
           <blockquote className={`text-base sm:text-lg font-medium leading-relaxed italic max-w-3xl
             ${dm ? 'text-slate-200' : 'text-slate-700'}`}
             style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}>
-            "RankSetu was born from my own confusion during NEET counselling — scattered PDFs, no clarity, and very high stakes.
+            "RankSetu was born from my own confusion during NEET counselling for my brother and my friend — scattered PDFs, no clarity, and very high stakes.
             I built this platform so no aspirant has to navigate their future blindly.
             Every feature here exists because a student once genuinely needed it."
           </blockquote>
@@ -298,7 +300,7 @@ function StorySection({ dm }) {
             <div className={`w-8 h-px ${dm ? 'bg-[#2563EB]/60' : 'bg-[#1A3C6E]/40'}`} />
             <span className={`text-xs font-bold tracking-[0.18em] uppercase
               ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
-              Umashankar · Founder, RankSetu · 2024
+              Umashankar · Founder, RankSetu · 2025
             </span>
           </div>
         </div>
@@ -338,18 +340,17 @@ export default function AboutUs({ darkMode: dm = false }) {
 
   const STEPS = [
     { num: "01", title: "Enter Your NEET Rank",      desc: "Input your rank and category. Get an instant landscape of every opportunity available across all of India — no guesswork, no confusion." },
-    { num: "02", title: "Filter Your Top Colleges",  desc: "No more 500-page PDFs. Surface your top 20–30 best-fit colleges matched precisely to your rank, category, and state preferences." },
+    { num: "02", title: "Filter Your Top Colleges",  desc: "No more 30000-page PDFs. Surface your top 20–30 best-fit colleges matched precisely to your rank, category, and state preferences." },
     { num: "03", title: "Strategic Choice Filling",  desc: "The right choice order is the real game of counselling. We guide the exact sequence that maximises your chances at the best possible seat." },
     { num: "04", title: "Secure Your Seat",          desc: "From rank to admission — navigate every round, upgrade opportunity, and deadline with complete confidence and clarity." },
   ];
 
   const BADGES = ["100% Free Forever", "No Login Required", "Zero Ads", "Verified Data"];
-
   const STATS = [
-    { value: "140000", label: "Aspirants Helped", suffix: "+" },
-    { value: "600",    label: "Colleges Mapped",  suffix: "+" },
-    { value: "6",      label: "Lakh+ Rank Records", suffix: "" },
-    { value: "2024",   label: "Founded",           suffix: "" },
+    { value: "700+",  label: "Medical Colleges", suffix: "+" },
+    { value: "6L+",   label: "Rank Coverage",    suffix: "+" },
+    { value: "5",   label: "Years of Data",    suffix: "+" },
+    { value: "2025", label: "Founded",          suffix: ""  },
   ];
 
   const VALUES = [
@@ -375,9 +376,8 @@ export default function AboutUs({ darkMode: dm = false }) {
             <span className="text-[#2563EB]">By an aspirant.</span>
           </h1>
           <p className={`text-base leading-relaxed max-w-2xl mb-6 ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
-            RankSetu was built by a NEET aspirant who experienced firsthand how difficult it was to navigate
-            counselling without a single reliable source. This page tells you who we are, what we stand for,
-            and why every feature on this platform was built with students — not profit — in mind.
+          RankSetu was born from my experience of helping my brother and friends navigate the NEET counselling process. Seeing how difficult it was to find reliable information in one place inspired me to build a platform that students can truly trust.
+
           </p>
 
           {/* Mission banner */}
@@ -537,15 +537,9 @@ export default function AboutUs({ darkMode: dm = false }) {
 
             <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-10 lg:gap-16">
 
-              {/* Photo column */}
+         
               <div>
-                {/*
-                  ── FOUNDER PHOTO ──────────────────────────────────────
-                  Replace the src below with your founder image path.
-                  The image is displayed in a 3:3.5 aspect ratio container.
-                  Recommended: WebP or JPEG, minimum 560×653px for sharpness.
-                  ──────────────────────────────────────────────────────
-                */}
+               
                 <div className={`relative rounded-xl overflow-hidden border shadow-sm mb-5 aspect-[3/3.5]
                   ${dm ? 'border-slate-600 bg-slate-700' : 'border-slate-200 bg-slate-100'}`}>
                   <Image
@@ -570,7 +564,7 @@ export default function AboutUs({ darkMode: dm = false }) {
                     Founder &amp; CEO
                   </p>
                   <p className={`text-xs mt-1 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
-                    RankSetu · Since 2024
+                    RankSetu · Since 2025
                   </p>
                 </div>
               </div>

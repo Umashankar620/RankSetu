@@ -24,226 +24,318 @@ const IC = {
   star:      ["M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"],
 };
 
-// ── RankSetu Logo Canvas (same as Header) ─────────────────────────────────────
-const CYCLE = 4800, BUILD = 3200;
-
-function rsDrawLogo(ctx, dark, p, W = 220, H = 56) {
-  ctx.clearRect(0, 0, W, H);
-  ctx.save();
-
-  const cl  = v => Math.min(1, Math.max(0, v));
-  const seg = (s, e) => cl((p - s) / (e - s));
-  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
-  function bounce(t) {
-    if (t < 1/2.75)   return 7.5625*t*t;
-    if (t < 2/2.75) { t -= 1.5/2.75;  return 7.5625*t*t + 0.75; }
-    if (t < 2.5/2.75){ t -= 2.25/2.75; return 7.5625*t*t + 0.9375; }
-    t -= 2.625/2.75;  return 7.5625*t*t + 0.984375;
+// ── RankSetu Logo — Living DNA Helix-Bridge mark (same as Header) ────────────
+function buildStrandPoints(phase, amp = 7.6, cx = 23, top = 7, bottom = 39, steps = 36) {
+  const pts = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const y = top + t * (bottom - top);
+    const angle = t * Math.PI * 2.4 + phase;
+    const x = cx + amp * Math.sin(angle);
+    const z = Math.cos(angle);
+    pts.push({ x, y, z, t });
   }
+  return pts;
+}
 
-  function rr(x, y, w, h, r, fill, stroke, sw) {
-    ctx.beginPath();
-    ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y);
-    ctx.arcTo(x+w, y,   x+w, y+r,   r); ctx.lineTo(x+w, y+h-r);
-    ctx.arcTo(x+w, y+h, x+w-r, y+h, r); ctx.lineTo(x+r, y+h);
-    ctx.arcTo(x,   y+h, x,   y+h-r, r); ctx.lineTo(x,   y+r);
-    ctx.arcTo(x,   y,   x+r, y,     r); ctx.closePath();
-    if (fill)   { ctx.fillStyle = fill;   ctx.fill(); }
-    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = sw || 1; ctx.stroke(); }
+function smoothPath(pts) {
+  if (pts.length < 2) return '';
+  if (pts.length === 2) return `M ${pts[0].x.toFixed(2)} ${pts[0].y.toFixed(2)} L ${pts[1].x.toFixed(2)} ${pts[1].y.toFixed(2)}`;
+  let d = `M ${pts[0].x.toFixed(2)} ${pts[0].y.toFixed(2)} `;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] || p2;
+    const c1x = p1.x + (p2.x - p0.x) / 6;
+    const c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6;
+    const c2y = p2.y - (p3.y - p1.y) / 6;
+    d += `C ${c1x.toFixed(2)} ${c1y.toFixed(2)}, ${c2x.toFixed(2)} ${c2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} `;
   }
+  return d.trim();
+}
 
-  const BX=0, BY=5, BS=46;
-  const DY  = BY+38;
-  const TX1 = BX+13, TX2 = BX+33;
-  const APX = BX+23, APY = BY+13;
-  const TWH = DY - (BY+20);
-  const TTY = BY+20;
-
-  // Icon box
-  rr(BX, BY, BS, BS, 11, '#1A3C6E');
-  ctx.beginPath();
-  ctx.moveTo(BX+11, BY+1); ctx.lineTo(BX+BS-11, BY+1);
-  ctx.strokeStyle = 'rgba(255,255,255,0.10)'; ctx.lineWidth = 1; ctx.stroke();
-
-  // 1. Deck
-  const dP = seg(0, 0.22);
-  if (dP > 0) {
-    const x0 = BX+4, x1 = BX+4+(BS-8)*dP;
-    ctx.beginPath(); ctx.moveTo(x0, DY); ctx.lineTo(x1, DY);
-    ctx.strokeStyle='#FFFFFF'; ctx.lineWidth=2.5; ctx.lineCap='butt'; ctx.stroke();
-  }
-
-  // 2. Towers
-  const tP = seg(0.10, 0.26);
-  if (tP > 0) {
-    [TX1, TX2].forEach(tx => {
-      const topY = DY - TWH*tP;
-      ctx.beginPath(); ctx.moveTo(tx, DY); ctx.lineTo(tx, topY);
-      ctx.strokeStyle='#FFFFFF'; ctx.lineWidth=2.8; ctx.lineCap='butt'; ctx.stroke();
-      if (tP > 0.7) {
-        const ca = (tP-0.7)/0.3;
-        ctx.fillStyle = `rgba(255,255,255,${ca})`;
-        ctx.fillRect(tx-3, topY-3, 6, 3);
-      }
-    });
-  }
-
-  // 3. Main cables
-  const aP = seg(0.20, 0.52);
-  if (aP > 0) {
-    [
-      { x0:TX1, y0:TTY, cx:BX+5,  cy:TTY-3, x1:APX, y1:APY },
-      { x0:TX2, y0:TTY, cx:BX+41, cy:TTY-3, x1:APX, y1:APY },
-    ].forEach(({ x0, y0, cx, cy, x1, y1 }) => {
-      const steps=40, endI=Math.round(aP*steps);
-      ctx.beginPath();
-      for (let i=0; i<=endI; i++) {
-        const t=i/steps, mt=1-t;
-        const px=mt*mt*x0+2*mt*t*cx+t*t*x1;
-        const py=mt*mt*y0+2*mt*t*cy+t*t*y1;
-        i===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
-      }
-      ctx.strokeStyle='#FFFFFF'; ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke();
-    });
-  }
-
-  // 4. Hangers
-  [BX+8, TX1, APX, TX2, BX+38].forEach((hx, i) => {
-    const hp = seg(0.36+i*0.022, 0.52+i*0.022);
-    if (hp > 0) {
-      const norm = Math.abs(hx-APX)/(TX2-APX);
-      const cabY = APY + (TTY-APY)*norm*norm;
-      ctx.beginPath(); ctx.moveTo(hx, cabY); ctx.lineTo(hx, cabY+(DY-cabY)*hp);
-      ctx.strokeStyle='#7DD3FC'; ctx.lineWidth=1.2; ctx.lineCap='butt'; ctx.stroke();
+function splitByDepth(pts) {
+  const segments = [];
+  let current = null;
+  pts.forEach((p, i) => {
+    const isFront = p.z > 0;
+    if (!current || current.front !== isFront) {
+      const seed = current ? [current.pts[current.pts.length - 1]] : [];
+      current = { front: isFront, pts: [...seed, p] };
+      segments.push(current);
+    } else {
+      current.pts.push(p);
     }
   });
-
-  // 5. SMG badge
-  const smgP = seg(0.48, 0.64);
-  if (smgP > 0) {
-    ctx.save(); ctx.globalAlpha = easeOut(smgP);
-    const PW=34, PH=11, PX=BX+(BS-PW)/2, PY=BY+BS-PH-2;
-    rr(PX, PY, PW, PH, 4, '#0A1E3D');
-    rr(PX, PY, PW, PH, 4, null, '#2563EB', 1.2);
-    ctx.font='700 7px "Segoe UI",Arial,sans-serif';
-    ctx.fillStyle='#BFDBFE';
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    const mY = PY+PH/2+0.5;
-    ctx.fillText('U', PX+6, mY);
-    ctx.fillText('M', PX+17, mY);
-    ctx.fillText('A', PX+28, mY);
-    ctx.restore();
-  }
-
-  // 6. Apex star
-  const sp = seg(0.50, 0.66);
-  if (sp > 0) {
-    const eb = bounce(sp);
-    ctx.save(); ctx.translate(APX, APY); ctx.scale(eb, eb);
-    ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI*2);
-    ctx.fillStyle='#3B82F6'; ctx.fill();
-    ctx.font='bold 7px Arial'; ctx.fillStyle='#FFFFFF';
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('★', 0, 0.5);
-    ctx.restore();
-  }
-
-  // 7. Orbit dot
-  const op = seg(0.62, 1.0);
-  if (op > 0) {
-    const angle = -Math.PI/2 + op*Math.PI*3.5;
-    for (let t=4; t>=0; t--) {
-      const ta=angle-t*0.16;
-      const ox=APX+8*Math.cos(ta), oy=APY+8*Math.sin(ta);
-      const al=t===0 ? Math.max(0.75, 0.75+0.25*Math.sin(op*Math.PI*10)) : (0.32-t*0.07)*op;
-      ctx.save(); ctx.globalAlpha=Math.max(0,al);
-      ctx.beginPath(); ctx.arc(ox, oy, t===0?2:1.2-t*0.2, 0, Math.PI*2);
-      ctx.fillStyle='#93C5FD'; ctx.fill(); ctx.restore();
-    }
-  }
-
-  // 8. "Rank"
-  const rankP = seg(0.64, 0.76);
-  if (rankP > 0) {
-    const e = easeOut(rankP);
-    ctx.save(); ctx.globalAlpha=e; ctx.translate((e-1)*8, 0);
-    ctx.font='800 24px "Arial Black","Syne",Arial,sans-serif';
-    ctx.fillStyle = dark ? '#F1F5F9' : '#111827';
-    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
-    ctx.fillText('Rank', BX+BS+8, BY+31);
-    ctx.restore();
-  }
-
-  // 9. Dot divider
-  const dotP = seg(0.72, 0.80);
-  if (dotP > 0) {
-    ctx.save(); ctx.globalAlpha=dotP;
-    ctx.beginPath(); ctx.arc(BX+BS+73, BY+24, 2.2, 0, Math.PI*2);
-    ctx.fillStyle = dark ? '#3B82F6' : '#1A3C6E'; ctx.fill();
-    ctx.restore();
-  }
-
-  // 10. "Setu"
-  const setuP = seg(0.72, 0.84);
-  if (setuP > 0) {
-    const e = easeOut(setuP);
-    ctx.save(); ctx.globalAlpha=e; ctx.translate((e-1)*8, 0);
-    ctx.font='800 24px "Arial Black","Syne",Arial,sans-serif';
-    ctx.fillStyle = dark ? '#60A5FA' : '#1A3C6E';
-    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
-    ctx.fillText('Setu', BX+BS+82, BY+31);
-    ctx.restore();
-  }
-
-  // 11. Tagline
-  const tagP = seg(0.84, 0.94);
-  if (tagP > 0) {
-    ctx.save(); ctx.globalAlpha=easeOut(tagP);
-    ctx.font='600 7px "Segoe UI",Arial,sans-serif';
-    ctx.fillStyle = dark ? '#3B82F6' : '#94a3b8';
-    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
-    ctx.fillText('NEET COUNSELLING', BX+BS+8, BY+43);
-    ctx.restore();
-  }
-
-  ctx.restore();
+  return segments;
 }
 
-function useRsLogo(dark) {
-  const ref      = useRef(null);
-  const rafRef   = useRef(null);
-  const startRef = useRef(null);
+let __rsLogoStyleInjected = false;
+function ensureRsLogoStyles() {
+  if (__rsLogoStyleInjected || typeof document === 'undefined') return;
+  __rsLogoStyleInjected = true;
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes rsFloat {
+      0%, 100% { transform: translateY(0px); }
+      50%      { transform: translateY(-3px); }
+    }
+    @keyframes rsLightSweep {
+      0%   { transform: translate(-14%, -10%) rotate(0deg);  opacity: 0.5; }
+      50%  { transform: translate(14%, 10%)  rotate(8deg);  opacity: 0.85; }
+      100% { transform: translate(-14%, -10%) rotate(0deg);  opacity: 0.5; }
+    }
+    @keyframes rsGlowPulse {
+      0%, 100% { opacity: 0.42; transform: scale(1); }
+      50%      { opacity: 0.78; transform: scale(1.08); }
+    }
+    .rs-logo-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      transition: transform 320ms cubic-bezier(.2,.8,.2,1);
+    }
+    .rs-logo-wrap:hover {
+      transform: scale(1.05);
+    }
+    .rs-logo-icon {
+      position: relative;
+      width: 46px;
+      height: 46px;
+      flex-shrink: 0;
+    }
+    .rs-logo-glow {
+      position: absolute;
+      inset: -10px;
+      border-radius: 18px;
+      background: radial-gradient(circle, rgba(37,99,235,0.40) 0%, rgba(37,99,235,0) 70%);
+      filter: blur(6px);
+      animation: rsGlowPulse 4.2s ease-in-out infinite;
+      transition: opacity 320ms ease, filter 320ms ease;
+      pointer-events: none;
+    }
+    .rs-logo-wrap:hover .rs-logo-glow {
+      opacity: 1 !important;
+      filter: blur(10px);
+    }
+    .rs-logo-float {
+      width: 100%;
+      height: 100%;
+      animation: rsFloat 6.4s ease-in-out infinite;
+    }
+    .rs-logo-box {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 13px;
+      box-shadow:
+        0 4px 14px rgba(8,16,32,0.32),
+        inset 0 1px 0 rgba(255,255,255,0.10),
+        inset 0 -9px 18px rgba(0,0,0,0.20);
+      overflow: hidden;
+      transition: box-shadow 320ms ease;
+    }
+    .rs-logo-wrap:hover .rs-logo-box {
+      box-shadow:
+        0 6px 20px rgba(8,16,32,0.40),
+        inset 0 1px 0 rgba(255,255,255,0.14),
+        inset 0 -9px 18px rgba(0,0,0,0.22);
+    }
+    .rs-logo-helix-svg {
+      position: absolute;
+      inset: 0;
+      transition: filter 320ms ease;
+    }
+    .rs-logo-wrap:hover .rs-logo-helix-svg {
+      filter: drop-shadow(0 0 4px rgba(91,156,255,0.65));
+    }
+    .rs-logo-sheen {
+      position: absolute;
+      inset: -25%;
+      background: radial-gradient(ellipse 55% 40% at 50% 50%, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0) 65%);
+      animation: rsLightSweep 7s ease-in-out infinite;
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+    .rs-logo-particle {
+      transition: opacity 320ms ease;
+    }
+    .rs-logo-wrap:hover .rs-logo-particle {
+      opacity: 1 !important;
+    }
+    .rs-wordmark-rank, .rs-wordmark-setu {
+      font-family: 'Poppins','Inter',Arial,sans-serif;
+      font-weight: 800;
+      font-size: 22px;
+      letter-spacing: 0.15px;
+      line-height: 1;
+    }
+    .rs-wordmark-tag {
+      font-family: 'Inter',Arial,sans-serif;
+      font-weight: 600;
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      margin-top: 3px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .rs-logo-float, .rs-logo-glow, .rs-logo-sheen { animation: none !important; }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function RsHelixBridgeLogo({ dark }) {
+  useEffect(() => { ensureRsLogoStyles(); }, []);
+
+  const gid = dark ? 'd' : 'l';
+  const [phase, setPhase] = useState(0);
+  const rafRef = useRef(null);
 
   useEffect(() => {
-    const cv = ref.current;
-    if (!cv) return;
-    const dpr = window.devicePixelRatio || 1;
-    const W = 220, H = 56;
-    cv.width  = W * dpr;
-    cv.height = H * dpr;
-    cv.style.width  = W + 'px';
-    cv.style.height = H + 'px';
-    const ctx = cv.getContext('2d');
-    ctx.scale(dpr, dpr);
-
-    function tick(ts) {
-      if (!startRef.current) startRef.current = ts;
-      const elapsed = (ts - startRef.current) % CYCLE;
-      const p = elapsed < BUILD ? elapsed / BUILD : 1;
-      rsDrawLogo(ctx, dark, p, W, H);
+    let last = performance.now();
+    const SPEED = 0.5;
+    const tick = (now) => {
+      const dt = (now - last) / 1000;
+      last = now;
+      setPhase((p) => (p + dt * SPEED) % (Math.PI * 2));
       rafRef.current = requestAnimationFrame(tick);
-    }
+    };
     rafRef.current = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(rafRef.current); };
-  }, [dark]);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
 
-  return ref;
+  const strandA = buildStrandPoints(phase);
+  const strandB = buildStrandPoints(phase + Math.PI);
+
+  const segA = splitByDepth(strandA);
+  const segB = splitByDepth(strandB);
+
+  const rungCount = 11;
+  const rungs = Array.from({ length: rungCount }, (_, k) => {
+    const idx = Math.round((k / (rungCount - 1)) * (strandA.length - 1));
+    return { a: strandA[idx], b: strandB[idx], i: idx };
+  });
+
+  const navyTop     = dark ? '#16335E' : '#22507F';
+  const navyBase    = dark ? '#0A0F19' : '#1A3C6E';
+  const backCol     = dark ? '#3D5C99' : '#7E9BCB';
+  const frontCol    = '#2563EB';
+  const particleCol = '#5B9CFF';
+
+  const particleStrand = strandA.filter((p) => p.z > 0).length >= strandB.filter((p) => p.z > 0).length
+    ? strandA : strandB;
+  const frontPathD = smoothPath(particleStrand);
+  const apex = strandA[0].y <= strandB[0].y ? strandA[0] : strandB[0];
+
+  return (
+    <div className="rs-logo-wrap">
+      <div className="rs-logo-icon">
+        <div className="rs-logo-glow" />
+        <div className="rs-logo-float">
+          <div className="rs-logo-box" style={{
+            background: `linear-gradient(150deg, ${navyTop} 0%, ${navyBase} 65%)`,
+          }}>
+            <div className="rs-logo-sheen" />
+
+            <svg className="rs-logo-helix-svg" width="46" height="46" viewBox="0 0 46 46">
+              <defs>
+                <linearGradient id={`rsFrontGrad-${gid}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"  stopColor="#8FC1FF" />
+                  <stop offset="45%" stopColor={frontCol} />
+                  <stop offset="100%" stopColor="#163E8F" />
+                </linearGradient>
+                <linearGradient id={`rsBackGrad-${gid}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"  stopColor={backCol} stopOpacity="0.7" />
+                  <stop offset="100%" stopColor={navyBase} stopOpacity="0.7" />
+                </linearGradient>
+                <radialGradient id={`rsRungShine-${gid}`} cx="35%" cy="30%" r="80%">
+                  <stop offset="0%"  stopColor="#FFFFFF" stopOpacity="0.98" />
+                  <stop offset="50%" stopColor="#BFDBFE" stopOpacity="0.7" />
+                  <stop offset="100%" stopColor={frontCol} stopOpacity="0.15" />
+                </radialGradient>
+                <radialGradient id={`rsParticleGlow-${gid}`} cx="50%" cy="50%" r="50%">
+                  <stop offset="0%"  stopColor="#FFFFFF" stopOpacity="1" />
+                  <stop offset="55%" stopColor={particleCol} stopOpacity="0.9" />
+                  <stop offset="100%" stopColor={particleCol} stopOpacity="0" />
+                </radialGradient>
+              </defs>
+
+              <line x1="6" y1="36.5" x2="40" y2="36.5"
+                stroke="#FFFFFF" strokeOpacity="0.85" strokeWidth="2.3" strokeLinecap="round" />
+              <line x1="10" y1="36.5" x2="10" y2="30" stroke={backCol} strokeOpacity="0.45" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="36" y1="36.5" x2="36" y2="30" stroke={backCol} strokeOpacity="0.45" strokeWidth="1.5" strokeLinecap="round" />
+
+              {[...segA, ...segB].filter((s) => !s.front).map((s, i) => (
+                <path key={`back-${i}`} d={smoothPath(s.pts)} fill="none"
+                  stroke={`url(#rsBackGrad-${gid})`} strokeWidth="2"
+                  strokeLinecap="round" strokeLinejoin="round" />
+              ))}
+
+              {rungs.map((r) => {
+                const depth = Math.max(r.a.z, r.b.z);
+                const w = 0.9 + Math.max(0, depth) * 1.1;
+                const op = 0.32 + Math.max(0, depth) * 0.62;
+                const bright = depth > 0.05;
+                return (
+                  <line key={`rung-${r.i}`}
+                    x1={r.a.x} y1={r.a.y} x2={r.b.x} y2={r.b.y}
+                    stroke={bright ? `url(#rsRungShine-${gid})` : backCol}
+                    strokeWidth={w}
+                    strokeOpacity={op}
+                    strokeLinecap="round"
+                  />
+                );
+              })}
+
+              {[...segA, ...segB].filter((s) => s.front).map((s, i) => (
+                <path key={`front-${i}`} d={smoothPath(s.pts)} fill="none"
+                  stroke={`url(#rsFrontGrad-${gid})`} strokeWidth="2.7"
+                  strokeLinecap="round" strokeLinejoin="round" />
+              ))}
+
+              <circle cx={apex.x} cy={apex.y} r="1.9" fill="#FFFFFF" opacity="0.92" />
+              <circle cx={apex.x} cy={apex.y} r="3.6" fill="#5B9CFF" opacity="0.22" />
+
+              <circle r="1.5" fill={`url(#rsParticleGlow-${gid})`} className="rs-logo-particle" opacity="0.85">
+                <animateMotion path={frontPathD} dur="3.2s" repeatCount="indefinite" rotate="auto" />
+                <animate attributeName="opacity" values="0;0.9;0.9;0" keyTimes="0;0.15;0.85;1" dur="3.2s" repeatCount="indefinite" />
+              </circle>
+              <circle r="1.2" fill={`url(#rsParticleGlow-${gid})`} className="rs-logo-particle" opacity="0.65">
+                <animateMotion path={frontPathD} dur="3.2s" begin="1.1s" repeatCount="indefinite" rotate="auto" />
+                <animate attributeName="opacity" values="0;0.7;0.7;0" keyTimes="0;0.15;0.85;1" dur="3.2s" begin="1.1s" repeatCount="indefinite" />
+              </circle>
+            </svg>
+
+            {/* SMG badge pill */}
+            <svg width="46" height="46" viewBox="0 0 46 46" style={{ position: 'absolute', inset: 0 }}>
+              <rect x="6" y="38.3" width="34" height="11" rx="4" fill="#0A1428" />
+              <rect x="6" y="38.3" width="34" height="11" rx="4" fill="none" stroke="#2563EB" strokeWidth="1.1" />
+              <text x="23" y="45" textAnchor="middle" fontFamily="Segoe UI, Arial, sans-serif"
+                fontSize="7" fontWeight="700" fill="#BFDBFE">SMG</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline' }}>
+          <span className="rs-wordmark-rank" style={{ color: dark ? '#F9FAFC' : '#0A0F19' }}>Rank</span>
+          <span className="rs-wordmark-setu" style={{ color: dark ? '#5B9CFF' : '#1A3C6E', marginLeft: '1px' }}>Setu</span>
+        </div>
+        <span className="rs-wordmark-tag" style={{ color: dark ? '#2563EB' : '#5C7AA8' }}>
+          NEET COUNSELLING
+        </span>
+      </div>
+    </div>
+  );
 }
 
-const RankSetuLogo     = () => { const ref = useRsLogo(false); return <canvas ref={ref} width={220} height={56} aria-label="RankSetu" style={{display:'block'}} />; };
-const RankSetuLogoDark = () => { const ref = useRsLogo(true);  return <canvas ref={ref} width={220} height={56} aria-label="RankSetu" style={{display:'block'}} />; };
+const RankSetuLogo     = () => <RsHelixBridgeLogo dark={false} />;
+const RankSetuLogoDark = () => <RsHelixBridgeLogo dark={true} />;
 
-// ── Footer Logo wrapper (replaces old RankSetu static logo) ─────────────────
+// ── Footer Logo wrapper ───────────────────────────────────────────────────────
 const FooterLogo = ({ darkMode: dm }) => (
   <div className="mb-4">
     {dm ? <RankSetuLogoDark /> : <RankSetuLogo />}
@@ -327,7 +419,7 @@ const NAV_LINKS = {
 
 const STATS = [
   { value: "700+",  label: "Medical Colleges" },
-  { value: "15L+",  label: "NEET Records" },
+  { value: "50,000+",  label: "NEET Records" },
   { value: "28",    label: "States Covered" },
   { value: "99.9%", label: "Data Accuracy" },
 ];
@@ -391,7 +483,7 @@ export default function Footer({ darkMode, showToast, setCurrentView }) {
             {/* Contact */}
             {[
               { icon: "mail",  text: "hello@ranksetu.com" },
-              { icon: "phone", text: "+91 0000000000" },
+    
               { icon: "map",   text: "NIT Hamirpur, India" },
             ].map(({ icon, text }) => (
               <div key={text} className="flex items-center gap-2.5 mb-2.5">

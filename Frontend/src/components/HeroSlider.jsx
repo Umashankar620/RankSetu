@@ -612,7 +612,7 @@ export default function HeroSlider({ darkMode, setCurrentView }) {
           }`}>
           <span className="h-1.5 w-1.5 bg-[#1A3C6E] animate-pulse" />
           Active Data Pipelines:
-          <span className="font-mono font-black">1,45,230 Records Synced</span>
+          <span className="font-mono font-black">50,000+ Records Synced</span>
           <span className={`h-3 w-px ${darkMode ? "bg-slate-600" : "bg-[#1A3C6E]/30"}`} />
           <span className={darkMode ? "text-[#60A5FA]" : "text-[#2563EB]"}>Live</span>
         </span>

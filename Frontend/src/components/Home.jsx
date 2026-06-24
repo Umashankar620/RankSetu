@@ -116,10 +116,10 @@ const FEATURES = [
 
 // ── Trust Indicators ────────────────────────────────────────────────────────
 const TRUST = [
-  { icon: Database,    label: '6 Lakh+',   sub: 'Rank Records'      },
+  { icon: Database,    label: '6 Lakh+',   sub: 'Rank Coverage'      },
   { icon: ShieldCheck, label: '100%',       sub: 'Official MCC Data' },
-  { icon: Clock,       label: '2020–2025',  sub: 'Years Covered'     },
-  { icon: BarChart2,   label: 'All Rounds', sub: 'R1, R2, R3, Stray' },
+  { icon: Clock,       label: '2021–2025',  sub: 'Years Covered'     },
+  { icon: BarChart2,   label: 'All Rounds', sub: 'R1, R2, R3, Stray, Special, Stray' },
 ];
 
 // ── Platform Highlights ─────────────────────────────────────────────────────
@@ -144,8 +144,8 @@ const HIGHLIGHTS = [
   },
   {
     icon: Users,
-    title: '1.4 Lakh+ Aspirants',
-    desc: 'Trusted by over 1.4 lakh NEET aspirants across India for counselling decisions.',
+    title: 'Student-First',
+    desc: 'Designed to make NEET counselling simpler and more transparent.',
     color: '#D97706',
   },
 ];
@@ -401,8 +401,9 @@ export default function Home({ setCurrentView, showToast, darkMode }) {
         dm ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200 shadow-sm'
       }`}>
         {[
-          { value: '600+', label: 'Medical Colleges Mapped', icon: MapPin },
-          { value: '1.4L+', label: 'Students Guided', icon: Users },
+          { value: '700+', label: 'Medical Colleges Mapped', icon: MapPin },
+          // { value: '1.4L+', label: 'Students Guided', icon: Users },
+          { value: 'Built For', label: 'NEET Aspirants', icon: Users },
           { value: '5 Yrs', label: 'Historical Cutoff Data', icon: FileText },
         ].map(({ value, label, icon: Icon }) => (
           <div key={label} className="text-center">
