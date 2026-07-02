@@ -3,9 +3,27 @@ services:
     name: ranksetu-python
     env: python
     region: singapore
-    plan: free
+    # CHANGED (was: free): free plan is single-core and spins down after
+    # 15 min of inactivity — real user traffic would hit cold-start delays
+    # (10-30s) on the first request after any idle period, and can't run
+    # more than 1 effective worker. starter is the minimum paid plan that
+    # gives a dedicated, always-on instance.
+    plan: starter
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    # --workers 2 needs cache.py to be Redis-backed (shared across
+    # processes) to give consistent cache hits — set REDIS_URL below
+    # before relying on this. Bump to 4 if you move to a bigger instance.
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2
+    # Render only routes traffic to an instance once this path returns
+    # 2xx/3xx — /api/healthz already checks DB connectivity (main.py),
+    # so this also stops Render from marking a deploy "live" before the
+    # DB pool is actually up.
+    healthCheckPath: /api/healthz
+    # Manual scaling — available on all paid plans (autoscaling needs a
+    # Pro workspace). Bump maxInstances once real traffic numbers justify
+    # it; each instance gets its own DB connections, so raise
+    # DB_CONNECTION_LIMIT accordingly if you do.
+    numInstances: 1
     envVars:
       - key: DB_HOST
         value: YOUR_TIDB_HOST
@@ -19,3 +37,11 @@ services:
         value: ranksetu
       - key: ALLOWED_ORIGINS
         value: https://ranksetu.in,https://www.ranksetu.in,https://ranksetu.vercel.app
+      # Same Redis instance the Node backend uses — both backends share
+      # one cache and get invalidated together via IMPORT_SECRET.
+      - key: REDIS_URL
+        value: YOUR_REDIS_URL
+      # Must match the Node backend's IMPORT_SECRET exactly, so a single
+      # upload script can invalidate both backends' caches with one secret.
+      - key: IMPORT_SECRET
+        value: YOUR_SHARED_IMPORT_SECRET

@@ -3,9 +3,10 @@
 import React, { useState } from 'react';
 import {
   BarChart2, Target, TrendingUp, BookOpen,
-  Layers, FlaskConical, Calendar, GraduationCap, Leaf,
+  Layers, Calendar, GraduationCap, Leaf,
   ArrowRight, ShieldCheck, Database, Clock, MapPin,
   CheckCircle, Star, Users, FileText, Zap, Info,
+  Building2, Search, Compass,
 } from 'lucide-react';
 
 const PRIMARY     = '#1A3C6E';
@@ -14,11 +15,22 @@ const INTERACTIVE = '#2563EB';
 // ── Feature cards config ───────────────────────────────────────────────────
 const FEATURES = [
   {
+    icon: Building2,
+    title: 'College Directory',
+    desc: 'Browse every NEET UG medical college with its own dedicated page — cutoffs, fee structure, seat matrix, and admission details, all in one place.',
+    howTo: 'Filter by state or college type, or search by name. Click any college to see its full cutoff history, fees, and seat breakdown.',
+    view: 'college-info',
+    badge: 'New',
+    badgeColor: '#2563EB',
+    color: '#2563EB',
+    category: 'Colleges',
+  },
+  {
     icon: BarChart2,
     title: 'MCC Cutoff Explorer',
     desc: 'Year-wise, round-wise opening & closing ranks for every MCC college — AIQ, AIIMS, JIPMER, and Deemed universities.',
     howTo: 'Select year, round, and category. Filter by college or branch to see exact rank ranges.',
-    view: 'analytics',
+    view: 'mcc',
     badge: null,
     badgeColor: null,
     color: PRIMARY,
@@ -26,12 +38,12 @@ const FEATURES = [
   },
   {
     icon: Leaf,
-    title: 'AYUSH Cutoffs',
+    title: 'Ayush Cutoff Explorer',
     desc: 'Opening & closing ranks for BAMS, BHMS, BUMS and BSMS programs under MCC and Ayush counselling.',
     howTo: 'Choose AYUSH course type and filter by state or college to compare rank trends across years.',
     view: 'ayush',
-    badge: null,
-    badgeColor: null,
+    badge: 'New',
+    badgeColor: '#16A34A',
     color: '#16A34A',
     category: 'Cutoff Data',
   },
@@ -59,24 +71,13 @@ const FEATURES = [
   },
   {
     icon: Layers,
-    title: 'AI Choice Lab',
-    desc: 'Organise your final preference list, detect sequence conflicts, and export before submitting on the MCC portal.',
-    howTo: 'Build your list by dragging colleges. The AI flags risky orderings and helps you lock the safest sequence.',
+    title: 'Choice List Builder',
+    desc: 'Build, reorder and audit your final preference list — detect sequence conflicts and export before submitting on the MCC portal.',
+    howTo: 'Add colleges and drag to reorder. The AI flags risky orderings and helps you lock the safest sequence.',
     view: 'lab',
     badge: null,
     badgeColor: null,
     color: PRIMARY,
-    category: 'Smart Tools',
-  },
-  {
-    icon: FlaskConical,
-    title: 'Choice Sandbox',
-    desc: 'Simulate your counselling choice list in a risk-free environment and resolve ordering conflicts before the window opens.',
-    howTo: 'Add colleges to your sandbox list and run simulations to test different ordering strategies without risk.',
-    view: 'sandbox',
-    badge: null,
-    badgeColor: null,
-    color: INTERACTIVE,
     category: 'Smart Tools',
   },
   {
@@ -107,6 +108,17 @@ const FEATURES = [
     desc: 'Dedicated section for all AIIMS campus cutoff data — filter by round, category, and program across all AIIMS campuses.',
     howTo: 'Select an AIIMS campus and category. Compare closing ranks across years to understand admission difficulty.',
     view: 'aiims-hub',
+    badge: null,
+    badgeColor: null,
+    color: PRIMARY,
+    category: 'Cutoff Data',
+  },
+  {
+    icon: MapPin,
+    title: 'State Quota Cutoffs',
+    desc: 'Opening & closing ranks for state government quota seats — filtered by state, authority and college.',
+    howTo: 'Pick your state and authority. Filter by college or course to see state quota rank ranges.',
+    view: 'state',
     badge: null,
     badgeColor: null,
     color: PRIMARY,
@@ -159,7 +171,7 @@ const HOW_TO = [
 ];
 
 // ── Category grouping ───────────────────────────────────────────────────────
-const CATEGORIES = ['All', 'Cutoff Data', 'Smart Tools', 'Resources'];
+const CATEGORIES = ['All', 'Colleges', 'Cutoff Data', 'Smart Tools', 'Resources'];
 
 export default function Home({ setCurrentView, showToast, darkMode }) {
   const dm = darkMode;
@@ -195,6 +207,88 @@ export default function Home({ setCurrentView, showToast, darkMode }) {
         ))}
       </div>
 
+      {/* ── College Directory Banner — new flagship feature, called out on its own ── */}
+      <button
+        onClick={() => setCurrentView('college-info')}
+        className={`w-full mb-8 text-left rounded-2xl border overflow-hidden relative group transition-all cursor-pointer ${
+          dm
+            ? 'bg-gradient-to-r from-[#102347] via-[#0F1E3D] to-[#0B0F19] border-blue-500/30 hover:border-blue-400/50'
+            : 'bg-gradient-to-r from-[#EEF4FF] via-[#F4F8FF] to-white border-blue-200 hover:border-blue-300'
+        }`}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center gap-5 p-5 sm:p-6">
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border"
+            style={{ backgroundColor: 'rgba(37,99,235,0.12)', borderColor: 'rgba(37,99,235,0.3)', color: '#2563EB' }}
+          >
+            <Building2 className="w-7 h-7" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className={`text-lg sm:text-xl font-black tracking-tight ${dm ? 'text-white' : 'text-slate-900'}`}>
+                Explore the College Directory
+              </h2>
+              <span className="text-[10px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border"
+                style={{ backgroundColor: 'rgba(37,99,235,0.12)', borderColor: 'rgba(37,99,235,0.3)', color: '#2563EB' }}>
+                New
+              </span>
+            </div>
+            <p className={`text-sm leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+              700+ medical colleges, each with its own page — cutoffs, fee structure, seat matrix and admission
+              details, all in one place. Search by name or filter by state and college type.
+            </p>
+          </div>
+          <div
+            className="flex items-center gap-2 text-sm font-black px-5 py-2.5 rounded-xl text-white shrink-0 transition-transform group-hover:translate-x-0.5"
+            style={{ backgroundColor: '#2563EB' }}
+          >
+            <Search className="w-4 h-4" />
+            Browse Colleges
+            <ArrowRight className="w-4 h-4" />
+          </div>
+        </div>
+      </button>
+
+      {/* ── "How to Use RankSetu" Banner — first stop for new users ──── */}
+      <button
+        onClick={() => setCurrentView('how-to-use')}
+        className={`w-full mb-8 text-left rounded-2xl border overflow-hidden relative group transition-all cursor-pointer ${
+          dm
+            ? 'bg-slate-800/40 border-slate-700 hover:border-blue-500/40'
+            : 'bg-white border-slate-200 shadow-sm hover:border-blue-300'
+        }`}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-5">
+          <div
+            className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border"
+            style={{ backgroundColor: 'rgba(26,60,110,0.08)', borderColor: 'rgba(26,60,110,0.2)', color: PRIMARY }}
+          >
+            <Compass className="w-6 h-6" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-0.5">
+              <h2 className={`text-base font-black tracking-tight ${dm ? 'text-white' : 'text-slate-900'}`}>
+                New here? Read the full How-to-Use Guide
+              </h2>
+              <span className="text-[10px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border"
+                style={{ backgroundColor: 'rgba(37,99,235,0.12)', borderColor: 'rgba(37,99,235,0.3)', color: '#2563EB' }}>
+                New
+              </span>
+            </div>
+            <p className={`text-sm leading-relaxed ${dm ? 'text-slate-400' : 'text-slate-600'}`}>
+              A beginner-friendly walkthrough of every tool — what it does, who it&rsquo;s for, and step-by-step guides for predicting, searching, and comparing colleges.
+            </p>
+          </div>
+          <div
+            className="flex items-center gap-2 text-sm font-black px-5 py-2.5 rounded-xl text-white shrink-0 transition-transform group-hover:translate-x-0.5"
+            style={{ backgroundColor: PRIMARY }}
+          >
+            Read the Guide
+            <ArrowRight className="w-4 h-4" />
+          </div>
+        </div>
+      </button>
+
       {/* ── Platform Highlights ──────────────────────────────────────── */}
       <div className={`mb-8 p-5 rounded-2xl border ${dm ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
         <p
@@ -223,12 +317,21 @@ export default function Home({ setCurrentView, showToast, darkMode }) {
 
       {/* ── How it works ────────────────────────────────────────────── */}
       <div className="mb-8">
-        <p
-          className="text-[11px] font-black uppercase tracking-[0.18em] mb-3"
-          style={{ color: PRIMARY }}
-        >
-          How It Works
-        </p>
+        <div className="flex items-center justify-between mb-3">
+          <p
+            className="text-[11px] font-black uppercase tracking-[0.18em]"
+            style={{ color: PRIMARY }}
+          >
+            How It Works
+          </p>
+          <button
+            onClick={() => setCurrentView('how-to-use')}
+            className="text-[11px] font-bold flex items-center gap-1 cursor-pointer hover:underline"
+            style={{ color: INTERACTIVE }}
+          >
+            View Full Guide <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {HOW_TO.map((step, idx) => (
             <div

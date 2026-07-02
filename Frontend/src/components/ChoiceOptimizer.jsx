@@ -1,15 +1,17 @@
-
-
 'use client';
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Sparkles, AlertTriangle, CheckCircle, Copy, Download,
   TrendingUp, TrendingDown, Minus, ChevronDown, Filter,
   BarChart3, Zap, Star, Shield, Target, Activity, Info,
-  ArrowUpRight, Clock, Flame, Award
+  ArrowUpRight, Clock, Flame, Award, Layers, MapPin, Building2
 } from "lucide-react";
-import { fetchOptimizerFilters, optimizeChoices } from "@/utils/api";
+import {
+  fetchPyCounselingTypes, fetchPyStates, fetchPyAuthorities,
+  fetchPyInstituteTypes, fetchPyCourses, fetchPyQuotas, fetchPyCategories,
+  optimizeChoices,
+} from "@/utils/api";
 
 const TOP_N_OPTIONS = [
   ...Array.from({ length: 30 }, (_, i) => ({ label: `Top ${i + 1}`, value: i + 1 })),
@@ -111,7 +113,7 @@ const CollegeCard = ({ college, idx, darkMode, userRank, onAddToLab }) => {
   );
 };
 
-const BucketPanel = ({ title, icon, items, darkMode, onCopy, onDownload, emptyLabel, userRank, onAddToLab }) => {
+const BucketPanel = ({ title, icon, items, darkMode, onCopy, emptyLabel, userRank, onAddToLab }) => {
   const Icon = icon;
   
   return (
@@ -133,11 +135,6 @@ const BucketPanel = ({ title, icon, items, darkMode, onCopy, onDownload, emptyLa
             className={`p-1.5 rounded transition disabled:opacity-40
               ${darkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}>
             <Copy className="w-3.5 h-3.5" />
-          </button>
-          <button onClick={onDownload} disabled={!items.length}
-            className={`p-1.5 rounded transition disabled:opacity-40
-              ${darkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}>
-            <Download className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
@@ -184,12 +181,32 @@ const SelectField = ({ label, value, onChange, options, darkMode, placeholder, i
 
 export default function ChoiceOptimizer({ darkMode, showToast, onShareCard, onAddToLab }) {
   const [userRank, setUserRank] = useState("");
-  const [categories, setCategories] = useState([]);
-  const [quotas, setQuotas] = useState([]);
-  const [courses, setCourses] = useState([]);
+
+  // ── Cascade selections (names — what gets sent to the API) ──────────────
+  const [ctName,       setCtName]       = useState("ALL");
+  const [stateName,    setStateName]    = useState("ALL");
+  const [authName,     setAuthName]     = useState("ALL");
+  const [instTypeName, setInstTypeName] = useState("ALL");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
-  const [selectedQuota, setSelectedQuota] = useState("ALL");
-  const [selectedCourse, setSelectedCourse] = useState("ALL");
+  const [selectedQuota,    setSelectedQuota]    = useState("ALL");
+  const [selectedCourse,   setSelectedCourse]   = useState("ALL");
+
+  // ── Cascade dropdown option lists — 100% database-driven ────────────────
+  const [counselingTypes, setCounselingTypes] = useState([]);
+  const [states,          setStates]          = useState([]);
+  const [authorities,     setAuthorities]     = useState([]);
+  const [instituteTypes,  setInstituteTypes]  = useState([]);
+  const [categories,      setCategories]      = useState([]);
+  const [quotas,          setQuotas]          = useState([]);
+  const [courses,         setCourses]         = useState([]);
+
+  // ── Per-step loading flags (so each dropdown can show its own spinner) ──
+  const [ldCt,    setLdCt]    = useState(true);
+  const [ldState, setLdState] = useState(false);
+  const [ldAuth,  setLdAuth]  = useState(false);
+  const [ldIType, setLdIType] = useState(false);
+  const [ldRest,  setLdRest]  = useState(false);
+
   const [topN, setTopN] = useState(10);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState({ dream: [], target: [], safe: [] });
@@ -197,15 +214,112 @@ export default function ChoiceOptimizer({ darkMode, showToast, onShareCard, onAd
   const [stats, setStats] = useState(null);
   const resultsRef = useRef(null);
 
+  // ==========================================================================
+  // CASCADE LOADERS — Counselling Type → State → Authority → Institute Type
+  // → Course/Quota/Category. Every dropdown is 100% database-driven: no
+  // hardcoded values anywhere, every selection narrows the next dropdown,
+  // and changing a parent filter resets every child filter automatically.
+  // ==========================================================================
+
+  // Step 1 — Counselling Type, loaded once on mount
   useEffect(() => {
-    fetchOptimizerFilters()
-      .then(filters => {
-        setCategories(filters.categories || []);
-        setQuotas(filters.quotas || []);
-        setCourses(filters.courses || []);
-      })
-      .catch(() => showToast("Failed to load filter options."));
+    setLdCt(true);
+    fetchPyCounselingTypes()
+      .then(r => setCounselingTypes(r?.data?.data || []))
+      .catch(() => showToast("Failed to load counselling types."))
+      .finally(() => setLdCt(false));
+  }, [showToast]);
+
+  // Reset every downstream filter — called whenever a parent filter changes
+  const resetDownstreamOfType = useCallback(() => {
+    setStateName("ALL"); setAuthName("ALL"); setInstTypeName("ALL");
+    setSelectedCategory("ALL"); setSelectedQuota("ALL"); setSelectedCourse("ALL");
+    setStates([]); setAuthorities([]); setInstituteTypes([]);
+    setCategories([]); setQuotas([]); setCourses([]);
+    setHasOptimized(false); setResults({ dream: [], target: [], safe: [] }); setStats(null);
   }, []);
+
+  const resetDownstreamOfState = useCallback(() => {
+    setAuthName("ALL"); setInstTypeName("ALL");
+    setSelectedCategory("ALL"); setSelectedQuota("ALL"); setSelectedCourse("ALL");
+    setAuthorities([]); setInstituteTypes([]);
+    setCategories([]); setQuotas([]); setCourses([]);
+    setHasOptimized(false); setResults({ dream: [], target: [], safe: [] }); setStats(null);
+  }, []);
+
+  const resetDownstreamOfAuth = useCallback(() => {
+    setInstTypeName("ALL");
+    setSelectedCategory("ALL"); setSelectedQuota("ALL"); setSelectedCourse("ALL");
+    setInstituteTypes([]);
+    setCategories([]); setQuotas([]); setCourses([]);
+    setHasOptimized(false); setResults({ dream: [], target: [], safe: [] }); setStats(null);
+  }, []);
+
+  // Step 2 — States, scoped to selected Counselling Type only
+  useEffect(() => {
+    if (ctName === "ALL") { setStates([]); return; }
+    setLdState(true);
+    fetchPyStates(ctName)
+      .then(r => setStates(r?.data?.data || []))
+      .catch(() => showToast("Failed to load states."))
+      .finally(() => setLdState(false));
+  }, [ctName, showToast]);
+
+  // Step 3 — Authorities, scoped to type + state
+  useEffect(() => {
+    if (ctName === "ALL") { setAuthorities([]); return; }
+    setLdAuth(true);
+    fetchPyAuthorities(ctName, stateName)
+      .then(r => setAuthorities(r?.data?.data || []))
+      .catch(() => showToast("Failed to load authorities."))
+      .finally(() => setLdAuth(false));
+  }, [ctName, stateName, showToast]);
+
+  // Institute Type pill — scoped to type + state + authority. Returns []
+  // for datasets whose CSV maps type: null (e.g. MCC, AYUSH); the UI
+  // hides this field entirely in that case instead of showing a stale list.
+  useEffect(() => {
+    if (ctName === "ALL") { setInstituteTypes([]); return; }
+    setLdIType(true);
+    fetchPyInstituteTypes(ctName, stateName, authName)
+      .then(r => setInstituteTypes(r?.data?.data || []))
+      .catch(() => showToast("Failed to load institute types."))
+      .finally(() => setLdIType(false));
+  }, [ctName, stateName, authName, showToast]);
+
+  // Remaining filters (Course, Quota, Category) — all scoped to everything
+  // selected so far. Never show values that don't exist in the filtered data.
+  useEffect(() => {
+    if (ctName === "ALL") { setCourses([]); setQuotas([]); setCategories([]); return; }
+    setLdRest(true);
+    Promise.all([
+      fetchPyCourses(ctName, stateName, authName, instTypeName),
+      fetchPyCategories(ctName, stateName, authName, instTypeName),
+    ]).then(([c, cat]) => {
+      setCourses(c?.data?.data || []);
+      setCategories(cat?.data?.data || []);
+    }).catch(() => showToast("Failed to load courses/categories."))
+      .finally(() => setLdRest(false));
+  }, [ctName, stateName, authName, instTypeName, showToast]);
+
+  // Quotas depend additionally on the selected Course
+  useEffect(() => {
+    if (ctName === "ALL") { setQuotas([]); return; }
+    fetchPyQuotas(ctName, stateName, authName, instTypeName, selectedCourse)
+      .then(r => setQuotas(r?.data?.data || []))
+      .catch(() => showToast("Failed to load quotas."));
+  }, [ctName, stateName, authName, instTypeName, selectedCourse, showToast]);
+
+  // onChange handlers that reset every downstream filter (per the cascading
+  // reset spec: changing a parent filter must reset every child filter).
+  const handleCtChange = (val) => { setCtName(val); resetDownstreamOfType(); };
+  const handleStateChange = (val) => { setStateName(val); resetDownstreamOfState(); };
+  const handleAuthChange = (val) => { setAuthName(val); resetDownstreamOfAuth(); };
+  const handleInstTypeChange = (val) => {
+    setInstTypeName(val);
+    setSelectedCategory("ALL"); setSelectedQuota("ALL"); setSelectedCourse("ALL");
+    setHasOptimized(false); setResults({ dream: [], target: [], safe: [] }); setStats(null);
+  };
 
   // Force Category to "Open" when Deemed quota is selected
   useEffect(() => {
@@ -221,6 +335,10 @@ export default function ChoiceOptimizer({ darkMode, showToast, onShareCard, onAd
     e.preventDefault();
     const rank = parseInt(userRank, 10);
     if (!rank || rank <= 0) { showToast("Please enter a valid NEET rank"); return; }
+    if (!ctName || ctName === "ALL") {
+      showToast("Please select a Counselling Type to proceed.");
+      return;
+    }
     if (!selectedCategory || selectedCategory === "ALL") {
       showToast("Please select a Category to proceed.");
       return;
@@ -228,8 +346,16 @@ export default function ChoiceOptimizer({ darkMode, showToast, onShareCard, onAd
 
     setLoading(true);
     try {
+      // Prediction NEVER runs on the whole database — every filter
+      // selected through the cascade above is applied server-side
+      // BEFORE prediction runs, on the exact same filtering pipeline
+      // the Upgrade module uses.
       const data = await optimizeChoices({
         user_rank: rank,
+        counseling_type: ctName,
+        state: stateName,
+        authority: authName,
+        institute_type: instTypeName,
         category: selectedCategory,
         quota: selectedQuota,
         course: selectedCourse,
@@ -269,17 +395,148 @@ export default function ChoiceOptimizer({ darkMode, showToast, onShareCard, onAd
     showToast(`📋 ${name} list copied`);
   };
 
-  const downloadList = (list, name) => {
-    if (!list.length) return;
-    const header = "Rank\tInstitute\tProgram\tQuota\tPredicted Rank\tConfidence\tTrend";
-    const rows = list.map((c, i) => `${i+1}\t${c.institute}\t${c.program}\t${c.quota}\t${c.predicted_close}\t${c.confidence}%\t${c.trend}`);
-    const blob = new Blob([[header, ...rows].join("\n")], { type: "text/plain" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `NEET_${name}_Rank_${userRank}.txt`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    showToast(`📥 ${name} list downloaded`);
+  // ───────────────────────────────────────────────────────────────────────
+  // exportPdf — ONE combined, branded PDF for Dream + Target + Safe
+  // together (college names included), replacing the old per-bucket .txt
+  // downloads. Requires: npm i jspdf jspdf-autotable
+  // ───────────────────────────────────────────────────────────────────────
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const exportPdf = async () => {
+    const all = [
+      ...results.dream.map(c => ({ ...c, _bucket: 'Dream' })),
+      ...results.target.map(c => ({ ...c, _bucket: 'Target' })),
+      ...results.safe.map(c => ({ ...c, _bucket: 'Safe' })),
+    ];
+    if (!all.length || pdfBusy) return;
+    setPdfBusy(true);
+    try {
+      const [{ jsPDF }, autoTableMod] = await Promise.all([
+        import('jspdf'),
+        import('jspdf-autotable'),
+      ]);
+      const autoTable = autoTableMod.default || autoTableMod;
+
+      const doc   = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const BRAND = [26, 60, 110];   // #1A3C6E
+      const MUTED = [120, 130, 145];
+      const BUCKET_TINT = {
+        Dream:  [255, 247, 230],
+        Target: [232, 244, 255],
+        Safe:   [232, 250, 240],
+      };
+      const genDate = new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+
+      const head = [[
+        '#', 'Bucket', 'Institute', 'Program', 'Quota',
+        'Predicted Rank', 'Confidence', 'Trend',
+      ]];
+      const body = all.map((c, i) => [
+        String(i + 1),
+        c._bucket,
+        c.institute || '—',
+        c.program || '—',
+        c.quota || '—',
+        c.predicted_close != null ? Number(c.predicted_close).toLocaleString('en-IN') : '—',
+        c.confidence != null ? `${c.confidence}%` : '—',
+        c.trend || '—',
+      ]);
+
+      autoTable(doc, {
+        head, body,
+        startY: 26,
+        margin: { left: 10, right: 10, top: 26, bottom: 18 },
+        theme: 'grid',
+        tableWidth: 'auto',
+        styles: {
+          font: 'helvetica', fontSize: 8, cellPadding: 2.4,
+          overflow: 'linebreak', valign: 'middle',
+          textColor: [30, 41, 59], lineColor: [221, 227, 235], lineWidth: 0.15,
+        },
+        headStyles: {
+          fillColor: BRAND, textColor: 255, fontStyle: 'bold',
+          fontSize: 8.5, halign: 'center',
+        },
+        columnStyles: {
+          0: { cellWidth: 8,  halign: 'center' },
+          1: { cellWidth: 20, halign: 'center', fontStyle: 'bold' },
+          2: { cellWidth: 80 },
+          3: { cellWidth: 40 },
+          4: { cellWidth: 30 },
+          5: { cellWidth: 28, halign: 'right' },
+          6: { cellWidth: 24, halign: 'center' },
+          7: { cellWidth: 22, halign: 'center' },
+        },
+        didParseCell: (data) => {
+          if (data.section === 'body') {
+            const tint = BUCKET_TINT[all[data.row.index]?._bucket];
+            if (tint) data.cell.styles.fillColor = tint;
+          }
+        },
+        didDrawPage: () => {
+          // ── watermark ───────────────────────────────────────────────
+          doc.saveGraphicsState();
+          doc.setGState(new doc.GState({ opacity: 0.07 }));
+          doc.setTextColor(...BRAND);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(64);
+          doc.text('RankSetu', pageW / 2, pageH / 2, { align: 'center', angle: 35 });
+          doc.restoreGraphicsState();
+
+          // ── header band ─────────────────────────────────────────────
+          doc.setFillColor(...BRAND);
+          doc.rect(0, 0, pageW, 20, 'F');
+          doc.setTextColor(255, 255, 255);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(16);
+          doc.text('RankSetu', 10, 11);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8.5);
+          doc.text('SMG  •  AI College Optimizer  •  Founder: Umashankar', 10, 16.5);
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9);
+          doc.text(`NEET Rank: ${rank.toLocaleString('en-IN')}`, pageW - 10, 11, { align: 'right' });
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          doc.text(`Generated: ${genDate}`, pageW - 10, 16.5, { align: 'right' });
+
+          // ── footer band ───────────────────────────────────────────────
+          doc.setDrawColor(...MUTED);
+          doc.setLineWidth(0.1);
+          doc.line(10, pageH - 13, pageW - 10, pageH - 13);
+          doc.setFontSize(7.5);
+          doc.setTextColor(...MUTED);
+          doc.setFont('helvetica', 'bold');
+          doc.text('RankSetu • SMG', 10, pageH - 8);
+          doc.setFont('helvetica', 'normal');
+          doc.text(
+            `Dream: ${results.dream.length}   Target: ${results.target.length}   Safe: ${results.safe.length}  — AI prediction based on past round-wise cutoffs; verify official seat matrix.`,
+            pageW / 2, pageH - 8, { align: 'center' },
+          );
+          doc.setFont('helvetica', 'italic');
+          doc.text('Made by Umashankar', pageW - 10, pageH - 3.5, { align: 'right' });
+        },
+      });
+
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let p = 1; p <= totalPages; p++) {
+        doc.setPage(p);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(...MUTED);
+        doc.text(`Page ${p} of ${totalPages}`, pageW - 10, pageH - 8, { align: 'right' });
+      }
+
+      doc.save(`RankSetu_Optimizer_Rank_${userRank || 'NA'}.pdf`);
+      showToast('📥 PDF downloaded');
+    } catch (e) {
+      console.error('[exportPdf]', e);
+      showToast('Could not generate the PDF — please try again');
+    } finally {
+      setPdfBusy(false);
+    }
   };
 
   const handleShareCardClick = () => {
@@ -316,6 +573,23 @@ export default function ChoiceOptimizer({ darkMode, showToast, onShareCard, onAd
           </div>
 
           <form onSubmit={handleOptimize}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 mb-3">
+              <SelectField label="Counselling Type *" icon={Layers} value={ctName} onChange={handleCtChange}
+                options={counselingTypes} darkMode={darkMode}
+                placeholder={ldCt ? "Loading…" : "Select Counselling Type"} />
+              <SelectField label="State" icon={MapPin} value={stateName} onChange={handleStateChange}
+                options={states} darkMode={darkMode}
+                placeholder={ldState ? "Loading…" : "All States"} />
+              <SelectField label="Authority" icon={Building2} value={authName} onChange={handleAuthChange}
+                options={authorities} darkMode={darkMode}
+                placeholder={ldAuth ? "Loading…" : "All Authorities"} />
+              {instituteTypes.length > 0 && (
+                <SelectField label="Institute Type" icon={Award} value={instTypeName} onChange={handleInstTypeChange}
+                  options={instituteTypes} darkMode={darkMode}
+                  placeholder={ldIType ? "Loading…" : "All Institute Types"} />
+              )}
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
               <div className="lg:col-span-1">
                 <label className={`text-sm font-bold uppercase tracking-wide block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -328,11 +602,13 @@ export default function ChoiceOptimizer({ darkMode, showToast, onShareCard, onAd
               </div>
 
               <SelectField label="Category *" icon={Target} value={selectedCategory} onChange={setSelectedCategory}
-                options={categories} darkMode={darkMode} placeholder="Select Category" />
+                options={categories} darkMode={darkMode}
+                placeholder={ldRest ? "Loading…" : "Select Category"} />
               <SelectField label="Quota" icon={Shield} value={selectedQuota} onChange={setSelectedQuota}
                 options={quotas} darkMode={darkMode} placeholder="All Quotas" />
               <SelectField label="Course" icon={BarChart3} value={selectedCourse} onChange={setSelectedCourse}
-                options={courses} darkMode={darkMode} placeholder="All Courses" />
+                options={courses} darkMode={darkMode}
+                placeholder={ldRest ? "Loading…" : "All Courses"} />
 
               <div>
                 <label className={`text-sm font-bold uppercase tracking-wide block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -376,10 +652,18 @@ export default function ChoiceOptimizer({ darkMode, showToast, onShareCard, onAd
       {/* Results */}
       {hasOptimized && (
         <div ref={resultsRef} className="space-y-4">
-          <div className={`flex items-center gap-2 px-4 py-2 rounded border text-sm
+          <div className={`flex items-center justify-between gap-2 px-4 py-2 rounded border text-sm flex-wrap
             ${darkMode ? 'bg-primary/5 border-primary/30 text-primary' : 'bg-primary/5 border-primary/20 text-primary'}`}>
-            <Flame className="w-4 h-4" />
-            Colleges sorted by closeness to rank {rank.toLocaleString()}
+            <div className="flex items-center gap-2">
+              <Flame className="w-4 h-4" />
+              Colleges sorted by closeness to rank {rank.toLocaleString()}
+            </div>
+            <button onClick={exportPdf} disabled={pdfBusy}
+              className="flex items-center gap-1.5 px-4 py-2 rounded bg-primary hover:bg-interactive text-white text-xs font-bold uppercase tracking-wide transition disabled:opacity-50">
+              {pdfBusy
+                ? <><span className="animate-spin inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full" /> Preparing PDF…</>
+                : <><Download className="w-3.5 h-3.5" /> Download PDF</>}
+            </button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -389,7 +673,6 @@ export default function ChoiceOptimizer({ darkMode, showToast, onShareCard, onAd
               items={results.dream}
               darkMode={darkMode}
               onCopy={() => copyList(results.dream, "Dream")}
-              onDownload={() => downloadList(results.dream, "Dream")}
               onAddToLab={onAddToLab}
               emptyLabel="No dream colleges"
               userRank={rank}
@@ -400,7 +683,6 @@ export default function ChoiceOptimizer({ darkMode, showToast, onShareCard, onAd
               items={results.target}
               darkMode={darkMode}
               onCopy={() => copyList(results.target, "Target")}
-              onDownload={() => downloadList(results.target, "Target")}
               onAddToLab={onAddToLab}
               emptyLabel="No target colleges"
               userRank={rank}
@@ -411,7 +693,6 @@ export default function ChoiceOptimizer({ darkMode, showToast, onShareCard, onAd
               items={results.safe}
               darkMode={darkMode}
               onCopy={() => copyList(results.safe, "Safe")}
-              onDownload={() => downloadList(results.safe, "Safe")}
               onAddToLab={onAddToLab}
               emptyLabel="No safe colleges"
               userRank={rank}

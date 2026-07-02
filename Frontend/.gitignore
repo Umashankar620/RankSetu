@@ -100,3 +100,6 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.tsnode_modules/
+venv/
+__pycache__/
+*.pyc

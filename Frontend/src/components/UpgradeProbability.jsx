@@ -1,30 +1,17 @@
-
-
-
-
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   Brain, TrendingUp, TrendingDown, Minus, ArrowUpCircle,
   Shield, Loader2, Sparkles, AlertTriangle, CheckCircle,
-  ChevronDown, Search, Activity, Target, Filter,
+  ChevronDown, Search, Activity, Target, Filter, Layers, MapPin, Building2, Award,
 } from "lucide-react";
 import { RadialBarChart, RadialBar, ResponsiveContainer, PolarAngleAxis } from "recharts";
-
-const API_BASE = process.env.NEXT_PUBLIC_PYTHON_URL || "http://localhost:8000";
-
-async function apiFetch(path, options = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.detail || json.message || `API error ${res.status}`);
-  return json;
-}
-
-const ROUND_OPTIONS = ["Round 1", "Round 2"];
+import {
+  fetchPyCounselingTypes, fetchPyStates, fetchPyAuthorities,
+  fetchPyInstituteTypes, fetchPyCategories, fetchPyQuotas, fetchPyRounds,
+  fetchUpgradeInstitutes, fetchUpgradeProbability,
+} from "@/utils/api";
 
 const ZONE_COLORS = {
   Promising: { stroke: "#1A3C6E", text: "text-primary", bg: "bg-primary/10 border-primary/30" },
@@ -216,57 +203,191 @@ const BetterCollegeCard = ({ college, darkMode, idx }) => (
 
 export default function UpgradeProbability({ darkMode, showToast }) {
   const [userRank, setUserRank] = useState("");
-  const [categories, setCategories] = useState([]);
-  const [quotas, setQuotas] = useState([]);
+
+  // ── Cascade selections ───────────────────────────────────────────────
+  const [ctName,       setCtName]       = useState("ALL");
+  const [stateName,    setStateName]    = useState("ALL");
+  const [authName,     setAuthName]     = useState("ALL");
+  const [instTypeName, setInstTypeName] = useState("ALL");
   const [category, setCategory] = useState("ALL");
-  const [quota, setQuota] = useState("ALL");
-  const [currentRound, setCurrentRound] = useState("Round 1");
+  const [quota,    setQuota]    = useState("ALL");
+  const [currentRound, setCurrentRound] = useState("");
   const [institute, setInstitute] = useState("");
+
+  // ── Cascade dropdown option lists — 100% database-driven ────────────
+  const [counselingTypes, setCounselingTypes] = useState([]);
+  const [states,          setStates]          = useState([]);
+  const [authorities,     setAuthorities]     = useState([]);
+  const [instituteTypes,  setInstituteTypes]  = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [quotas,     setQuotas]     = useState([]);
+  const [rounds,     setRounds]     = useState([]);
   const [institutes, setInstitutes] = useState([]);
+
+  const [ldCt,    setLdCt]    = useState(true);
+  const [ldState, setLdState] = useState(false);
+  const [ldAuth,  setLdAuth]  = useState(false);
+  const [ldIType, setLdIType] = useState(false);
+  const [ldRest,  setLdRest]  = useState(false);
+  const [ldRound, setLdRound] = useState(false);
   const [instLoading, setInstLoading] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [hasChecked, setHasChecked] = useState(false);
   const resultsRef = useRef(null);
 
+  // ==========================================================================
+  // CASCADE LOADERS — same pipeline as the Prediction module (per spec:
+  // "Never maintain separate filtering logic for Prediction and
+  // Upgradation"). Counselling Type → State → Authority → Institute Type
+  // → Category/Quota → College list, all database-driven, all reset
+  // automatically whenever a parent filter changes.
+  // ==========================================================================
+
   useEffect(() => {
-    let cancelled = false;
-    const loadAll = async () => {
-      setInstLoading(true);
-      try {
-        const [filterData, instData] = await Promise.all([
-          apiFetch("/api/filters"),
-          apiFetch("/api/upgrade-institutes"),
-        ]);
-        if (cancelled) return;
-        const f = filterData.filters || filterData;
-        setCategories(f.categories || []);
-        setQuotas(f.quotas || []);
-        const list = instData.data?.institutes || instData.institutes || [];
-        setInstitutes(list);
-        if (list.length === 0) showToast?.("No institutes found.");
-      } catch (err) {
-        if (!cancelled) showToast?.(err.message || "Could not load data.");
-        setInstitutes([]);
-      } finally {
-        if (!cancelled) setInstLoading(false);
-      }
-    };
-    loadAll();
-    return () => { cancelled = true; };
+    setLdCt(true);
+    fetchPyCounselingTypes()
+      .then(r => setCounselingTypes(r?.data?.data || []))
+      .catch(() => showToast?.("Failed to load counselling types."))
+      .finally(() => setLdCt(false));
+  }, [showToast]);
+
+  const resetDownstreamOfType = useCallback(() => {
+    setStateName("ALL"); setAuthName("ALL"); setInstTypeName("ALL");
+    setCategory("ALL"); setQuota("ALL"); setCurrentRound(""); setInstitute("");
+    setStates([]); setAuthorities([]); setInstituteTypes([]);
+    setCategories([]); setQuotas([]); setRounds([]); setInstitutes([]);
+    setHasChecked(false); setResult(null);
   }, []);
+  const resetDownstreamOfState = useCallback(() => {
+    setAuthName("ALL"); setInstTypeName("ALL");
+    setCategory("ALL"); setQuota("ALL"); setCurrentRound(""); setInstitute("");
+    setAuthorities([]); setInstituteTypes([]);
+    setCategories([]); setQuotas([]); setRounds([]); setInstitutes([]);
+    setHasChecked(false); setResult(null);
+  }, []);
+  const resetDownstreamOfAuth = useCallback(() => {
+    setInstTypeName("ALL");
+    setCategory("ALL"); setQuota("ALL"); setCurrentRound(""); setInstitute("");
+    setInstituteTypes([]);
+    setCategories([]); setQuotas([]); setRounds([]); setInstitutes([]);
+    setHasChecked(false); setResult(null);
+  }, []);
+
+  useEffect(() => {
+    if (ctName === "ALL") { setStates([]); return; }
+    setLdState(true);
+    fetchPyStates(ctName)
+      .then(r => setStates(r?.data?.data || []))
+      .catch(() => showToast?.("Failed to load states."))
+      .finally(() => setLdState(false));
+  }, [ctName, showToast]);
+
+  useEffect(() => {
+    if (ctName === "ALL") { setAuthorities([]); return; }
+    setLdAuth(true);
+    fetchPyAuthorities(ctName, stateName)
+      .then(r => setAuthorities(r?.data?.data || []))
+      .catch(() => showToast?.("Failed to load authorities."))
+      .finally(() => setLdAuth(false));
+  }, [ctName, stateName, showToast]);
+
+  useEffect(() => {
+    if (ctName === "ALL") { setInstituteTypes([]); return; }
+    setLdIType(true);
+    fetchPyInstituteTypes(ctName, stateName, authName)
+      .then(r => setInstituteTypes(r?.data?.data || []))
+      .catch(() => showToast?.("Failed to load institute types."))
+      .finally(() => setLdIType(false));
+  }, [ctName, stateName, authName, showToast]);
+
+  // Category + Quota — scoped to everything selected so far
+  useEffect(() => {
+    if (ctName === "ALL") { setCategories([]); setQuotas([]); return; }
+    setLdRest(true);
+    Promise.all([
+      fetchPyCategories(ctName, stateName, authName, instTypeName),
+      fetchPyQuotas(ctName, stateName, authName, instTypeName, "ALL"),
+    ]).then(([cat, q]) => {
+      setCategories(cat?.data?.data || []);
+      setQuotas(q?.data?.data || []);
+    }).catch(() => showToast?.("Failed to load categories/quotas."))
+      .finally(() => setLdRest(false));
+  }, [ctName, stateName, authName, instTypeName, showToast]);
+
+  // Round — 100% database-driven (was previously a hardcoded ["Round 1",
+  // "Round 2"] list). Scoped to the same cascade as Category/Quota, via
+  // the existing /api/filters/rounds endpoint (fetchPyRounds in api.js).
+  // Whatever rounds actually exist in the imported data for this
+  // counselling type/state/authority/institute-type show up here
+  // automatically — a new Round 3/4/5 or a Stray Vacancy round needs zero
+  // frontend code changes.
+  useEffect(() => {
+    if (ctName === "ALL") { setRounds([]); setCurrentRound(""); return; }
+    setLdRound(true);
+    fetchPyRounds(ctName, stateName, authName, instTypeName)
+      .then(r => {
+        const list = r?.data?.data || [];
+        setRounds(list);
+        // Keep a valid selection: prefer "Round 1" if present, else the
+        // first available round, else clear it.
+        setCurrentRound(prev => {
+          if (prev && list.includes(prev)) return prev;
+          return list.includes("Round 1") ? "Round 1" : (list[0] || "");
+        });
+      })
+      .catch(() => showToast?.("Failed to load rounds."))
+      .finally(() => setLdRound(false));
+  }, [ctName, stateName, authName, instTypeName, showToast]);
+
+  // College dropdown — scoped to the FULL cascade, exactly the same
+  // filtering pipeline the Prediction module uses, so the list only ever
+  // shows colleges that genuinely exist within the selected scope.
+  useEffect(() => {
+    if (ctName === "ALL") { setInstitutes([]); return; }
+    let cancelled = false;
+    setInstLoading(true);
+    fetchUpgradeInstitutes({
+      category, quota,
+      counselingType: ctName, state: stateName, authority: authName, instituteType: instTypeName,
+    }).then(instData => {
+      if (cancelled) return;
+      const list = instData?.data?.institutes || instData?.institutes || [];
+      setInstitutes(list);
+    }).catch(err => { if (!cancelled) showToast?.(err.message || "Could not load colleges."); })
+      .finally(() => { if (!cancelled) setInstLoading(false); });
+    return () => { cancelled = true; };
+  }, [ctName, stateName, authName, instTypeName, category, quota, showToast]);
+
+  const handleCtChange = (val) => { setCtName(val); resetDownstreamOfType(); };
+  const handleStateChange = (val) => { setStateName(val); resetDownstreamOfState(); };
+  const handleAuthChange = (val) => { setAuthName(val); resetDownstreamOfAuth(); };
+  const handleInstTypeChange = (val) => {
+    setInstTypeName(val);
+    setCategory("ALL"); setQuota("ALL"); setCurrentRound(""); setInstitute("");
+    setHasChecked(false); setResult(null);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const rank = parseInt(userRank, 10);
     if (!rank || rank <= 0) return showToast?.("Enter valid NEET AIR rank");
+    if (!ctName || ctName === "ALL") return showToast?.("Select a Counselling Type");
+    if (!quota || quota === "ALL") return showToast?.("Select a Quota");
     if (!institute) return showToast?.("Select your currently allotted college");
+    if (!currentRound || currentRound === "ALL") return showToast?.("Select your current round");
     setLoading(true);
     setResult(null);
     try {
-      const data = await apiFetch("/api/upgrade-check", {
-        method: "POST",
-        body: JSON.stringify({ user_rank: rank, current_institute: institute, category, quota, current_round: currentRound }),
+      // Upgradation uses EXACTLY the same filtering pipeline as Prediction —
+      // the full cascade is applied server-side before any upgrade math runs.
+      const data = await fetchUpgradeProbability({
+        user_rank: rank,
+        current_institute: institute,
+        category, quota,
+        counseling_type: ctName, state: stateName, authority: authName, institute_type: instTypeName,
+        current_round: currentRound,
       });
       if (!data.success) {
         showToast?.(data.message || "Insufficient data.");
@@ -284,6 +405,193 @@ export default function UpgradeProbability({ darkMode, showToast }) {
   };
 
   const ra = result?.round_analysis;
+
+  // ───────────────────────────────────────────────────────────────────────
+  // exportUpgradePdf — branded PDF of the Upgrade Probability report.
+  // Same approach/branding as ChoiceLab.jsx's exportPdf: dynamic import of
+  // jspdf + jspdf-autotable (kept out of the main bundle), a repeating
+  // header/footer band + faint watermark drawn via didDrawPage, and a
+  // clean autoTable for the tabular data. Two tables are rendered:
+  //   1) Round-wise cutoff shift (from result.round_analysis.year_wise)
+  //   2) Colleges you may get in the next round (result.better_colleges)
+  // ───────────────────────────────────────────────────────────────────────
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const exportUpgradePdf = async () => {
+    if (!result || pdfBusy) return;
+    setPdfBusy(true);
+    try {
+      const [{ jsPDF }, autoTableMod] = await Promise.all([
+        import('jspdf'),
+        import('jspdf-autotable'),
+      ]);
+      const autoTable = autoTableMod.default || autoTableMod;
+
+      const doc   = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const BRAND = [26, 60, 110];   // #1A3C6E
+      const MUTED = [120, 130, 145];
+      const genDate = new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+
+      const drawBands = () => {
+        doc.saveGraphicsState();
+        doc.setGState(new doc.GState({ opacity: 0.07 }));
+        doc.setTextColor(...BRAND);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(56);
+        doc.text('RankSetu', pageW / 2, pageH / 2, { align: 'center', angle: 35 });
+        doc.restoreGraphicsState();
+
+        doc.setFillColor(...BRAND);
+        doc.rect(0, 0, pageW, 20, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.text('RankSetu', 10, 11);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.text('SMG  •  Upgrade Probability Report  •  Founder: Umashankar', 10, 16.5);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text(`Rank: ${result.user_rank?.toLocaleString() || '—'}`, pageW - 10, 11, { align: 'right' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.text(`Generated: ${genDate}`, pageW - 10, 16.5, { align: 'right' });
+
+        doc.setDrawColor(...MUTED);
+        doc.setLineWidth(0.1);
+        doc.line(10, pageH - 13, pageW - 10, pageH - 13);
+        doc.setFontSize(7.5);
+        doc.setTextColor(...MUTED);
+        doc.setFont('helvetica', 'bold');
+        doc.text('RankSetu • SMG', 10, pageH - 8);
+        doc.setFont('helvetica', 'normal');
+        doc.text(
+          'Reference only — always cross-check with official MCC/state counselling data before deciding.',
+          pageW / 2, pageH - 8, { align: 'center' },
+        );
+        doc.setFont('helvetica', 'italic');
+        doc.text('Made by Umashankar', pageW - 10, pageH - 3.5, { align: 'right' });
+      };
+
+      drawBands();
+
+      // ── Summary block ──────────────────────────────────────────────────
+      doc.setTextColor(30, 41, 59);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('Summary', 10, 28);
+
+      const summaryRows = [
+        ['NEET AIR Rank', result.user_rank?.toLocaleString() || '—'],
+        ['Currently Allotted College', result.current_college || '—'],
+        ['Category / Quota', `${result.category || '—'} / ${result.quota || '—'}`],
+        ['Current Round', currentRound || '—'],
+        ['Upgrade Probability', `${result.upgrade_probability}% (${result.upgrade_zone})`],
+        ['Risk of Losing Current Seat', result.risk_of_losing_seat || '—'],
+      ];
+      autoTable(doc, {
+        startY: 32,
+        margin: { left: 10, right: 10 },
+        theme: 'plain',
+        body: summaryRows,
+        styles: { font: 'helvetica', fontSize: 9, cellPadding: 1.4, textColor: [30, 41, 59] },
+        columnStyles: { 0: { fontStyle: 'bold', cellWidth: 60 }, 1: { cellWidth: 'auto' } },
+      });
+
+      let cursorY = doc.lastAutoTable.finalY + 4;
+
+      // ── Round-wise shift table ───────────────────────────────────────────
+      if (ra?.year_wise?.length > 0) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text(`Cutoff Shift — ${ra.from_round} → ${ra.to_round}`, 10, cursorY);
+
+        autoTable(doc, {
+          startY: cursorY + 3,
+          margin: { left: 10, right: 10 },
+          theme: 'grid',
+          head: [['Year', ra.from_round, ra.to_round, 'Shift']],
+          body: ra.year_wise.map(row => [
+            String(row.year),
+            row.from_close != null ? row.from_close.toLocaleString() : '—',
+            row.to_close   != null ? row.to_close.toLocaleString()   : '—',
+            row.shift != null ? `${row.shift > 0 ? '+' : ''}${row.shift.toLocaleString()}` : '—',
+          ]),
+          styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 2, textColor: [30, 41, 59] },
+          headStyles: { fillColor: BRAND, textColor: 255, fontStyle: 'bold' },
+          alternateRowStyles: { fillColor: [245, 248, 252] },
+        });
+        cursorY = doc.lastAutoTable.finalY + 8;
+      }
+
+      // ── Better colleges table ────────────────────────────────────────────
+      if (cursorY > pageH - 40) { doc.addPage(); drawBands(); cursorY = 28; }
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text(`Colleges You May Get in ${ra?.to_round || 'the Next Round'}`, 10, cursorY);
+
+      if (result.better_colleges?.length > 0) {
+        autoTable(doc, {
+          startY: cursorY + 3,
+          margin: { left: 10, right: 10, bottom: 18 },
+          theme: 'grid',
+          head: [['#', 'Institute', `Predicted ${ra?.to_round || 'Next Round'} Cutoff`, 'Confidence', 'Trend']],
+          body: result.better_colleges.map((c, i) => [
+            String(i + 1),
+            c.institute || '—',
+            c.predicted_r2_cutoff != null ? c.predicted_r2_cutoff.toLocaleString() : '—',
+            c.confidence != null ? `${c.confidence}%` : '—',
+            c.trend || '—',
+          ]),
+          styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 2.2, overflow: 'linebreak', textColor: [30, 41, 59] },
+          headStyles: { fillColor: BRAND, textColor: 255, fontStyle: 'bold' },
+          alternateRowStyles: { fillColor: [245, 248, 252] },
+          columnStyles: { 0: { cellWidth: 8, halign: 'center' }, 1: { cellWidth: 80 } },
+          didDrawPage: drawBands,
+        });
+      } else {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(...MUTED);
+        doc.text('No better colleges found for this Category/Quota.', 10, cursorY + 8);
+      }
+
+      // ── Recommendation ──────────────────────────────────────────────────
+      const afterTableY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 6 : cursorY + 14;
+      if (result.recommendation) {
+        const finalY = afterTableY > pageH - 30 ? (doc.addPage(), drawBands(), 28) : afterTableY;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(...BRAND);
+        doc.text('Recommendation', 10, finalY);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(30, 41, 59);
+        const wrapped = doc.splitTextToSize(result.recommendation, pageW - 20);
+        doc.text(wrapped, 10, finalY + 6);
+      }
+
+      // page numbers, added last so the true total count is known
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let p = 1; p <= totalPages; p++) {
+        doc.setPage(p);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(...MUTED);
+        doc.text(`Page ${p} of ${totalPages}`, pageW - 10, pageH - 8, { align: 'right' });
+      }
+
+      doc.save('RankSetu_Upgrade_Report.pdf');
+      showToast?.('PDF downloaded', 'success');
+    } catch (e) {
+      console.error('[exportUpgradePdf]', e);
+      showToast?.('Could not generate the PDF — please try again', 'error');
+    } finally {
+      setPdfBusy(false);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -329,6 +637,23 @@ export default function UpgradeProbability({ darkMode, showToast }) {
           </div>
 
           <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+              <SelectField label="Counselling Type *" icon={Layers} value={ctName} onChange={handleCtChange}
+                options={counselingTypes} darkMode={darkMode}
+                placeholder={ldCt ? "Loading…" : "Select Counselling Type"} />
+              <SelectField label="State" icon={MapPin} value={stateName} onChange={handleStateChange}
+                options={states} darkMode={darkMode}
+                placeholder={ldState ? "Loading…" : "All States"} />
+              <SelectField label="Authority" icon={Building2} value={authName} onChange={handleAuthChange}
+                options={authorities} darkMode={darkMode}
+                placeholder={ldAuth ? "Loading…" : "All Authorities"} />
+              {instituteTypes.length > 0 && (
+                <SelectField label="Institute Type" icon={Award} value={instTypeName} onChange={handleInstTypeChange}
+                  options={instituteTypes} darkMode={darkMode}
+                  placeholder={ldIType ? "Loading…" : "All Institute Types"} />
+              )}
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <div>
                 <label className="text-sm font-bold uppercase tracking-wide block mb-1 flex items-center gap-1 text-slate-500">
@@ -338,17 +663,17 @@ export default function UpgradeProbability({ darkMode, showToast }) {
                   className={`w-full text-sm px-3 py-2 border rounded focus:outline-none focus:border-primary
                     ${darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-800'}`} />
               </div>
+              <SelectField label="Category" icon={Target} value={category} onChange={setCategory}
+                options={categories} darkMode={darkMode} placeholder={ldRest ? "Loading…" : "All Categories"} />
+              <SelectField label="Quota *" icon={Shield} value={quota} onChange={setQuota}
+                options={quotas} darkMode={darkMode} placeholder={ldRest ? "Loading…" : "Select Quota"} />
               <div className="relative z-10">
                 <SearchableSelect label="Currently Allotted College" value={institute} onChange={setInstitute}
                   options={institutes} darkMode={darkMode} placeholder={instLoading ? "Loading…" : "Select college"} loading={instLoading} />
               </div>
-              <SelectField label="Category" icon={Target} value={category} onChange={setCategory}
-                options={categories} darkMode={darkMode} placeholder="All Categories" />
-              <SelectField label="Quota" icon={Shield} value={quota} onChange={setQuota}
-                options={quotas} darkMode={darkMode} placeholder="All Quotas" />
-              <SelectField label="Current Round" icon={Filter} value={currentRound} onChange={setCurrentRound}
-                options={ROUND_OPTIONS} darkMode={darkMode} placeholder="Select round"
-                hint="Round 1 → check R2 upgrade; Round 2 → check R3 upgrade" />
+              <SelectField label="Current Round *" icon={Filter} value={currentRound} onChange={setCurrentRound}
+                options={rounds} darkMode={darkMode} placeholder={ldRound ? "Loading…" : "Select round"}
+                hint="Select the round you are currently in — the next round is checked automatically" />
               <button type="submit" disabled={loading}
                 className="h-10 px-4 rounded bg-primary hover:bg-interactive text-white text-xs font-bold uppercase tracking-wide transition disabled:opacity-50">
                 {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin inline mr-1" /> : <Sparkles className="w-3.5 h-3.5 inline mr-1" />}
@@ -381,6 +706,19 @@ export default function UpgradeProbability({ darkMode, showToast }) {
       {/* Results */}
       {hasChecked && result && !loading && (
         <div ref={resultsRef} className="space-y-4">
+          {/* Header + PDF export */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <h3 className={`text-sm font-bold uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+              Your Upgrade Report
+            </h3>
+            <button type="button" onClick={exportUpgradePdf} disabled={pdfBusy}
+              className="flex items-center gap-1.5 px-4 py-2 text-white font-bold text-xs rounded-xl transition-all hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: '#16A34A' }}>
+              {pdfBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+              {pdfBusy ? 'Preparing PDF…' : 'Download PDF'}
+            </button>
+          </div>
+
           {/* Gauge + rank */}
           <div className={`rounded border p-5 flex flex-col sm:flex-row items-center justify-center gap-6 ${darkMode ? 'border-slate-700 bg-slate-800/30' : 'border-slate-200 bg-white'}`}>
             <ProbabilityGauge value={result.upgrade_probability} zone={result.upgrade_zone} years={ra?.years_analyzed ?? 0} darkMode={darkMode} />

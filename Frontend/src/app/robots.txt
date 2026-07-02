@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
+Allow: /college-info
+Allow: /college/*
 
 Disallow: /api/
 Disallow: /_next/

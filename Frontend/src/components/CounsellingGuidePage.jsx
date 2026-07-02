@@ -157,6 +157,14 @@ const QUOTAS = [
     example: { title: "Real Scenario", text: "Faraz is enrolled at Jamia. He applies for BDS under JI quota — competition is only with other Jamia students." },
     note: "Faculty of Dentistry Jamia is only for BDS (dental). No separate state quota exists.",
   },
+  {
+    code: "AFMC", fullName: "Armed Forces Medical College, Pune", tag: "Registration Only via MCC",
+    seats: "Registration through MCC; seat allotment done by AFMC", shortDesc: "MCC's role for AFMC is limited to registration of willing candidates. Actual counselling/allotment is done separately by AFMC authorities as per their own rules.",
+    who: "Any NEET-qualified candidate who wants to be considered by AFMC. Candidates must separately check AFMC's own medical and physical eligibility conditions before applying.",
+    rank: "AFMC applies its own selection process after receiving the registered candidate list from MCC — not a standard MCC merit-list allotment.",
+    example: { title: "Important to Know", text: "Rakesh registers for AFMC on the MCC portal. MCC forwards his details to AFMC. From here, AFMC — not MCC — decides eligibility, conducts further screening, and allots the seat as per its own regulations." },
+    note: "MCC will NOT be responsible for any allotment made by AFMC, and will not entertain any grievance about AFMC's process. Always check medical/physical eligibility directly on the AFMC website before applying — admissions have been cancelled in the past for not meeting AFMC's medical standards.",
+  },
 ];
 
 const CATEGORIES = [
@@ -213,28 +221,280 @@ const CATEGORIES = [
 const ROUNDS = [
   {
     num: "R1", name: "Round 1",
-    purpose: "First round of counselling. Maximum seats available — complete seat matrix offered.",
-    strategy: "If your AIR is strong, this is your most important round. Top government colleges, AIIMS, JIPMER fill up here.",
-    important: "After R1 allotment, you must pay acceptance fee and report to college. If you don't report, you are debarred.",
+    purpose: "First round of counselling. Maximum seats available — the complete seat matrix is offered fresh.",
+    strategy: "If your AIR is strong, this is your most important round. Top government colleges, AIIMS, and JIPMER mostly fill up here — don't hold back your best choices.",
+    important: "After R1 allotment, you must report physically with original documents to confirm your seat. If you don't report, you are not automatically debarred from R2 — but you will need to check MCC's latest notice, since rules can be revised each year.",
+    who: "Any candidate who has registered, paid fees, and locked choices before the Round 1 deadline.",
+    process: [
+      "Register on mcc.nic.in and pay Registration Fee + Security Deposit (amount depends on category and quota — see Fees section below).",
+      "Fill choices of colleges/courses in your genuine order of preference, then lock them before the deadline. Once locked, choices CANNOT be modified — not even by MCC.",
+      "MCC processes the seat allotment and publishes the Round 1 result on mcc.nic.in.",
+      "If allotted a seat, physically report with original documents at the allotted college within the stipulated time to confirm admission.",
+      "At the time of reporting, you can also give 'willingness for upgradation' to Round 2 if you want to keep this seat as backup while trying for something better.",
+    ],
+    note: "If you registered but did NOT get any seat in Round 1, you do not need to register again — you are automatically carried forward into Round 2.",
   },
   {
     num: "R2", name: "Round 2",
-    purpose: "Seats vacated after Round 1 + newly added seats from candidates who upgraded.",
-    strategy: "Participate with your R1 seat still secured. You can only move up, not down.",
-    important: "You can participate in R2 even if you have a seat from R1.",
+    purpose: "Seats vacated after Round 1 (due to non-reporting, resignation, or upgrades) plus any newly released seats.",
+    strategy: "You must submit completely fresh choices for Round 2 — your Round 1 choices are treated as null and void. If you already hold a Round 1 seat and gave upgrade willingness, you keep that seat safe while trying to move up.",
+    important: "If you are allotted a seat in Round 2 and do not report/join, your security deposit will be forfeited, and you'll need fresh payment to join Round 3.",
+    who: [
+      "Group I — Registered candidates who got no seat in Round 1.",
+      "Group II — Candidates whose Round 1 seat got cancelled during document verification (changed category).",
+      "Group III — Candidates who reported in Round 1 and gave 'Yes' for upgradation willingness.",
+      "Group IV — Candidates allotted a seat in Round 1 but who did not join.",
+      "Group V — Candidates who resigned online from their Round 1 seat within the resignation window.",
+    ],
+    process: [
+      "If you registered in Round 1 but got no seat, you do NOT need to register again — just fill fresh choices.",
+      "If you are registering for the very first time in Round 2, you must complete full registration with fresh payment of fees.",
+      "Fill and lock FRESH choices — your Round 1 choice list has no effect on Round 2 allotment.",
+      "MCC processes allotment and publishes the Round 2 result.",
+      "Physically report at the newly allotted college. If you are upgrading from your Round 1 seat, you must first get an online relieving letter from your Round 1 college before joining the Round 2 college.",
+      "You can again give willingness for upgradation to Round 3 at the time of reporting.",
+    ],
+    note: "Once upgraded in Round 2, you have NO further claim on your Round 1 seat — it is released to another candidate.",
   },
   {
-    num: "R3", name: "Round 3 (Mop-Up)",
-    purpose: "Final mopping up of all remaining vacant seats across all categories.",
-    strategy: "If you don't have a seat after R1/R2, this is crucial. Closing ranks are more relaxed.",
-    important: "After R3, minority/NRI vacant seats convert to Open/PS seats.",
+    num: "R3", name: "Round 3 (Mop-Up Round)",
+    purpose: "Final mopping-up of all seats left vacant after Round 1 and Round 2, across AIQ, Deemed, Central Universities, AIIMS, JIPMER, and B.Sc. Nursing.",
+    strategy: "If you still don't have a seat after R1/R2, this round matters most — closing ranks are usually more relaxed here since supply and demand have already adjusted twice.",
+    important: "Once you JOIN a seat allotted in Round 3, you CANNOT resign or upgrade further — this is a final commitment. Think carefully before locking choices for Round 3.",
+    who: [
+      "Group I — Registered candidates who got no seat in Round 1 or Round 2.",
+      "Group II — Candidates whose Round 2 seat got cancelled during document verification (changed category).",
+      "Group III — Candidates who reported in Round 2 and gave 'Yes' for upgradation willingness.",
+      "Group IV — Candidates allotted a Round 2 seat but who did not join, or who resigned and exited with forfeiture.",
+    ],
+    process: [
+      "No fresh registration needed if you already registered in Round 1 or Round 2 and remained unallotted.",
+      "If you never registered before, or you did not report/resigned in an earlier round, you must do a fresh full registration with full payment of fees.",
+      "Fill and lock completely FRESH choices — Round 2 choices are void for Round 3.",
+      "MCC processes allotment and publishes the Round 3 result.",
+      "Report physically and join the allotted college. If upgrading from Round 2, get a relieving letter from the Round 2 college first.",
+      "If you are allotted a seat in Round 3 and do NOT report, you exit with forfeiture of your security deposit AND you are eliminated from all further rounds, including the Stray Vacancy Round.",
+    ],
+    note: "Conversion of unfilled reserved-category seats (e.g., ST(PwD)→ST→SC→UR) happens during Round 3, once all eligible candidates in that category have been exhausted.",
   },
   {
-    num: "SV", name: "Stray Vacancy",
-    purpose: "Absolute last round. Very small seat count but ranks can be surprisingly relaxed.",
-    strategy: "Monitor MCC website carefully. Sometimes good seats appear here due to last-minute withdrawals.",
-    important: "Final chance. No further rounds after this. Admission process closes.",
+    num: "SV", name: "Stray Vacancy Round",
+    purpose: "The absolute last round — for seats that remain vacant after Round 3 in AIQ and Deemed Universities. Seat count is small, but ranks can be surprisingly relaxed.",
+    strategy: "Register fresh and monitor the MCC website closely. Sometimes strong seats appear here due to very last-minute non-joining by other candidates.",
+    important: "This is the final chance. There is no round after this — the admission process closes once Stray Vacancy Round ends.",
+    who: "Fresh registration is required for everyone. However, three groups are NOT eligible: (a) candidates who don't register for this round, (b) candidates already holding/joined a seat at the time of this round, and (c) candidates allotted a Round 3 seat who did not report.",
+    process: [
+      "Register fresh for the Stray Vacancy Round (even if you registered before).",
+      "Before this round, MCC cross-checks data with State counselling authorities — if your name appears as allotted in either list, you are removed from the All-India Stray Vacancy Round to prevent seat blocking.",
+      "Fill and lock choices for available vacant seats.",
+      "If allotted a seat, you must join it. If you don't join, your security deposit is forfeited and you become ineligible for any further round (if any is announced).",
+    ],
+    note: null,
   },
+];
+
+// ══════════════════════════════════════════════════════════════════════
+// ELIGIBILITY — exact wording simplified from Chapter 1 & NTA eligibility clause
+// ══════════════════════════════════════════════════════════════════════
+const ELIGIBILITY = [
+  {
+    title: "Qualify NEET-UG first",
+    text: "You must have passed Physics, Chemistry, and Biology/Biotechnology individually, AND English, in your qualifying exam (usually Class 12). You also need a valid NEET-UG rank from NTA.",
+  },
+  {
+    title: "Minimum marks needed (Class 12, PCB combined)",
+    text: "General / General-EWS candidates: at least 50% marks in Physics + Chemistry + Biology/Biotechnology taken together. SC / ST / OBC-NCL candidates: at least 40% marks (relaxed). PwBD candidates: at least 40% marks (relaxed), as per NMC/DCI norms.",
+  },
+  {
+    title: "No separate MCC eligibility test",
+    text: "MCC does not conduct its own entrance exam. Your NEET-UG rank from NTA is the only merit criterion MCC uses for AIQ, Deemed, Central University, AIIMS, JIPMER, and B.Sc. Nursing seats.",
+  },
+  {
+    title: "Data comes from your NTA registration — cannot be edited",
+    text: "The name, date of birth, category, and other details you entered on the NTA NEET application form are automatically carried into your MCC counselling profile. MCC does NOT allow you to edit this information under any circumstances — so make sure it was correct at the NTA stage itself.",
+  },
+];
+
+// ══════════════════════════════════════════════════════════════════════
+// FEES — exact figures from Chapter 13 of the official bulletin
+// ══════════════════════════════════════════════════════════════════════
+const FEES = [
+  {
+    group: "Deemed Universities (100% seats)",
+    registration: "₹5,000 (non-refundable) — same for every candidate",
+    security: "₹2,00,000 (refundable)",
+    total: "₹2,05,000 at the time of registration",
+  },
+  {
+    group: "AIQ / Central Universities (DU, AMU, BHU, Jamia) / AFMC & ESI / All AIIMS / JIPMER / B.Sc. Nursing — UR/EWS candidates",
+    registration: "₹1,000 (non-refundable)",
+    security: "₹10,000 (refundable)",
+    total: "₹11,000 at the time of registration",
+  },
+  {
+    group: "Same group as above — SC / ST / OBC / PwD candidates",
+    registration: "₹500 (non-refundable)",
+    security: "₹5,000 (refundable)",
+    total: "₹5,500 at the time of registration",
+  },
+];
+
+// ══════════════════════════════════════════════════════════════════════
+// DOCUMENTS — required at the time of physical reporting (Chapter 12 FAQ Q29)
+// ══════════════════════════════════════════════════════════════════════
+const DOCUMENTS = [
+  "MCC Allotment Letter (downloaded from the MCC website)",
+  "NEET Admit Card issued by NTA",
+  "NEET Result / Rank Letter issued by NTA",
+  "Date of Birth Certificate (needed only if your Class 10 certificate does not show DOB)",
+  "Class 10th Certificate",
+  "Class 10+2 Certificate",
+  "Class 10+2 Marksheet",
+  "8 passport-size photographs — same photo as used on your NEET application form",
+  "Proof of identity — Aadhaar / PAN / Driving Licence / Passport",
+  "For OCI/PIO/Foreign National candidates — citizenship certificate / card number documents",
+  "SC/ST certificate (standard format, in English or Hindi — carry an attested English/Hindi translation if issued in a regional language) — only if claiming this category",
+  "OBC-NCL certificate matching the Central OBC list, confirming you are NOT in the creamy layer — only if claiming this category",
+  "EWS certificate in the prescribed format — only if claiming this category",
+];
+
+// ══════════════════════════════════════════════════════════════════════
+// GLOSSARY — terms actually used in MCC's official bulletin, defined simply.
+// (Terms like "Freeze / Float / Slide" are common in OTHER counselling
+// bodies like AACCC or JoSAA, but MCC's bulletin does not use those words —
+// so they are intentionally left out here to avoid mixing up terminology.)
+// ══════════════════════════════════════════════════════════════════════
+const GLOSSARY = [
+  { term: "AIQ", def: "All India Quota — the 15% of seats in every state's government medical colleges that are opened up to students from anywhere in India, filled by MCC." },
+  { term: "MCC", def: "Medical Counselling Committee — the central body under DGHS, Ministry of Health & Family Welfare, that conducts online counselling for AIQ, Deemed Universities, AIIMS, JIPMER, Central Universities, and more." },
+  { term: "State Quota", def: "Seats reserved for students who meet a state's own domicile rules, counselled separately by that state's own counselling authority — NOT by MCC." },
+  { term: "Open Seat", def: "A seat with no category restriction. Any eligible candidate can be allotted an Open Seat, regardless of their reservation category." },
+  { term: "Deemed University", def: "A private institution granted 'Deemed to be University' status by the UGC. 100% of Deemed University MBBS/BDS seats are counselled by MCC, but fees are much higher than government colleges." },
+  { term: "Seat Matrix", def: "The full list of how many seats are available in each college, course, and category for a given round." },
+  { term: "Choice Filling", def: "The process where you arrange colleges/courses in the exact order you prefer them, before locking." },
+  { term: "Choice Locking", def: "Once you finalize (lock) your choice order, it becomes permanent for that round — it cannot be changed, even by MCC, even if you made a mistake." },
+  { term: "Seat Allotment", def: "MCC's software matches your AIR against the seat matrix and your locked choices, and assigns you the highest-preference seat you qualify for." },
+  { term: "Free Exit", def: "After Round 1, you are allowed to simply not report to your allotted college with no penalty — your security deposit is not forfeited." },
+  { term: "Exit with Forfeiture", def: "From Round 2 onwards, if you are allotted a seat but do not report/join, you lose your security deposit as a penalty." },
+  { term: "Upgradation / Upgrade", def: "Choosing to try for a better seat in the next round while temporarily holding your current seat as backup. If you get upgraded, your previous seat is released to someone else." },
+  { term: "Security Deposit", def: "A refundable deposit paid at registration (₹2,00,000 for Deemed, ₹5,000–₹10,000 for AIQ/Central seats) to discourage candidates from blocking seats without joining." },
+  { term: "Stray Vacancy Round", def: "The final round, held after Round 3, to fill any seats that are still empty. Very few seats, but sometimes with relaxed closing ranks." },
+  { term: "Mop-Up Round", def: "The older name for what is now called Round 3 — a round meant to 'mop up' (fill) all remaining vacant seats." },
+  { term: "Conversion", def: "When a reserved-category seat (like ST or NRI) stays empty because no eligible candidate in that category wants it, MCC converts it to another category (usually UR/Open) during Round 3, following a fixed conversion algorithm." },
+  { term: "NRI Seat", def: "A seat reserved for Non-Resident Indian candidates or their dependents, usually with fees in US dollars, mainly found in Deemed and private institutions." },
+  { term: "OCI", def: "Overseas Citizen of India — a status for certain foreign nationals of Indian origin. Following a 2023 Supreme Court judgment, OCI cardholders are treated at par with Indian citizens and are eligible for both UR and NRI category seats." },
+  { term: "PwD / PwBD", def: "Person with Disability — candidates with at least 40% benchmark disability get 5% horizontal reservation across all categories, verified through a disability certificate from an authorized government medical board." },
+  { term: "EWS", def: "Economically Weaker Section — 10% reservation for General category candidates whose family income is below ₹8 lakh/year and who don't own specified amounts of land/property." },
+];
+
+// ══════════════════════════════════════════════════════════════════════
+// FAQS — paraphrased in simple language from the official bulletin's own FAQ chapter
+// ══════════════════════════════════════════════════════════════════════
+const FAQS = [
+  {
+    q: "Do I need any documents to register online?",
+    a: "You mainly need the details from the NEET-UG application form you already submitted to NTA. Keep a printout of that form handy, since MCC asks for information exactly matching it (same spelling, same date format).",
+  },
+  {
+    q: "How and when do I make the payment?",
+    a: "After completing fresh registration, the payment page opens automatically. Pay by Net Banking, Credit Card, or Debit Card. Only after successful payment can you move on to choice filling.",
+  },
+  {
+    q: "Is there a limit on how many choices I can fill?",
+    a: "No — you can add as many college/course choices as you want. Just make sure they are arranged in your genuine order of preference, since the same software and choice-filling process is common across AIQ, Deemed, Central Universities, AIIMS, JIPMER, AMU, and BHU.",
+  },
+  {
+    q: "Can I get an idea of what seat I'm likely to get at my rank?",
+    a: "Yes — the previous years' composite allotment lists and category/course-wise opening-closing ranks are published on the MCC website's download section. These only give a rough idea; they don't guarantee anything for the current year.",
+  },
+  {
+    q: "Is it compulsory to lock my choices, or will I get a seat automatically from leftovers?",
+    a: "You must fill and lock your choices yourself. If you don't lock them manually, the system auto-locks whatever you've filled at the scheduled deadline. If you don't fill any choices at all, you get no seat allotment.",
+  },
+  {
+    q: "Do I have to join my Round 1 college to be allowed into Round 2?",
+    a: "No — there's free exit after Round 1. But if you want to KEEP your Round 1 seat as a backup while trying to upgrade in Round 2, you must physically report and give upgradation willingness at the time of admission.",
+  },
+  {
+    q: "If I don't report during Round 2, do I need to register again for Round 3?",
+    a: "Yes. Your security deposit is forfeited, and you can only participate in Round 3 with a completely fresh payment.",
+  },
+  {
+    q: "Who is eligible for the 2nd round of allotment?",
+    a: "Five groups: (1) registered candidates who got no seat in Round 1, (2) candidates whose Round 1 seat was cancelled during document checks, (3) candidates who reported in Round 1 and opted for upgradation, (4) candidates allotted a seat but who didn't join, and (5) candidates who resigned online from their Round 1 seat.",
+  },
+  {
+    q: "Can I get a Round 2 seat using my old Round 1 choices, without filling fresh ones?",
+    a: "No. Fresh choice submission is compulsory for Round 2 (and every later round). If you skip this step, you won't be considered for that round's allotment — you simply retain whatever seat you already joined, if any.",
+  },
+  {
+    q: "After joining Round 3, can I leave or resign?",
+    a: "No. Once you join a seat allotted in Round 3, you cannot vacate it. If you were ALLOTTED a Round 3 seat but never joined, you can still exit — but with forfeiture of your security deposit, and you become ineligible for any further rounds.",
+  },
+  {
+    q: "If I forget my password, how do I get it back?",
+    a: "Use the 'forgot password' option and answer the security question you set during registration. If your answers match your registered details, you'll be allowed to set a new password.",
+  },
+  {
+    q: "Can I modify my locked choices?",
+    a: "You can freely modify, add, or delete choices before locking. Once locked, they are final for that round — no exceptions, even for genuine mistakes.",
+  },
+  {
+    q: "If I'm not allotted any seat in Round 2 or Round 3, do I lose my earlier seat?",
+    a: "No — if you get no NEW seat in a later round, you simply retain whatever seat you already held from an earlier round. But the moment you DO get upgraded, your earlier seat is cancelled automatically and given to someone else — with no claim back on it.",
+  },
+  {
+    q: "If I get upgraded, can I join the new college directly?",
+    a: "No. You first need an online-generated relieving letter from your earlier college (issued through the MCC software by the college authority) before you're allowed to join the new, upgraded seat.",
+  },
+  {
+    q: "By mistake I registered for the wrong quota (e.g. Deemed instead of AIQ) — can I fix it?",
+    a: "Yes, but only once. There's a 'reset' option on the registration page that lets you clear your previously filled quota choice and register again. After using reset, you must complete a fresh registration with full payment.",
+  },
+  {
+    q: "Who is NOT eligible for the Stray Vacancy Round?",
+    a: "Three groups: candidates who didn't register for the Stray round, candidates already holding/joined a seat at that time, and candidates allotted a Round 3 seat who did not report.",
+  },
+  {
+    q: "How much time do I get to join my allotted college?",
+    a: "You must join within the time mentioned in the official counselling schedule — MCC will not extend this date under any circumstances. Some colleges take 2–3 days to complete formalities, so don't wait until the last day.",
+  },
+  {
+    q: "What if my original documents are with another college?",
+    a: "You will NOT be allowed to take admission using a certificate stating your originals are 'deposited elsewhere.' You must have your actual original documents in hand at the time of reporting.",
+  },
+  {
+    q: "There's a spelling mismatch between my documents and my application form — what do I do?",
+    a: "Carry a notarized affidavit proving that all the documents belong to the same person.",
+  },
+  {
+    q: "When and how is my security deposit refunded?",
+    a: "Only after all rounds of counselling are fully completed. MCC's Financial Custodian (HLL Lifecare Ltd.) starts the refund within 15 working days of the official notification and completes it within 30 days — refunded ONLY to the exact same account/card you originally paid from.",
+  },
+  {
+    q: "Can I get my refund sent to a different bank account or card?",
+    a: "No. MCC will not entertain such requests under any circumstance — the refund always goes back to the original payment source. Keep that account/card active until the refund is processed.",
+  },
+];
+
+// ══════════════════════════════════════════════════════════════════════
+// COMPARISON — MCC (verified from official bulletin) vs State Counselling
+// (kept general/high-level since state rules vary a lot state-to-state and
+// aren't covered by this MCC bulletin — always check your own state's
+// official counselling website for exact figures)
+// ══════════════════════════════════════════════════════════════════════
+const COMPARISON_ROWS = [
+  { label: "Conducting Authority", mcc: "Medical Counselling Committee (MCC), DGHS, MoHFW, Govt. of India", state: "Each state's own Directorate of Medical Education / State Counselling Committee" },
+  { label: "Official Website", mcc: "www.mcc.nic.in", state: "Varies by state (each state has its own portal)" },
+  { label: "Seats Covered", mcc: "15% AIQ + 100% AIIMS + 100% JIPMER + 100% Deemed Universities + 100% Central Universities (BHU, AMU, DU internal, Jamia) + ESIC + B.Sc. Nursing (central institutes)", state: "85% State Quota of government colleges + 100% private medical/dental colleges within that state" },
+  { label: "Domicile Requirement", mcc: "None for AIQ, AIIMS, JIPMER Open, Deemed, and most Central seats (fully domicile-free)", state: "Yes — almost always requires proof of domicile/residence in that state" },
+  { label: "Reservation Policy", mcc: "Central Government norms: SC 15%, ST 7.5%, OBC-NCL 27%, EWS 10%, PwD 5% (no reservation in Deemed Universities except possible minority quota)", state: "State's own reservation policy — percentages and categories can differ significantly from Central norms" },
+  { label: "Number of Rounds", mcc: "4 rounds — Round 1, Round 2, Round 3 (Mop-Up), and Stray Vacancy Round", state: "Varies by state — some states run 3 rounds, some run more, including their own stray/mop-up rounds" },
+  { label: "Registration Fee & Security Deposit", mcc: "Fixed nationwide — e.g. ₹1,000+₹10,000 (UR/EWS) or ₹500+₹5,000 (SC/ST/OBC/PwD) for AIQ/Central seats; ₹5,000+₹2,00,000 for Deemed Universities", state: "Set independently by each state — amounts differ widely" },
+  { label: "Choice Locking", mcc: "Once locked, cannot be modified under any circumstances, even by MCC", state: "Similar strict-lock rule in most states, but exact windows/processes vary" },
+  { label: "Seat Upgradation", mcc: "Allowed up to Round 3 while keeping your current seat as backup, by giving 'willingness' at the time of reporting", state: "Most states allow similar upgrade options, but the process and terminology can differ" },
+  { label: "Who Should Apply", mcc: "Every NEET-qualified student in India — since AIQ, AIIMS, JIPMER, Deemed & Central Universities are open to all states", state: "Only students who meet that specific state's domicile rules, for 85% state-quota government seats and private colleges in that state" },
+  { label: "Best For", mcc: "Trying for AIQ seats in ANY state, plus AIIMS/JIPMER/BHU/Deemed options nationwide", state: "Securing the much larger pool of state-quota seats within your own home state, usually at lower fees than Deemed Universities" },
 ];
 
 // ══════════════════════════════════════════════════════════════════════
@@ -438,6 +698,7 @@ function SmallCard({ item, type, dm, onClick }) {
 
 // ── Round Card ─────────────────────────────────────────────────────────
 function RoundCard({ round, dm }) {
+  const [open, setOpen] = useState(false);
   return (
     <div className={`rounded-xl border overflow-hidden ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
       {/* Card header */}
@@ -464,6 +725,22 @@ function RoundCard({ round, dm }) {
           <p className={`text-xs leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{round.purpose}</p>
         </div>
 
+        {/* Who's eligible (if provided) */}
+        {round.who && (
+          <div>
+            <div className={`text-xs font-bold uppercase tracking-wide mb-1 ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
+              Who Can Take Part
+            </div>
+            {Array.isArray(round.who) ? (
+              <ul className={`text-xs leading-relaxed space-y-1 ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+                {round.who.map((w, i) => <li key={i}>• {w}</li>)}
+              </ul>
+            ) : (
+              <p className={`text-xs leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{round.who}</p>
+            )}
+          </div>
+        )}
+
         {/* Strategy */}
         <div
           className="p-2.5 rounded-lg border"
@@ -475,6 +752,24 @@ function RoundCard({ round, dm }) {
           <p className={`text-xs leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{round.strategy}</p>
         </div>
 
+        {/* Step-by-step process toggle */}
+        {round.process && (
+          <div>
+            <button
+              onClick={() => setOpen(!open)}
+              className="flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+              style={{ color: accent2(dm) }}
+            >
+              {open ? IC.chevU : IC.chevD} Step-by-step process
+            </button>
+            {open && (
+              <ol className={`mt-2 space-y-1.5 text-xs leading-relaxed list-decimal list-inside ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+                {round.process.map((s, i) => <li key={i}>{s}</li>)}
+              </ol>
+            )}
+          </div>
+        )}
+
         {/* Important */}
         <div
           className="p-2.5 rounded-lg border"
@@ -482,7 +777,170 @@ function RoundCard({ round, dm }) {
         >
           <p className="text-xs leading-relaxed" style={{ color: accent2(dm) }}>⚠ {round.important}</p>
         </div>
+
+        {/* Extra note */}
+        {round.note && (
+          <p className={`text-xs italic leading-relaxed ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ℹ {round.note}</p>
+        )}
       </div>
+    </div>
+  );
+}
+
+// ── Comparison Table (MCC vs State) ─────────────────────────────────────
+function ComparisonTable({ dm }) {
+  return (
+    <div className={`rounded-xl border overflow-hidden ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className={dm ? 'bg-slate-800/80' : 'bg-slate-50'}>
+              <th className={`text-left p-3 font-bold text-xs uppercase tracking-wide ${dm ? 'text-slate-400' : 'text-slate-500'}`}>Aspect</th>
+              <th className="text-left p-3 font-bold text-xs uppercase tracking-wide" style={{ color: accent(dm) }}>MCC (Central Counselling)</th>
+              <th className="text-left p-3 font-bold text-xs uppercase tracking-wide" style={{ color: accent2(dm) }}>State Counselling</th>
+            </tr>
+          </thead>
+          <tbody>
+            {COMPARISON_ROWS.map((r, i) => (
+              <tr key={r.label} className={`border-t ${dm ? 'border-slate-700' : 'border-slate-100'} ${i % 2 === 1 ? (dm ? 'bg-slate-800/30' : 'bg-slate-50/60') : ''}`}>
+                <td className={`p-3 font-semibold align-top ${dm ? 'text-white' : 'text-slate-900'}`}>{r.label}</td>
+                <td className={`p-3 align-top leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{r.mcc}</td>
+                <td className={`p-3 align-top leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{r.state}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="p-3 border-t" style={{ borderColor: tint(dm, '25'), backgroundColor: tint(dm, '06') }}>
+        <p className="text-xs leading-relaxed" style={{ color: accent(dm) }}>
+          <strong>Note:</strong> The MCC column above is verified directly from MCC's official Information Bulletin.
+          The State Counselling column is a general overview — exact rules, fees, reservation percentages, and
+          round counts differ from state to state, so always cross-check with your own state's official counselling website too.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Fees Table ────────────────────────────────────────────────────────
+function FeesTable({ dm }) {
+  return (
+    <div className={`rounded-xl border overflow-hidden ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className={dm ? 'bg-slate-800/80' : 'bg-slate-50'}>
+              <th className={`text-left p-3 font-bold text-xs uppercase tracking-wide ${dm ? 'text-slate-400' : 'text-slate-500'}`}>Quota Group</th>
+              <th className={`text-left p-3 font-bold text-xs uppercase tracking-wide ${dm ? 'text-slate-400' : 'text-slate-500'}`}>Registration Fee</th>
+              <th className={`text-left p-3 font-bold text-xs uppercase tracking-wide ${dm ? 'text-slate-400' : 'text-slate-500'}`}>Security Deposit</th>
+              <th className="text-left p-3 font-bold text-xs uppercase tracking-wide" style={{ color: accent(dm) }}>Total Payable</th>
+            </tr>
+          </thead>
+          <tbody>
+            {FEES.map((f, i) => (
+              <tr key={f.group} className={`border-t ${dm ? 'border-slate-700' : 'border-slate-100'} ${i % 2 === 1 ? (dm ? 'bg-slate-800/30' : 'bg-slate-50/60') : ''}`}>
+                <td className={`p-3 font-semibold align-top ${dm ? 'text-white' : 'text-slate-900'}`}>{f.group}</td>
+                <td className={`p-3 align-top ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{f.registration}</td>
+                <td className={`p-3 align-top ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{f.security}</td>
+                <td className="p-3 align-top font-bold" style={{ color: accent(dm) }}>{f.total}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="p-3 border-t" style={{ borderColor: tint(dm, '25'), backgroundColor: tint(dm, '06') }}>
+        <p className="text-xs leading-relaxed" style={{ color: accent(dm) }}>
+          <strong>If applying for both Govt./Central seats AND Deemed University seats:</strong> you only pay the
+          higher fee once (the Deemed University fee of ₹2,05,000) — not both amounts separately. Registration
+          fee is non-refundable; the security deposit is refunded after all rounds are completed, to the same
+          account/card it was paid from.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Simple bullet list card ─────────────────────────────────────────────
+function BulletCard({ items, dm, numbered = false }) {
+  return (
+    <div className={`rounded-xl border overflow-hidden ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+      {items.map((text, i) => (
+        <div
+          key={i}
+          className={`flex gap-3 p-4 ${i < items.length - 1 ? `border-b ${dm ? 'border-slate-700/60' : 'border-slate-100'}` : ''}
+            ${i % 2 === 1 ? (dm ? 'bg-slate-800/30' : 'bg-slate-50/60') : ''}`}
+        >
+          <span
+            className="w-7 h-7 rounded-lg shrink-0 flex items-center justify-center text-xs font-bold border"
+            style={{ backgroundColor: tint(dm, '12'), borderColor: tint(dm, '25'), color: accent(dm) }}
+          >
+            {numbered ? i + 1 : IC.check}
+          </span>
+          <p className={`text-sm leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{text}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Eligibility card list (title + text) ────────────────────────────────
+function EligibilityList({ dm }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {ELIGIBILITY.map((e, i) => (
+        <div key={i} className={`p-4 rounded-xl border ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+          <div className="text-sm font-bold mb-1.5" style={{ color: accent(dm) }}>{e.title}</div>
+          <p className={`text-xs leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{e.text}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Glossary grid ────────────────────────────────────────────────────────
+function GlossaryGrid({ dm }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {GLOSSARY.map((g) => (
+        <div key={g.term} className={`p-3.5 rounded-xl border ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+          <div
+            className="inline-block text-xs font-bold uppercase px-2 py-0.5 rounded-full border mb-2"
+            style={{ backgroundColor: tint(dm, '10'), borderColor: tint(dm, '30'), color: accent(dm) }}
+          >
+            {g.term}
+          </div>
+          <p className={`text-xs leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{g.def}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── FAQ Accordion ─────────────────────────────────────────────────────────
+function FAQAccordion({ dm }) {
+  const [openIdx, setOpenIdx] = useState(null);
+  return (
+    <div className={`rounded-xl border overflow-hidden ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+      {FAQS.map((f, i) => {
+        const isOpen = openIdx === i;
+        return (
+          <div key={i} className={i < FAQS.length - 1 ? `border-b ${dm ? 'border-slate-700/60' : 'border-slate-100'}` : ''}>
+            <button
+              onClick={() => setOpenIdx(isOpen ? null : i)}
+              className={`w-full flex items-center justify-between gap-3 p-4 text-left cursor-pointer transition-colors
+                ${dm ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50'}`}
+            >
+              <span className={`text-sm font-semibold ${dm ? 'text-white' : 'text-slate-900'}`}>{f.q}</span>
+              <span className="shrink-0" style={{ color: accent(dm) }}>{isOpen ? IC.chevU : IC.chevD}</span>
+            </button>
+            {isOpen && (
+              <div className="px-4 pb-4">
+                <p className={`text-sm leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{f.a}</p>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -556,7 +1014,7 @@ export default function CounsellingGuidePage({ darkMode: dm = false, setCurrentV
                 <div className="space-y-2">
                   {[
                     { icon: "📄", text: "Source: mcc.nic.in" },
-                    { icon: "🔄", text: "Updated for 2024 Counselling" },
+                    { icon: "🔄", text: "Updated for 2025 Counselling" },
                     { icon: "📊", text: "All Rounds Covered" },
                     { icon: "🏷️", text: "All Quota Codes Explained" },
                   ].map(t => (
@@ -587,10 +1045,16 @@ export default function CounsellingGuidePage({ darkMode: dm = false, setCurrentV
           <div className="flex flex-wrap gap-2">
             {[
               { href: "#sec-scope", label: "What MCC Handles" },
+              { href: "#sec-compare", label: "MCC vs State" },
+              { href: "#sec-eligibility", label: "Eligibility" },
               { href: "#sec-allotment", label: "How Allotment Works" },
               { href: "#sec-quotas", label: "Quota Codes" },
               { href: "#sec-categories", label: "Category Reservation" },
               { href: "#sec-rounds", label: "Counselling Rounds" },
+              { href: "#sec-fees", label: "Fees & Refund" },
+              { href: "#sec-documents", label: "Documents Required" },
+              { href: "#sec-glossary", label: "Glossary" },
+              { href: "#sec-faq", label: "FAQs" },
             ].map(link => (
               <a
                 key={link.href}
@@ -651,6 +1115,48 @@ export default function CounsellingGuidePage({ darkMode: dm = false, setCurrentV
               </p>
             </div>
           </div>
+        </div>
+
+        {/* ── SECTION: MCC vs STATE COMPARISON ────────────────────── */}
+        <div id="sec-compare" className="mb-8 scroll-mt-24">
+          <SectionHeader
+            icon={IC.trophy}
+            title="MCC vs State Counselling — What's the Difference?"
+            subtitle="The single most confusing thing for first-timers. This table clears it up in one glance."
+            dm={dm}
+          />
+          <ComparisonTable dm={dm} />
+
+          {/* Decision guide */}
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className={`p-4 rounded-xl border ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+              <div className="text-sm font-bold mb-1.5" style={{ color: accent(dm) }}>Should I register for MCC?</div>
+              <p className={`text-xs leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+                Yes — almost every NEET-qualified student should register for MCC counselling. It's your only route to
+                AIQ seats in EVERY state (not just your own), plus AIIMS, JIPMER, BHU, AMU, and Deemed Universities. There's
+                no domicile restriction, so you lose nothing by registering.
+              </p>
+            </div>
+            <div className={`p-4 rounded-xl border ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+              <div className="text-sm font-bold mb-1.5" style={{ color: accent2(dm) }}>Should I also register for State Counselling?</div>
+              <p className={`text-xs leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+                Yes, if you meet your state's domicile rules — State Quota is 85% of every government college's seats,
+                a much bigger pool than the 15% AIQ. Most students register for BOTH MCC and their home state's counselling
+                at the same time, since the two processes run independently and don't block each other.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── SECTION: ELIGIBILITY ────────────────────────────────── */}
+        <div id="sec-eligibility" className="mb-8 scroll-mt-24">
+          <SectionHeader
+            icon={IC.shield}
+            title="Am I Eligible? — Eligibility Conditions"
+            subtitle="Straight from the official bulletin — the minimum bar you need to clear before you can even register"
+            dm={dm}
+          />
+          <EligibilityList dm={dm} />
         </div>
 
         {/* ── SECTION 2: OPEN vs CATEGORY SEAT ───────────────────── */}
@@ -781,6 +1287,71 @@ export default function CounsellingGuidePage({ darkMode: dm = false, setCurrentV
           </div>
         </div>
 
+        {/* ── SECTION: FEES & SECURITY DEPOSIT ────────────────────── */}
+        <div id="sec-fees" className="mb-8 scroll-mt-24">
+          <SectionHeader
+            icon={IC.db}
+            title="Fees & Security Deposit — Exact Amounts"
+            subtitle="These figures are fixed nationwide by MCC and are the same regardless of which state you're from"
+            dm={dm}
+          />
+          <FeesTable dm={dm} />
+
+          <div
+            className="mt-4 p-4 rounded-xl border"
+            style={{ backgroundColor: tint2(dm, '08'), borderColor: tint2(dm, '30') }}
+          >
+            <div className="text-sm font-bold uppercase tracking-wide mb-2" style={{ color: accent2(dm) }}>
+              💰 Refund Policy — When You Get Your Money Back
+            </div>
+            <ul className={`space-y-1.5 text-xs leading-relaxed`} style={{ color: accent2(dm) }}>
+              <li>• Refund only starts after ALL rounds of counselling (including Stray Vacancy) are fully completed and MCC notifies this on its portal.</li>
+              <li>• The Financial Custodian (HLL Lifecare Ltd., a Govt. of India undertaking) begins the refund within 15 working days and completes it within 30 days of the notification.</li>
+              <li>• The refund goes ONLY to the exact same bank account/card you originally paid from — keep that account active until refund is complete.</li>
+              <li>• If a seat allotted in Round 2 or later is not joined, the security deposit for that round is forfeited (not refunded).</li>
+              <li>• You do not need to separately request a refund — MCC publishes an eligible list, and the process starts automatically.</li>
+              <li>• MCC does not pay any interest on the security deposit held during the counselling period.</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* ── SECTION: DOCUMENTS REQUIRED ─────────────────────────── */}
+        <div id="sec-documents" className="mb-8 scroll-mt-24">
+          <SectionHeader
+            icon={IC.book}
+            title="Documents Required at Reporting"
+            subtitle="Carry ORIGINALS plus attested photocopies of every document below when you report to your allotted college — incomplete documents can cost you your seat"
+            dm={dm}
+          />
+          <BulletCard items={DOCUMENTS} dm={dm} />
+          <p className={`mt-3 text-xs italic leading-relaxed ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+            Some colleges may ask for additional documents specific to them — always check the allotted college's own
+            website or contact them directly right after your result is declared.
+          </p>
+        </div>
+
+        {/* ── SECTION: GLOSSARY ───────────────────────────────────── */}
+        <div id="sec-glossary" className="mb-8 scroll-mt-24">
+          <SectionHeader
+            icon={IC.book}
+            title="Counselling Dictionary — Terms Explained Simply"
+            subtitle="Every important word from the MCC bulletin, explained in plain English so you never get confused again"
+            dm={dm}
+          />
+          <GlossaryGrid dm={dm} />
+        </div>
+
+        {/* ── SECTION: FAQ ─────────────────────────────────────────── */}
+        <div id="sec-faq" className="mb-8 scroll-mt-24">
+          <SectionHeader
+            icon={IC.users}
+            title="Frequently Asked Questions"
+            subtitle="Real questions students ask, answered simply — sourced from MCC's own official FAQ chapter"
+            dm={dm}
+          />
+          <FAQAccordion dm={dm} />
+        </div>
+
         {/* ── COMMON MISTAKES CALLOUT ─────────────────────────────── */}
         <div
           className={`mb-8 p-5 rounded-xl border ${dm ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200'}`}
@@ -794,6 +1365,11 @@ export default function CounsellingGuidePage({ darkMode: dm = false, setCurrentV
             <li>• Checking only the Open/UR closing rank when you belong to a reserved category — always use the category filter on the Cutoff Data page to see the real closing rank for your category.</li>
             <li>• Skipping Round 2 because you already have a seat — you can almost always participate in upgrade rounds while keeping your current seat safe.</li>
             <li>• Ignoring Stray Vacancy round — some good seats appear here at the very last moment due to late withdrawals.</li>
+            <li>• Not filling FRESH choices in Round 2/Round 3 — your earlier round's choice list is void, so if you skip fresh choice filling you get no new allotment that round.</li>
+            <li>• Confusing AIQ (15% central, domicile-free) with State Quota (85%, needs domicile) — many students think registering for MCC alone is enough; check your state's own counselling too.</li>
+            <li>• Joining a Round 3 seat without being sure — once joined, there is NO exit; you cannot resign even with genuine reasons.</li>
+            <li>• Giving wrong information at registration (name, category, etc.) — MCC pulls this directly from your NTA form and will not edit it under any circumstances, and wrong info can get your admission cancelled later.</li>
+            <li>• Waiting until the last day to report to your allotted college — some colleges take 2–3 days to complete formalities, and missing the deadline cancels your seat with no extension.</li>
           </ul>
         </div>
 
@@ -815,7 +1391,9 @@ export default function CounsellingGuidePage({ darkMode: dm = false, setCurrentV
             </div>
             <p className={`text-sm leading-relaxed mb-3 ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
               All Opening and Closing Rank data on RankSetu is sourced directly from the official MCC seat allotment result PDFs
-              published on mcc.nic.in — no estimation or approximation involved.
+              published on mcc.nic.in — no estimation or approximation involved. The Eligibility, Fees, Refund Policy, Documents,
+              Round-wise process, and FAQ sections above are paraphrased directly from MCC's official <strong>NEET-UG 2025 Information
+              Bulletin & Counselling Scheme</strong> — nothing in those sections is guessed or invented.
             </p>
             <div className="flex flex-wrap gap-2 mb-3">
               {["Source: mcc.nic.in official PDFs", "No estimation involved", "Years 2020–2024 covered", "Round-wise data preserved", "Category-wise data preserved"].map(item => (

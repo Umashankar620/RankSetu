@@ -98,8 +98,46 @@ export default function CutoffTable({
   onPageChange, loading, hasSearched,
   userRank, cutoffShift = 0, darkMode = false,
   onOpenTrendModal,
+  // ── Checkbox shortlist wiring ──────────────────────────────────────────
+  // CutoffPage owns the "selected rows" state and the Send-to-Choice-Lab
+  // bar/logic — this component only needs to keep raw checked rows in sync
+  // via setSelectedColleges. If not passed, it falls back to an internal
+  // list so the component still works standalone.
+  selectedColleges, setSelectedColleges,
+  onAddToChoiceLab, // optional — lets a row/heading trigger the forward directly
+  setCurrentView,   // optional — passed through by CutoffPage, unused here directly
 }) {
   const [expanded, setExpanded] = useState({});
+  const [internalSelected, setInternalSelected] = useState([]);
+  const isSelectionControlled = selectedColleges !== undefined && typeof setSelectedColleges === 'function';
+  const shortlist    = isSelectionControlled ? (selectedColleges || []) : internalSelected;
+  const setShortlist = isSelectionControlled ? setSelectedColleges : setInternalSelected;
+
+  const selectedIds = new Set(shortlist.map(c => c.id ?? c.institute));
+
+  const toggleSelect = (row) => {
+    const rowId = row.id ?? row.institute;
+    setShortlist(prev => {
+      const exists = prev.some(c => (c.id ?? c.institute) === rowId);
+      if (exists) return prev.filter(c => (c.id ?? c.institute) !== rowId);
+      return [...prev, row];
+    });
+  };
+
+  const pageRowIds = data.map(row => row.id ?? row.institute);
+  const allPageSelected = pageRowIds.length > 0 && pageRowIds.every(id => selectedIds.has(id));
+  const togglePageAll = () => {
+    if (allPageSelected) {
+      setShortlist(prev => prev.filter(c => !pageRowIds.includes(c.id ?? c.institute)));
+    } else {
+      setShortlist(prev => {
+        const existingIds = new Set(prev.map(c => c.id ?? c.institute));
+        const toAdd = data.filter(row => !existingIds.has(row.id ?? row.institute));
+        return [...prev, ...toAdd];
+      });
+    }
+  };
+
   const pageStart = (currentPage - 1) * 20 + 1;
   const pageEnd   = Math.min(currentPage * 20, totalItems);
   const toggle = (id) => setExpanded(p => ({ ...p, [id]: !p[id] }));
@@ -175,6 +213,15 @@ export default function CutoffTable({
         <table className="w-full text-left border-collapse text-sm">
           <thead>
             <tr className="border-b bg-primary text-white">
+              <th className="px-3 py-3 text-center font-semibold w-10 border-r border-white/20">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 accent-white cursor-pointer align-middle"
+                  checked={allPageSelected}
+                  onChange={togglePageAll}
+                  aria-label="Select all colleges on this page"
+                />
+              </th>
               <th className="px-3 py-3 text-center font-semibold w-12 border-r border-white/20">#</th>
               <th className="px-4 py-3 font-semibold min-w-[320px] border-r border-white/20">Institution Profile</th>
               <th className="px-4 py-3 text-right font-semibold w-28 border-r border-white/20">Closing</th>
@@ -202,6 +249,15 @@ export default function CutoffTable({
                       ? `border-slate-600 hover:bg-slate-600 ${isEven ? 'bg-slate-700/40' : 'bg-slate-800'}`
                       : `border-slate-200 hover:bg-slate-50 ${isEven ? 'bg-slate-50' : 'bg-white'}`
                   }`}>
+                    <td className="px-3 py-3 text-center border-r border-slate-200 dark:border-slate-600">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 accent-primary cursor-pointer align-middle"
+                        checked={selectedIds.has(row.id ?? row.institute)}
+                        onChange={() => toggleSelect(row)}
+                        aria-label={`Select ${row.institute}`}
+                      />
+                    </td>
                     <td className="px-3 py-3 text-center font-medium border-r border-slate-200 dark:border-slate-600">
                       {String(sno).padStart(2, '0')}
                     </td>
@@ -267,7 +323,7 @@ export default function CutoffTable({
                   </tr>
                   {isExp && (
                     <tr className={darkMode ? 'bg-slate-700/30' : 'bg-slate-50'}>
-                      <td colSpan="10" className={`p-5 ${darkMode ? 'border-slate-700' : 'border-slate-200 border-t'}`}>
+                      <td colSpan="11" className={`p-5 ${darkMode ? 'border-slate-700' : 'border-slate-200 border-t'}`}>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                           <div className={`rounded-md p-3 shadow-sm flex flex-col gap-1 border ${
                             darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'

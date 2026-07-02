@@ -37,4 +37,6 @@ temp/
 *.pem
 *.key
 *.crt
-secrets.json
+secrets.jsonvenv/
+__pycache__/
+*.pyc

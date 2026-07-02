@@ -1,289 +1,258 @@
 // =============================================================================
-// controllers/cutoffController.js
-// Table: mcc_cutoffs
-// Columns: id, year, round, quota, category, institute_name, course,
-//          opening_rank, closing_rank, fees, bond_years
+// controllers/cutoffController.js  —  Complete, all endpoints, state + authority
+// + institute_type aware (so College/Course/Quota/Category/Round/Year lists all
+// genuinely narrow down when State or Institute Type pills are selected).
 // =============================================================================
-const db    = require('../config/db');
-const cache = require('../config/cache');
+const svc = require('../services/cutoffService');
 
-const TABLE        = 'mcc_cutoffs';
-const PAGE_SIZE    = 20;
-const FILTER_TTL   = 10 * 60_000; // 10 minutes
-
-// Safe whitelist — only these columns allowed in WHERE
-const ALLOWED_COLS = new Set(['year', 'round', 'category', 'quota', 'course']);
-
-// =============================================================================
-// POST /api/cutoffs
-// Body: { year, round, category, quota, program, institute, page }
-// =============================================================================
-const getCutoffs = async (req, res) => {
-  try {
-    const {
-      year, round, category, quota,
-      program, institute,
-      page = 1,
-    } = req.body;
-
-    const pageNum = Math.max(1, parseInt(page) || 1);
-    const offset  = (pageNum - 1) * PAGE_SIZE;
-
-    const conditions  = [];
-    const params      = [];
-
-    // Map frontend keys → exact DB column names
-    const simpleFilters = {
-      year,
-      round,
-      category,
-      quota,
-      course: program,   // frontend sends "program", DB column is "course"
-    };
-
-    for (const [col, val] of Object.entries(simpleFilters)) {
-      if (val && val !== 'ALL' && val !== '' && ALLOWED_COLS.has(col)) {
-        conditions.push(`\`${col}\` = ?`);
-        params.push(val);
-      }
-    }
-
-    // institute_name — exact match
-    if (institute && institute !== 'ALL' && institute !== '') {
-      conditions.push('`institute_name` = ?');
-      params.push(institute);
-    }
-
-    const WHERE = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
-
-    const [[rows], [[countRow]]] = await Promise.all([
-      db.query(
-        `SELECT
-           id,
-           year,
-           round,
-           quota,
-           category,
-           institute_name  AS institute,
-           course          AS program,
-           opening_rank    AS openRank,
-           closing_rank    AS closeRank,
-           fees,
-           bond_years      AS bondYears
-         FROM ${TABLE}
-         ${WHERE}
-         ORDER BY closing_rank ASC
-         LIMIT ? OFFSET ?`,
-        [...params, PAGE_SIZE, offset]
-      ),
-      db.query(`SELECT COUNT(*) AS total FROM ${TABLE} ${WHERE}`, params),
-    ]);
-
-    return res.status(200).json({
-      success:     true,
-      data:        rows,
-      totalItems:  countRow.total,
-      totalPages:  Math.ceil(countRow.total / PAGE_SIZE),
-      currentPage: pageNum,
-      pageSize:    PAGE_SIZE,
-    });
-  } catch (err) {
-    console.error('[getCutoffs error]', err.message);
-    return res.status(500).json({ success: false, message: 'Server Error. Please try again.' });
+const handle = (fn) => async (req, res) => {
+  try { await fn(req, res); }
+  catch (err) {
+    // CHANGED: log the full error server-side always, but only send the
+    // raw message to the client outside production — err.message can
+    // include DB/internal details (query fragments, connection info)
+    // that shouldn't be exposed publicly. 4xx messages we throw ourselves
+    // (Unauthorized, not configured, etc.) are already safe to show as-is.
+    console.error('[ctrl]', err);
+    const status = err.statusCode || 500;
+    const message = (status === 500 && process.env.NODE_ENV === 'production')
+      ? 'Server Error. Please try again.'
+      : (err.message || 'Server Error.');
+    res.status(status).json({ success: false, message });
   }
 };
 
-// =============================================================================
-// GET /api/filters — distinct dropdown values (cached 10 min)
-// NOW INCLUDES: quotaInstituteMap for dependent filtering on frontend
-// Uses index: ix_quota_institute (quota, institute_name) — index-only scan
-// =============================================================================
-const getFilterOptions = async (req, res) => {
-  // Bumped to v4 — includes quotaInstituteMap; old v3 cache would miss it
-  const CACHE_KEY = 'filter_options_v4';
-  const cached    = cache.get(CACHE_KEY);
-  if (cached) return res.status(200).json({ success: true, filters: cached, fromCache: true });
+const toInt = (v) => (v !== undefined && v !== null && v !== '' ? parseInt(v) : null);
 
-  try {
-    const queries = [
-      `SELECT DISTINCT year           FROM ${TABLE} WHERE year           IS NOT NULL ORDER BY year DESC`,
-      `SELECT DISTINCT round          FROM ${TABLE} WHERE round          IS NOT NULL AND round          != '' ORDER BY round`,
-      `SELECT DISTINCT category       FROM ${TABLE} WHERE category       IS NOT NULL AND category       != '' ORDER BY category`,
-      `SELECT DISTINCT quota          FROM ${TABLE} WHERE quota          IS NOT NULL AND quota          != '' ORDER BY quota`,
-      `SELECT DISTINCT course         FROM ${TABLE} WHERE course         IS NOT NULL AND course         != '' ORDER BY course`,
-      `SELECT DISTINCT institute_name FROM ${TABLE} WHERE institute_name IS NOT NULL AND institute_name != '' ORDER BY institute_name`,
-      // NEW: quota → institute mapping for dependent filtering.
-      // Hits the ix_quota_institute (quota, institute_name) index as an index-only scan — no row reads.
-      `SELECT DISTINCT quota, institute_name
-         FROM ${TABLE}
-         WHERE quota          IS NOT NULL AND quota          != ''
-           AND institute_name IS NOT NULL AND institute_name != ''
-         ORDER BY quota, institute_name`,
-    ];
+// ── FILTER CASCADE ────────────────────────────────────────────────────────────
+// Step 1: GET /api/filters/counseling-types
+const getCounselingTypes = handle(async (req, res) => {
+  const data = await svc.getCounselingTypes();
+  res.json({ success: true, data });
+});
 
-    const results = await Promise.all(queries.map((q) => db.execute(q)));
+// Step 2: GET /api/filters/states?counseling_type_id=1
+//   State comes right after Counselling Type, before Authority — because
+//   in this dataset Authority itself depends on State (e.g. UP -> UPDGME /
+//   UP_Ayush, All India -> MCC / AACCC).
+const getStates = handle(async (req, res) => {
+  const { counseling_type_id } = req.query;
+  const data = await svc.getStates(toInt(counseling_type_id));
+  res.json({ success: true, data });
+});
 
-    // Build quotaInstituteMap: { "AIQ": ["AIIMS Delhi", ...], "State": [...], ... }
-    // Used by FilterBar to show only relevant institutes when a quota is selected.
-    const quotaInstituteMap = {};
-    results[6][0].forEach(({ quota, institute_name }) => {
-      if (!quotaInstituteMap[quota]) quotaInstituteMap[quota] = [];
-      quotaInstituteMap[quota].push(institute_name);
-    });
+// Step 3: GET /api/filters/authorities?counseling_type_id=1&state_id=2
+const getAuthorities = handle(async (req, res) => {
+  const { counseling_type_id, state_id } = req.query;
+  const data = await svc.getAuthorities(toInt(counseling_type_id), toInt(state_id));
+  res.json({ success: true, data });
+});
 
-    const filters = {
-      years:             results[0][0].map((r) => r.year),
-      rounds:            results[1][0].map((r) => r.round),
-      categories:        results[2][0].map((r) => r.category),
-      quotas:            results[3][0].map((r) => r.quota),
-      programs:          results[4][0].map((r) => r.course),
-      institutes:        results[5][0].map((r) => r.institute_name),
-      quotaInstituteMap, // NEW — dependent filtering map
-      // mcc_cutoffs has no gender/type columns — return empty arrays
-      genders:           [],
-      types:             [],
-    };
+// GET /api/filters/institute-types?counseling_type_id=&authority_id=&state_id=
+//   Only datasets that actually populate the `type` column (UP files) will
+//   return rows here — MCC/AYUSH correctly return an empty list, so the
+//   frontend hides this pill row entirely for those, instead of showing a
+//   stale/static list that doesn't match real data.
+const getInstituteTypes = handle(async (req, res) => {
+  const { counseling_type_id, authority_id, state_id } = req.query;
+  const data = await svc.getInstituteTypes(
+    toInt(counseling_type_id), toInt(authority_id), toInt(state_id)
+  );
+  res.json({ success: true, data });
+});
 
-    cache.set(CACHE_KEY, filters, FILTER_TTL);
-    return res.status(200).json({ success: true, filters, fromCache: false });
-  } catch (err) {
-    console.error('[getFilterOptions error]', err.message);
-    return res.status(500).json({ success: false, message: 'Failed to load filter options.' });
-  }
-};
+// Step 4: GET /api/filters/years?counseling_type_id=1&authority_id=2&state_id=&institute_type_id=
+const getYears = handle(async (req, res) => {
+  const { counseling_type_id, authority_id, state_id, institute_type_id } = req.query;
+  const data = await svc.getYears(
+    toInt(counseling_type_id), toInt(authority_id), toInt(state_id), toInt(institute_type_id)
+  );
+  res.json({ success: true, data });
+});
 
-// =============================================================================
-// GET /api/trends?institute=...&category=...
-// =============================================================================
-const getInstituteTrends = async (req, res) => {
-  try {
-    const { institute, category } = req.query;
+// Step 4: GET /api/filters/rounds?counseling_type_id=1&authority_id=2&state_id=&institute_type_id=
+const getRounds = handle(async (req, res) => {
+  const { counseling_type_id, authority_id, state_id, institute_type_id } = req.query;
+  const data = await svc.getRounds(
+    toInt(counseling_type_id), toInt(authority_id), toInt(state_id), toInt(institute_type_id)
+  );
+  res.json({ success: true, data });
+});
 
-    if (!institute) {
-      return res.status(400).json({ success: false, message: 'institute query param is required.' });
-    }
+// Step 5: GET /api/filters/courses?counseling_type_id=1&authority_id=2&state_id=&institute_type_id=
+const getCourses = handle(async (req, res) => {
+  const { counseling_type_id, authority_id, state_id, institute_type_id } = req.query;
+  const data = await svc.getCourses(
+    toInt(counseling_type_id), toInt(authority_id), toInt(state_id), toInt(institute_type_id)
+  );
+  res.json({ success: true, data });
+});
 
-    // Available categories for this institute
-    const [catRows] = await db.query(
-      `SELECT DISTINCT category
-       FROM ${TABLE}
-       WHERE institute_name = ? AND category IS NOT NULL AND category != ''
-       ORDER BY category`,
-      [institute]
-    );
-    const categories     = catRows.map((r) => r.category);
-    const activeCategory = category || (categories[0] ?? null);
+// Step 6: GET /api/filters/quotas?counseling_type_id=1&authority_id=2&course_id=3&state_id=&institute_type_id=
+const getQuotas = handle(async (req, res) => {
+  const { counseling_type_id, authority_id, course_id, state_id, institute_type_id } = req.query;
+  const data = await svc.getQuotas(
+    toInt(counseling_type_id), toInt(authority_id), toInt(course_id),
+    toInt(state_id), toInt(institute_type_id)
+  );
+  res.json({ success: true, data });
+});
 
-    let chartData    = [];
-    let tableRecords = [];
+// Step 6: GET /api/filters/categories?counseling_type_id=1&authority_id=2&state_id=&institute_type_id=
+const getCategories = handle(async (req, res) => {
+  const { counseling_type_id, authority_id, state_id, institute_type_id } = req.query;
+  const data = await svc.getCategories(
+    toInt(counseling_type_id), toInt(authority_id), toInt(state_id), toInt(institute_type_id)
+  );
+  res.json({ success: true, data });
+});
 
-    if (activeCategory) {
-      // Aggregated per year+round for chart
-      const [trendRows] = await db.query(
-        `SELECT
-           year,
-           round,
-           MIN(closing_rank) AS minCloseRank
-         FROM ${TABLE}
-         WHERE institute_name = ? AND category = ?
-           AND closing_rank IS NOT NULL
-         GROUP BY year, round
-         ORDER BY year ASC`,
-        [institute, activeCategory]
-      );
+// ── COLLEGES ──────────────────────────────────────────────────────────────────
+// GET /api/colleges?counseling_type_id=&authority_id=&course_id=&quota_id=&state_id=&institute_type_id=&search=&page=
+// THE CORE FIX: state_id + institute_type_id are now passed through, so the
+// college list returned here genuinely shrinks to only colleges that have at
+// least one cutoffs row matching every selected filter — exactly matching
+// what's actually in the uploaded CSVs (e.g. selecting "State" institute type
+// only shows the UP government college rows, not MCC/AYUSH ones).
+const getColleges = handle(async (req, res) => {
+  const { counseling_type_id, authority_id, course_id, quota_id,
+          state_id, institute_type_id, search, page, pageSize } = req.query;
+  const data = await svc.getColleges({
+    counselingTypeId: toInt(counseling_type_id),
+    authorityId:      toInt(authority_id),
+    courseId:         toInt(course_id),
+    quotaId:          toInt(quota_id),
+    stateId:          toInt(state_id),
+    instituteTypeId:  toInt(institute_type_id),
+    search:           search  || '',
+    page:             page    || 1,
+    pageSize:         pageSize || 50,
+  });
+  res.json({ success: true, ...data });
+});
 
-      const byYear = {};
-      trendRows.forEach(({ year, round, minCloseRank }) => {
-        if (!byYear[year]) byYear[year] = { year };
-        byYear[year][round] = minCloseRank;
-      });
-      chartData = Object.values(byYear);
+// GET /api/colleges/:id/cutoffs
+const getCollegeCutoffs = handle(async (req, res) => {
+  const { id } = req.params;
+  const { counseling_type_id, authority_id, course_id, quota_id,
+          state_id, institute_type_id } = req.query;
+  if (!id) return res.status(400).json({ success: false, message: 'id required' });
+  const data = await svc.getCollegeCutoffs({
+    instituteId:      parseInt(id),
+    counselingTypeId: toInt(counseling_type_id),
+    authorityId:      toInt(authority_id),
+    courseId:         toInt(course_id),
+    quotaId:          toInt(quota_id),
+    stateId:          toInt(state_id),
+    instituteTypeId:  toInt(institute_type_id),
+  });
+  res.json({ success: true, data });
+});
 
-      // Raw rows for table
-      const [tableRows] = await db.query(
-        `SELECT
-           year,
-           round,
-           category,
-           quota,
-           opening_rank  AS openRank,
-           closing_rank  AS closeRank
-         FROM ${TABLE}
-         WHERE institute_name = ? AND category = ?
-         ORDER BY year DESC, round ASC`,
-        [institute, activeCategory]
-      );
-      tableRecords = tableRows;
-    }
+// ── ELIGIBILITY ───────────────────────────────────────────────────────────────
+// GET /api/eligibility?counseling_type_id=&authority_id=&category_id=&course_id=&rank=&round_id=&state_id=&institute_type_id=&page=
+const getEligibility = handle(async (req, res) => {
+  const { counseling_type_id, authority_id, category_id, course_id, round_id,
+          state_id, institute_type_id, rank, page, pageSize } = req.query;
+  if (!category_id) return res.status(400).json({ success: false, message: 'category_id required' });
+  if (!rank)        return res.status(400).json({ success: false, message: 'rank required' });
+  const data = await svc.getEligibility({
+    counselingTypeId: toInt(counseling_type_id),
+    authorityId:      toInt(authority_id),
+    categoryId:       parseInt(category_id),
+    courseId:         toInt(course_id),
+    roundId:          toInt(round_id),
+    stateId:          toInt(state_id),
+    instituteTypeId:  toInt(institute_type_id),
+    rank:             parseInt(rank),
+    page:             page     || 1,
+    pageSize:         pageSize || 50,
+  });
+  res.json({ success: true, ...data });
+});
 
-    return res.status(200).json({
-      success: true,
-      data: { categories, chartData, tableRecords },
-    });
-  } catch (err) {
-    console.error('[getInstituteTrends error]', err.message);
-    return res.status(500).json({ success: false, message: 'Server Error fetching trends.' });
-  }
-};
+// ── MAIN SEARCH ───────────────────────────────────────────────────────────────
+// POST /api/cutoffs  — body already supports `state` and `instituteType` by
+// name (resolved to ids inside svc.getCutoffs via nameToId()), unchanged.
+const getCutoffs = handle(async (req, res) => {
+  const result = await svc.getCutoffs(req.body);
+  res.json({ success: true, ...result });
+});
 
-// =============================================================================
+// ── LEGACY FULL FILTER BLOB ───────────────────────────────────────────────────
+// GET /api/filters?counselingType=MCC
+const getFilterOptions = handle(async (req, res) => {
+  const { counselingType } = req.query;
+  const filters = await svc.getFilterOptions(counselingType || '');
+  res.json({ success: true, filters });
+});
+
+// ── INSTITUTE AUTOCOMPLETE ────────────────────────────────────────────────────
+// GET /api/institutes/search?q=&counselingType=&authorityId=&courseId=&quotaId=&stateId=&instituteTypeId=&limit=
+const searchInstitutes = handle(async (req, res) => {
+  const { q, counselingType, authorityId, courseId, quotaId, stateId, instituteTypeId, limit } = req.query;
+  const results = await svc.searchInstitutes({
+    query:           q,
+    counselingType,
+    authorityId:     toInt(authorityId),
+    courseId:        toInt(courseId),
+    quotaId:         toInt(quotaId),
+    stateId:         toInt(stateId),
+    instituteTypeId: toInt(instituteTypeId),
+    limit:           parseInt(limit) || 15,
+  });
+  res.json({ success: true, institutes: results });
+});
+
+// ── TRENDS ────────────────────────────────────────────────────────────────────
+// GET /api/trends?institute=&category=&counselingType=
+const getInstituteTrends = handle(async (req, res) => {
+  const { institute, category, counselingType } = req.query;
+  if (!institute) return res.status(400).json({ success: false, message: 'institute required' });
+  const data = await svc.getInstituteTrends({ institute, category, counselingType });
+  res.json({ success: true, data });
+});
+
+// ── UPGRADE PROBABILITY ───────────────────────────────────────────────────────
 // POST /api/upgrade-probability
-// Body: { institute, category, quota, currentRank, round }
-// =============================================================================
-const getUpgradeProbability = async (req, res) => {
-  try {
-    const { institute, category, quota, currentRank, round } = req.body;
-
-    if (!institute || !category || !currentRank) {
-      return res.status(400).json({
-        success: false,
-        message: 'institute, category, and currentRank are required.',
-      });
-    }
-
-    const conditions = ['institute_name = ?', 'category = ?'];
-    const params     = [institute, category];
-
-    if (quota && quota !== 'ALL' && quota !== '') {
-      conditions.push('quota = ?');
-      params.push(quota);
-    }
-    if (round && round !== 'ALL' && round !== '') {
-      conditions.push('round = ?');
-      params.push(round);
-    }
-
-    const [rows] = await db.query(
-      `SELECT year, round, closing_rank AS closeRank, opening_rank AS openRank
-       FROM ${TABLE}
-       WHERE ${conditions.join(' AND ')}
-       ORDER BY year DESC, round ASC`,
-      params
-    );
-
-    if (rows.length === 0) {
-      return res.status(200).json({
-        success:        true,
-        probability:    null,
-        message:        'Not enough historical data.',
-        historicalData: [],
-      });
-    }
-
-    const rank        = parseInt(currentRank);
-    const favorable   = rows.filter((r) => r.closeRank >= rank).length;
-    const probability = Math.round((favorable / rows.length) * 100);
-
-    return res.status(200).json({
-      success:        true,
-      probability,
-      historicalData: rows,
-      sampleSize:     rows.length,
-    });
-  } catch (err) {
-    console.error('[getUpgradeProbability error]', err.message);
-    return res.status(500).json({ success: false, message: 'Server Error.' });
+const getUpgradeProbability = handle(async (req, res) => {
+  const { institute, category, quota, currentRank, round, counselingType } = req.body;
+  if (!institute || !category || !currentRank) {
+    return res.status(400).json({ success: false, message: 'institute, category, currentRank required' });
   }
-};
+  const result = await svc.getUpgradeProbability({ institute, category, quota, currentRank, round, counselingType });
+  res.json({ success: true, ...result });
+});
 
-module.exports = { getCutoffs, getFilterOptions, getInstituteTrends, getUpgradeProbability };
+// ── ADMIN ─────────────────────────────────────────────────────────────────────
+const invalidateCache = handle(async (req, res) => {
+  const secret = req.headers['x-import-secret'] || req.body?.secret;
+  const result = await svc.invalidateCacheAfterImport(secret);
+  res.json(result);
+});
+
+const rebuildFacets = handle(async (req, res) => {
+  if (!process.env.IMPORT_SECRET) {
+    return res.status(503).json({ success: false, message: 'IMPORT_SECRET not configured on this server.' });
+  }
+  const secret = req.headers['x-import-secret'] || req.body?.secret;
+  if (secret !== process.env.IMPORT_SECRET) {
+    return res.status(403).json({ success: false, message: 'Unauthorized' });
+  }
+  const count = await svc.rebuildFacets();
+  res.json({ success: true, facetRows: count });
+});
+
+const getCacheHealth = handle(async (req, res) => {
+  const version = await require('../config/cache').getImportVersion();
+  res.json({ success: true, importVersion: version });
+});
+
+module.exports = {
+  getCounselingTypes, getStates, getAuthorities, getInstituteTypes, getYears, getRounds,
+  getCourses, getQuotas, getCategories,
+  getColleges, getCollegeCutoffs, getEligibility,
+  getCutoffs, getFilterOptions, searchInstitutes,
+  getInstituteTrends, getUpgradeProbability,
+  invalidateCache, rebuildFacets, getCacheHealth,
+};

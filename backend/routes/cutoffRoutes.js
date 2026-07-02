@@ -1,40 +1,59 @@
 // =============================================================================
-// routes/cutoffRoutes.js
+// routes/cutoffRoutes.js  —  All production routes
 // =============================================================================
-// Route Map:
-//   GET  /api/filters          — dropdown options (cached)
-//   POST /api/cutoffs          — paginated search (body: filters + page)
-//   GET  /api/trends           — institute trend chart data
-//   POST /api/upgrade-probability — upgrade chance calculator
-// =============================================================================
-
 const express = require('express');
 const router  = express.Router();
-const {
-  getCutoffs,
-  getFilterOptions,
-  getInstituteTrends,
-  getUpgradeProbability,
+const ctrl    = require('../controllers/cutoffController');
+const { apiLimiter, filterLimiter, searchLimiter, strictLimiter } = require('../middleware/rateLimiter');
 
+// NOTE: apiLimiter no longer applied globally here — it was stacking with
+// filterLimiter/searchLimiter on the SAME request (two counters consuming
+// budget for one call), which made the real per-route limit lower than it
+// looked. Each route now has exactly ONE limiter.
 
-} = require('../controllers/cutoffController');
-const { apiLimiter, searchLimiter } = require('../middleware/rateLimiter');
+// Filter cascade — bursty, cheap, cached reads
+router.get('/filters/counseling-types', filterLimiter, ctrl.getCounselingTypes);
+router.get('/filters/states',           filterLimiter, ctrl.getStates);
+router.get('/filters/authorities',      filterLimiter, ctrl.getAuthorities);
+router.get('/filters/institute-types',  filterLimiter, ctrl.getInstituteTypes);
+router.get('/filters/years',            filterLimiter, ctrl.getYears);
+router.get('/filters/rounds',           filterLimiter, ctrl.getRounds);
+router.get('/filters/courses',          filterLimiter, ctrl.getCourses);
+router.get('/filters/quotas',           filterLimiter, ctrl.getQuotas);
+router.get('/filters/categories',       filterLimiter, ctrl.getCategories);
 
-// Apply general limiter to all /api routes
-router.use(apiLimiter);
+// Legacy full blob (must come AFTER specific routes)
+router.get('/filters',                  filterLimiter, ctrl.getFilterOptions);
 
-// ── Filter options (GET — called once on page load) ────────
-router.get('/filters', getFilterOptions);
+// Colleges
+router.get('/colleges',                 searchLimiter, ctrl.getColleges);
+router.get('/colleges/:id/cutoffs',     searchLimiter, ctrl.getCollegeCutoffs);
 
-// ── Cutoff search (POST — body carries all filter params) ──
-// FIX: Must be POST because frontend sends JSON body via fetchCutoffs()
-router.post('/cutoffs', searchLimiter, getCutoffs);
+// Core feature
+router.get('/eligibility',              searchLimiter, ctrl.getEligibility);
 
-// ── Institute trend data (GET — query: ?institute=...) ─────
-router.get('/trends', searchLimiter, getInstituteTrends);
+// Search
+router.post('/cutoffs',                 searchLimiter, ctrl.getCutoffs);
 
-// ── Upgrade probability (POST) ─────────────────────────────
-router.post('/upgrade-probability', searchLimiter, getUpgradeProbability);
+// Autocomplete
+router.get('/institutes/search',        searchLimiter, ctrl.searchInstitutes);
 
+// Charts
+router.get('/trends',                   searchLimiter, ctrl.getInstituteTrends);
+
+// Upgrade
+router.post('/upgrade-probability',     searchLimiter, ctrl.getUpgradeProbability);
+
+// Admin
+router.post('/admin/cache-invalidate',  strictLimiter, ctrl.invalidateCache);
+router.post('/admin/rebuild-facets',    strictLimiter, ctrl.rebuildFacets);
+
+// Health
+router.get('/health/cache',             apiLimiter, ctrl.getCacheHealth);
+router.get('/health/db',                apiLimiter, (req, res) => {
+  const db = require('../config/db');
+  const healthy = typeof db.getDbHealth === 'function' ? db.getDbHealth() : true;
+  res.status(healthy ? 200 : 503).json({ success: healthy, dbConnected: healthy });
+});
 
 module.exports = router;

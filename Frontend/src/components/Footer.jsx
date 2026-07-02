@@ -404,7 +404,8 @@ const NAV_LINKS = {
     { label: "National AIIMS",    view: "aiims-hub" },
   ],
   "Resources": [
-    { label: "College Database",  view: "college-db" },
+    { label: "How to Use RankSetu", view: "how-to-use", badge: "New" },
+    { label: "College Database",  view: "college-info" },
     { label: "Counselling Guide", view: "counselling" },
     { label: "Rank Predictor",    view: "predictor", badge: "New" },
     { label: "Timeline",          view: "timeline" },

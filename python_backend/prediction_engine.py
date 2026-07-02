@@ -1,12 +1,19 @@
 # =============================================================
-# python_backend/prediction_engine.py — v6
-# FIXED for mcc_cutoffs schema:
-#   - r.round_name  → r.round
-#   - r.institute   → r.institute_name
-#   - r.program     → r.course
-#   - r.closeRank   → r.closing_rank
-#   - r.openRank    → r.opening_rank
-#   - r.bondYears   → r.bond_years
+# python_backend/prediction_engine.py — v7 (dynamic schema)
+# =============================================================
+# CHANGED from v6:
+#   - run_optimizer() now accepts optional counseling_type and state
+#     filters (default "ALL", same convention as quota/course), so
+#     predictions can be scoped to e.g. counseling_type="STATE",
+#     state="Uttar Pradesh" — or left as "ALL" for All-India MCC data.
+#   - Everything else (predict_closing_rank and all its helper
+#     functions: weighted OLS regression, Holt forecasting,
+#     exponential smoothing, IQR outlier filtering, anomaly
+#     detection, confidence/volatility/momentum scoring) is
+#     UNCHANGED. This file's math does not need to know anything
+#     about the new normalized schema — Cutoff rows look exactly
+#     the same as before (see models.py — Cutoff now reads from
+#     v_cutoffs_flat, a view that reproduces the old flat shape).
 # =============================================================
 
 import logging
@@ -383,28 +390,60 @@ def predict_closing_rank(rows: List[Cutoff]) -> Optional[Dict]:
     }
 
 
-def run_optimizer(db: Session, user_rank: int, category: str, quota: str, course: str, top_n: int = 0) -> Dict:
+def run_optimizer(db: Session, user_rank: int, category: str, quota: str, course: str,
+                   counseling_type: str = "ALL", state: str = "ALL", authority: str = "ALL",
+                   institute_type: str = "ALL", top_n: int = 0) -> Dict:
+    """
+    CHANGED: now accepts counseling_type, state, authority, AND
+    institute_type — same "ALL" convention as quota/course. This mirrors
+    the Node.js backend's full cascade dimension (counseling_type → state
+    → authority → institute_type) so the same engine can be scoped exactly
+    like the main filter UI, with zero code change needed when a new
+    state/authority/institute_type's CSV is imported — it just becomes a
+    selectable value in /api/filters.
+    """
     from sqlalchemy import func
+
+    def _eq(col, val: str):
+        return func.lower(func.trim(col)) == val.strip().lower()
 
     query = db.query(Cutoff)
     if category and category != "ALL":
-        query = query.filter(func.lower(func.trim(Cutoff.category)) == category.strip().lower())
+        query = query.filter(_eq(Cutoff.category, category))
     if quota and quota != "ALL":
-        query = query.filter(func.lower(func.trim(Cutoff.quota)) == quota.strip().lower())
+        query = query.filter(_eq(Cutoff.quota, quota))
     if course and course != "ALL":
-        query = query.filter(func.lower(func.trim(Cutoff.course)) == course.strip().lower())
+        query = query.filter(_eq(Cutoff.course, course))
+    if counseling_type and counseling_type != "ALL":
+        query = query.filter(_eq(Cutoff.counseling_type, counseling_type))
+    if state and state != "ALL":
+        query = query.filter(_eq(Cutoff.state, state))
+    if authority and authority != "ALL":
+        query = query.filter(_eq(Cutoff.authority, authority))
+    if institute_type and institute_type != "ALL":
+        query = query.filter(_eq(Cutoff.type, institute_type))
 
     all_rows = query.all()
 
     # ── Fallback: if quota+course combo has nothing, try without course
     # (some quotas, e.g. "Deemed/Paid Seat Quota", may only have rows under
-    # a different course label than the user picked).
+    # a different course label than the user picked). counseling_type/
+    # state/authority/institute_type are kept in the fallback too —
+    # dropping course should never silently leak data from a different scope.
     if not all_rows and course and course != "ALL":
         fallback_q = db.query(Cutoff)
         if category and category != "ALL":
-            fallback_q = fallback_q.filter(func.lower(func.trim(Cutoff.category)) == category.strip().lower())
+            fallback_q = fallback_q.filter(_eq(Cutoff.category, category))
         if quota and quota != "ALL":
-            fallback_q = fallback_q.filter(func.lower(func.trim(Cutoff.quota)) == quota.strip().lower())
+            fallback_q = fallback_q.filter(_eq(Cutoff.quota, quota))
+        if counseling_type and counseling_type != "ALL":
+            fallback_q = fallback_q.filter(_eq(Cutoff.counseling_type, counseling_type))
+        if state and state != "ALL":
+            fallback_q = fallback_q.filter(_eq(Cutoff.state, state))
+        if authority and authority != "ALL":
+            fallback_q = fallback_q.filter(_eq(Cutoff.authority, authority))
+        if institute_type and institute_type != "ALL":
+            fallback_q = fallback_q.filter(_eq(Cutoff.type, institute_type))
         all_rows = fallback_q.all()
         if all_rows:
             logger.info("Optimizer fallback: dropped course filter (%s) — %d rows found", course, len(all_rows))
@@ -454,7 +493,8 @@ def run_optimizer(db: Session, user_rank: int, category: str, quota: str, course
         target = target[:top_n]
         safe   = safe[:top_n]
 
-    logger.info("Category=%s Quota=%s Course=%s UserRank=%d → D:%d T:%d S:%d",
-                category, quota, course, user_rank, len(dream), len(target), len(safe))
+    logger.info("CT=%s State=%s Auth=%s InstType=%s Category=%s Quota=%s Course=%s UserRank=%d → D:%d T:%d S:%d",
+                counseling_type, state, authority, institute_type, category, quota, course, user_rank,
+                len(dream), len(target), len(safe))
 
     return {"dream": dream, "target": target, "safe": safe, "message": None}

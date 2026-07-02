@@ -365,6 +365,7 @@ const SvgIcon = ({ name, color, size = 16 }) => {
     heart:    ["M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"],
     leaf:     ["M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z","M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"],
     check:    ["M22 11.08V12a10 10 0 1 1-5.93-9.14","M22 4L12 14.01 9 11.01"],
+    building: ["M3 21h18","M5 21V7l8-4v18","M19 21V11l-6-4","M9 9v.01","M9 12v.01","M9 15v.01","M9 18v.01"],
   };
   const d = icons[name];
   return (
@@ -377,38 +378,40 @@ const SvgIcon = ({ name, color, size = 16 }) => {
 };
 
 // ── Nav Data ──────────────────────────────────────────────────────────────────
-// Tools dropdown — ye sab counselling decisions ke tools hain
+// Tools dropdown — counselling decision-making tools
 const HUB_ITEMS = [
-  { view: "optimizer",       icon: "sliders", color: "#1A3C6E", label: "Choice Optimizer",  sub: "Best college order for your rank" },
-  { view: "upgrade",         lucideIcon: ArrowUpCircle, color: "#1A3C6E", label: "Upgrade Checker", sub: "Round 2 seat upgrade probability", badge: "New" },
-  { view: "state-analytics", icon: "pin",     color: "#1A3C6E", label: "State Quota Cutoffs", sub: "State seat allotment rank data" },
-  
+  { view: "optimizer", icon: "sliders", color: "#1A3C6E", label: "Choice Optimizer",     sub: "Best college order for your rank" },
+  { view: "upgrade",   lucideIcon: ArrowUpCircle, color: "#1A3C6E", label: "Upgrade Checker", sub: "Round 2 seat upgrade probability", badge: "New" },
+  { view: "lab",       icon: "sliders", color: "#1A3C6E", label: "Choice List Builder",  sub: "Build & reorder your final preference list" },
 ];
 
-// OR-CR dropdown — previous year rank data
+// Cutoffs dropdown — previous year opening/closing rank data, one clear
+// destination per counselling type (MCC, Ayush, AIIMS, State) so each item
+// actually opens its own data instead of all landing on the same screen.
 const OR_CR_ITEMS = [
   {
-    view: "analytics",
+    view: "mcc",
     icon: "bar",
     color: "#1A3C6E",
-    label: "MCC Counselling Ranks",
+    label: "MCC Counselling Cutoffs",
     sub: "AIQ opening & closing ranks, all rounds",
     badge: "Updated",
   },
   {
     view: "ayush",
     icon: "leaf",
-    color: "#1A3C6E",
-    label: "Ayush Counselling Ranks",
+    color: "#16A34A",
+    label: "Ayush Counselling Cutoffs",
     sub: "BAMS, BHMS & BUMS seat cutoff data",
     badge: "New",
   },
-  { view: "aiims-hub",       icon: "award",   color: "#1A3C6E", label: "AIIMS Cutoffs",    sub: "All-India AIIMS campus rank data" },
+  { view: "aiims-hub", icon: "award", color: "#1A3C6E", label: "AIIMS Cutoffs",       sub: "All-India AIIMS campus rank data" },
+  { view: "state",     icon: "pin",   color: "#1A3C6E", label: "State Quota Cutoffs", sub: "State govt college seat rank data" },
 ];
 
 // Resources dropdown
 const RESOURCE_ITEMS = [
-  { view: "college-db",   icon: "file",     color: "#1A3C6E", label: "College Directory",  sub: "600+ medical colleges, fees & seats" },
+  { view: "how-to-use",   icon: "file",     color: "#2563EB", label: "How to Use RankSetu", sub: "Complete beginner-friendly platform guide", badge: "New" },
   { view: "counselling",  icon: "users",    color: "#1A3C6E", label: "Counselling Process", sub: "Round-wise allotment & joining steps" },
   { view: "predictor",    icon: "activity", color: "#047857", label: "Rank Predictor",      sub: "Expected NEET rank from your score", badge: "New" },
   { view: "about-us",     icon: "heart",    color: "#1A3C6E", label: "About RankSetu",      sub: "Our mission & the team" },
@@ -560,13 +563,13 @@ export default function Header({ currentView, setCurrentView, darkMode, setDarkM
           </button>
 
           <DesktopDropdown
-            label="OR-CR"
+            label="Cutoffs"
             description={GROUP_INFO["OR CR"]}
             items={OR_CR_ITEMS}
             darkMode={dm}
             setCurrentView={setCurrentView}
             currentView={currentView}
-            activeViews={["analytics", "state-analytics", "ayush"]}
+            activeViews={["mcc", "ayush", "aiims-hub", "state"]}
           />
 
           <DesktopDropdown
@@ -576,7 +579,7 @@ export default function Header({ currentView, setCurrentView, darkMode, setDarkM
             darkMode={dm}
             setCurrentView={setCurrentView}
             currentView={currentView}
-            activeViews={["optimizer", "upgrade", "aiims-hub"]}
+            activeViews={["optimizer", "upgrade", "lab"]}
           />
 
           <DesktopDropdown
@@ -586,8 +589,23 @@ export default function Header({ currentView, setCurrentView, darkMode, setDarkM
             darkMode={dm}
             setCurrentView={setCurrentView}
             currentView={currentView}
-            activeViews={["college-db", "counselling", "predictor", "about-us"]}
+            activeViews={["how-to-use", "counselling", "predictor", "about-us"]}
           />
+
+          <button
+            className={`ms-navpill flex items-center gap-1 h-9 px-4 text-[13px] font-semibold border-none font-sans cursor-pointer transition-all duration-100 tracking-tight border-b-2 ${
+              currentView === "college-info"
+                ? dm ? "text-blue-400 border-blue-400 bg-transparent rounded-none" : "text-[#1A3C6E] border-[#1A3C6E] bg-transparent rounded-none"
+                : dm ? "text-slate-400 border-transparent bg-transparent rounded-none hover:text-slate-200" : "text-slate-600 border-transparent bg-transparent rounded-none hover:text-[#1A3C6E]"
+            }`}
+            onClick={() => setCurrentView("college-info")}
+          >
+            <SvgIcon name="building" size={13} />
+            Colleges
+            <span className={`ml-1 text-[8.5px] font-bold px-1 py-0.5 rounded-sm tracking-wider uppercase ${
+              dm ? "bg-blue-500/20 text-blue-300" : "bg-[#1A3C6E]/10 text-[#1A3C6E]"
+            }`}>New</span>
+          </button>
 
           <button
             className={`ms-navpill flex items-center gap-1 h-9 px-4 text-[13px] font-semibold border-none font-sans cursor-pointer transition-all duration-100 tracking-tight border-b-2 ${
@@ -650,10 +668,11 @@ export default function Header({ currentView, setCurrentView, darkMode, setDarkM
       {mobileOpen && (
         <div className={`ms-mobile-drawer px-4 pb-6 pt-3 border-t ${dm ? "border-[#1A3C6E]/30" : "border-[#C5D4E8]"}`}>
           <MobileLink icon="home"  iconColor={dm ? "#94a3b8" : "#64748b"} label="Home"     darkMode={dm} onClick={() => { setCurrentView("home"); setMobileOpen(false); }} />
+          <MobileLink icon="building" iconColor="#2563EB" label="College Directory" badge="New" darkMode={dm} onClick={() => { setCurrentView("college-info"); setMobileOpen(false); }} />
           <MobileLink icon="clock" iconColor={dm ? "#94a3b8" : "#64748b"} label="Timeline" darkMode={dm} onClick={() => { setCurrentView("timeline"); setMobileOpen(false); }} />
 
           <div className="mt-2">
-            <div className={`text-[10px] font-bold uppercase tracking-widest px-3 pt-2 pb-1 ${dm ? "text-slate-500" : "text-slate-400"}`}>OR-CR</div>
+            <div className={`text-[10px] font-bold uppercase tracking-widest px-3 pt-2 pb-1 ${dm ? "text-slate-500" : "text-slate-400"}`}>Cutoffs</div>
 
             <div className={`pl-1 border-l-2 ml-3 ${dm ? "border-white/7" : "border-black/8"}`}>
               {OR_CR_ITEMS.map(item => (

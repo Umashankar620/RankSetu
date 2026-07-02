@@ -1,5 +1,22 @@
 # =============================================================
-# upgrade_engine.py — v5 (PERFORMANCE REWRITE)
+# upgrade_engine.py — v7 (dynamic schema + authority dimension)
+# =============================================================
+# CHANGED from v6:
+#   - _load_all_data(), run_upgrade_check(), and get_upgrade_institutes()
+#     now ALSO accept an optional authority filter (same "ALL" convention
+#     already used for category/quota/counseling_type/state), mirroring
+#     the Node.js backend's counseling_type → authority cascade.
+# =============================================================
+# CHANGED in v6 (dynamic schema):
+#   - _load_all_data(), run_upgrade_check(), and get_upgrade_institutes()
+#     now accept optional counseling_type and state filters (same "ALL"
+#     convention already used for category/quota), so the "better
+#     colleges" scan and institute dropdown can be scoped per
+#     counseling-type/state without ever touching the scoring math.
+#   - All scoring logic (YearShift records, weighted/median shift,
+#     upgrade probability formula, college confidence, seat risk,
+#     recommendation text) is UNCHANGED — see the v5 performance-
+#     rewrite notes below, which still fully apply.
 # =============================================================
 # WHY v4 WAS SLOW (~5 min per request):
 #   For every institute in the "better colleges" scan (often 600+),
@@ -66,7 +83,9 @@ def _round_priority(rname: str) -> int:
 # SINGLE BULK FETCH — replaces hundreds/thousands of per-institute
 # queries with exactly ONE database round-trip.
 # ─────────────────────────────────────────────────────────────
-def _load_all_data(db: Session, category: Optional[str], quota: Optional[str]) -> AllData:
+def _load_all_data(db: Session, category: Optional[str], quota: Optional[str],
+                    counseling_type: Optional[str] = None, state: Optional[str] = None,
+                    authority: Optional[str] = None, institute_type: Optional[str] = None) -> AllData:
     q = db.query(Cutoff).filter(
         Cutoff.institute_name.isnot(None),
         Cutoff.institute_name != "",
@@ -77,6 +96,14 @@ def _load_all_data(db: Session, category: Optional[str], quota: Optional[str]) -
         q = q.filter(Cutoff.category == category)
     if not _is_all(quota):
         q = q.filter(Cutoff.quota == quota)
+    if not _is_all(counseling_type):
+        q = q.filter(Cutoff.counseling_type == counseling_type)
+    if not _is_all(state):
+        q = q.filter(Cutoff.state == state)
+    if not _is_all(authority):
+        q = q.filter(Cutoff.authority == authority)
+    if not _is_all(institute_type):
+        q = q.filter(Cutoff.type == institute_type)
 
     data: AllData = {}
     for row in q.all():
@@ -304,14 +331,25 @@ def _round_labels(current_round, scenarios):
 
 
 def run_upgrade_check(db: Session, user_rank: int, current_institute: str,
-                      category: str, quota: str, current_round: str = "Round 1") -> Dict:
+                      category: str, quota: str, current_round: str = "Round 1",
+                      counseling_type: str = "ALL", state: str = "ALL",
+                      authority: str = "ALL", institute_type: str = "ALL") -> Dict:
+    """
+    CHANGED: now accepts counseling_type, state, authority, AND
+    institute_type (same "ALL" convention as category/quota). They're
+    threaded straight into _load_all_data so the entire "better colleges"
+    scan stays scoped to the right counseling-type/state/authority/
+    institute-type — e.g. don't compare a UP STATE counseling college
+    against an All-India MCC college's shift pattern, or mix institute
+    types (Government vs Private) when the user has narrowed to one.
+    """
     scenarios = _round_scenarios(current_round)
     from_round, to_round, next_label = _round_labels(current_round, scenarios)
     from_p, to_p, _ = scenarios[0]
 
     # ── ONE query for everything below. Everything after this line is
     # pure in-memory Python — zero further DB round-trips. ──────────
-    all_data = _load_all_data(db, category, quota)
+    all_data = _load_all_data(db, category, quota, counseling_type, state, authority, institute_type)
 
     current_inst_key = current_institute.strip()
     current_data      = all_data.get(current_inst_key, {})
@@ -324,8 +362,9 @@ def run_upgrade_check(db: Session, user_rank: int, current_institute: str,
         return {
             "success": False,
             "message": (f"No round-wise shift data found for '{current_institute}' "
-                        f"with the selected Category/Quota combination. "
-                        "Try selecting 'All Categories' or 'All Quotas' to widen the search."),
+                        f"with the selected Counseling Type/State/Authority/Institute "
+                        "Type/Category/Quota combination. Try widening one of those "
+                        "filters to 'All'."),
         }
 
     shifts         = [r.shift for r in records]
@@ -413,6 +452,10 @@ def run_upgrade_check(db: Session, user_rank: int, current_institute: str,
         "current_college":  current_institute,
         "category":         category,
         "quota":            quota,
+        "counseling_type":  counseling_type,
+        "state":            state,
+        "authority":        authority,
+        "institute_type":   institute_type,
         "round_analysis": {
             "avg_shift_r1_to_r2":  avg_shift,
             "min_shift":           min(shifts),
@@ -437,13 +480,23 @@ def run_upgrade_check(db: Session, user_rank: int, current_institute: str,
     }
 
 
-def get_upgrade_institutes(db: Session, category=None, quota=None) -> List[str]:
-    # Already a single query in v4 — left as-is, this was never the bottleneck.
+def get_upgrade_institutes(db: Session, category=None, quota=None,
+                            counseling_type=None, state=None, authority=None,
+                            institute_type=None) -> List[str]:
+    """CHANGED: now also accepts counseling_type/state/authority/institute_type filters."""
     q = (db.query(distinct(Cutoff.institute_name))
          .filter(Cutoff.institute_name.isnot(None), Cutoff.institute_name != ""))
     if not _is_all(category):
         q = q.filter(Cutoff.category == category)
     if not _is_all(quota):
         q = q.filter(Cutoff.quota == quota)
+    if not _is_all(counseling_type):
+        q = q.filter(Cutoff.counseling_type == counseling_type)
+    if not _is_all(state):
+        q = q.filter(Cutoff.state == state)
+    if not _is_all(authority):
+        q = q.filter(Cutoff.authority == authority)
+    if not _is_all(institute_type):
+        q = q.filter(Cutoff.type == institute_type)
     rows = q.order_by(Cutoff.institute_name).all()
     return [r[0].strip() for r in rows if r[0]]

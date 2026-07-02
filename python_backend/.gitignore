@@ -1,0 +1,20 @@
+# Environment / secrets — was missing entirely, meant .env (DB password,
+# IMPORT_SECRET, REDIS_URL) had no protection against being committed.
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+*.egg-info/
+.pytest_cache/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
