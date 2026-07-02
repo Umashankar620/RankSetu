@@ -1,43 +1,175 @@
-# ============================================
+# ==========================================================
 # RankSetu - Root .gitignore
-# ============================================
+# Covers:
+# - Frontend (Next.js / React)
+# - Backend (Node.js / Express)
+# - Python Backend (FastAPI)
+# ==========================================================
 
-# OS files
+# ==========================================================
+# Operating System
+# ==========================================================
 .DS_Store
+.AppleDouble
+.LSOverride
 Thumbs.db
-*.swp
-*.swo
-*~
+Desktop.ini
+Icon?
+.Spotlight-V100/
+.Trashes/
+.fseventsd
 
-# IDE
+# ==========================================================
+# Editors / IDEs
+# ==========================================================
 .vscode/
 .idea/
 *.code-workspace
 
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Vim
+*.swp
+*.swo
+*~
 
-# Environment files (template only, no actual keys)
+# ==========================================================
+# Environment Variables
+# ==========================================================
 .env
 .env.*
 !.env.example
 
-# Temporary files
+# ==========================================================
+# Secrets / Certificates
+# ==========================================================
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets.json
+
+# ==========================================================
+# Node.js
+# ==========================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# npm / pnpm / yarn cache
+.npm/
+.pnpm-store/
+.yarn/
+.yarn-cache/
+
+# Plug'n'Play
+.pnp
+.pnp.js
+.pnp.*
+
+# ==========================================================
+# Next.js / React / Vite
+# ==========================================================
+.next/
+out/
+dist/
+build/
+.vercel/
+.netlify/
+
+# Vite / Parcel cache
+.vite/
+.parcel-cache/
+.cache/
+
+# TypeScript
+*.tsbuildinfo
+
+# Coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# ==========================================================
+# Python
+# ==========================================================
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.hypothesis/
+
+# Packaging
+.eggs/
+*.egg-info/
+pip-wheel-metadata/
+
+# ==========================================================
+# FastAPI / Uvicorn
+# ==========================================================
+uvicorn.log
+
+# ==========================================================
+# Databases
+# ==========================================================
+*.db
+*.sqlite
+*.sqlite3
+
+# ==========================================================
+# Logs
+# ==========================================================
+logs/
+*.log
+
+# ==========================================================
+# Runtime
+# ==========================================================
+*.pid
+*.pid.lock
+*.seed
+
+# ==========================================================
+# Temporary Files
+# ==========================================================
 tmp/
 temp/
+.tmp/
 *.tmp
+*.temp
 *.bak
 *.backup
 *.old
 
-# Secrets
-*.pem
-*.key
-*.crt
-secrets.json
-venv/
-__pycache__/
-*.pyc
+# ==========================================================
+# Archives
+# ==========================================================
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+
+# ==========================================================
+# Misc
+# ==========================================================
+.eslintcache
+
+# ==========================================================
+# Files to KEEP in Git
+# ==========================================================
+!.env.example
