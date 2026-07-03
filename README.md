@@ -373,7 +373,7 @@ NEXT_PUBLIC_SITE_URL=https://rank-setu.vercel.app
 
 ## 🖼️ Screenshots
 
-> **To add your own:** create `docs/screenshots/` in the repo root and add `homepage.png`, `cutoff-search.png`, `optimizer.png`, and `upgrade-probability.png`. Once pushed, the table below renders them automatically — no other edits needed.
+
 
 | | |
 |---|---|
