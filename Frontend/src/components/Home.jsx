@@ -6,7 +6,8 @@ import {
   Layers, Calendar, GraduationCap, Leaf,
   ArrowRight, ShieldCheck, Database, Clock, MapPin,
   CheckCircle, Star, Users, FileText, Zap, Info,
-  Building2, Search, Compass,
+  Building2, Search, Compass, Mail, Quote, ChevronDown,
+  HelpCircle, Layers3,
 } from 'lucide-react';
 
 const PRIMARY     = '#1A3C6E';
@@ -39,7 +40,7 @@ const FEATURES = [
   {
     icon: Leaf,
     title: 'Ayush Cutoff Explorer',
-    desc: 'Opening & closing ranks for BAMS, BHMS, BUMS and BSMS programs under MCC and Ayush counselling.',
+    desc: 'Opening & closing ranks for BAMS, BHMS, BUMS and BSMS programs under AACC and State Ayush counselling.',
     howTo: 'Choose AYUSH course type and filter by state or college to compare rank trends across years.',
     view: 'ayush',
     badge: 'New',
@@ -83,7 +84,7 @@ const FEATURES = [
   {
     icon: BookOpen,
     title: 'Counselling Guide',
-    desc: 'Complete MCC UG counselling guide — quota codes, category benefits, round strategy and choice filling tips explained clearly.',
+    desc: 'Complete NEET UG counselling guide — quota codes, category benefits, round strategy and choice filling tips explained clearly.',
     howTo: 'Browse sections by topic — from registration to reporting. Use it step-by-step during the actual counselling window.',
     view: 'counselling',
     badge: null,
@@ -116,7 +117,7 @@ const FEATURES = [
   {
     icon: MapPin,
     title: 'State Quota Cutoffs',
-    desc: 'Opening & closing ranks for state government quota seats — filtered by state, authority and college.',
+    desc: 'Opening & closing ranks for state government quota seats — filtered by state, authority and college, covering every state including UP.',
     howTo: 'Pick your state and authority. Filter by college or course to see state quota rank ranges.',
     view: 'state',
     badge: null,
@@ -129,9 +130,17 @@ const FEATURES = [
 // ── Trust Indicators ────────────────────────────────────────────────────────
 const TRUST = [
   { icon: Database,    label: '6 Lakh+',   sub: 'Rank Coverage'      },
-  { icon: ShieldCheck, label: '100%',       sub: 'Official MCC Data' },
+  { icon: ShieldCheck, label: '100%',       sub: 'Official Data'      },
   { icon: Clock,       label: '2021–2025',  sub: 'Years Covered'     },
-  { icon: BarChart2,   label: 'All Rounds', sub: 'R1, R2, R3, Stray, Special, Stray' },
+  { icon: BarChart2,   label: 'All Rounds', sub: 'R1, R2, R3, Stray & Special' },
+];
+
+// ── All-in-One Coverage — MCC, AACC, and every state's NEET & AYUSH ────────
+const COVERAGE = [
+  { tag: 'MCC · All India Quota  & Nursing', desc: 'MBBS & BDS AIQ BSc Nursing — 15% AIQ seats, AIIMS & JIPMER' },
+  { tag: 'AACC · AYUSH', desc: 'BAMS, BHMS, BUMS counselling' },
+  { tag: 'All 28 States · NEET UG', desc: 'State quota MBBS/BDS for every state' },
+  { tag: 'All States · AYUSH', desc: 'State-level AYUSH counselling' },
 ];
 
 // ── Platform Highlights ─────────────────────────────────────────────────────
@@ -151,7 +160,7 @@ const HIGHLIGHTS = [
   {
     icon: ShieldCheck,
     title: 'Verified Official Data',
-    desc: 'All data sourced directly from MCC seat allotment PDFs on mcc.nic.in.',
+    desc: 'All data is sourced directly from official MCC, AACC, and State seat allotment PDFs.',
     color: PRIMARY,
   },
   {
@@ -173,10 +182,42 @@ const HOW_TO = [
 // ── Category grouping ───────────────────────────────────────────────────────
 const CATEGORIES = ['All', 'Colleges', 'Cutoff Data', 'Smart Tools', 'Resources'];
 
+// ── Popular quick searches — jump straight into a pre-scoped tool ──────────
+const POPULAR_SEARCHES = [
+  { label: 'AIIMS Cutoffs',        view: 'aiims-hub' },
+  { label: 'MCC Round 1 Cutoffs',  view: 'mcc' },
+  { label: 'OBC Category Cutoffs', view: 'mcc' },
+  { label: 'State Quota Colleges', view: 'state' },
+  { label: 'Ayush BAMS Cutoffs',   view: 'ayush' },
+  { label: 'Choice List Order',    view: 'lab' },
+];
+
+// ── Homepage quick FAQ — short answers; the deep FAQ lives on the
+// How-to-Use page (setCurrentView('how-to-use') links out to it) ───────────
+const HOME_FAQS = [
+  { q: 'Is RankSetu free?', a: 'Yes — every tool and dataset is 100% free, with no login required.' },
+  { q: 'Does RankSetu cover only MCC, or AYUSH too?', a: 'Both — and more. RankSetu covers MCC All-India Quota, AACC AYUSH & Nursing counselling, and every state\u2019s NEET and AYUSH counselling, including UP NEET and UP AYUSH, all in one place.' },
+  { q: 'Where does the cutoff data come from?', a: 'Directly from official MCC, AACC, and State seat allotment PDFs — no estimates.' },
+  { q: 'Do I submit my choices through RankSetu?', a: 'No. RankSetu helps you plan and order your choices — the actual submission still happens on the official MCC, AACC, or State counselling portal.' },
+  { q: 'I\u2019m new here — where do I start?', a: 'Head to the "How to Use RankSetu" guide for a full walkthrough of every tool, step by step.' },
+];
+
 export default function Home({ setCurrentView, showToast, darkMode }) {
   const dm = darkMode;
   const [activeCategory, setActiveCategory] = useState('All');
   const [expandedCard, setExpandedCard] = useState(null);
+  const [openFaq, setOpenFaq] = useState(0);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
+
+  const handleNewsletterSubmit = (e) => {
+    e.preventDefault();
+    if (!newsletterEmail.trim()) return;
+    // Note: no backend endpoint is wired up yet — this just confirms intent
+    // to the user. Hook this up to a real subscribe API before shipping.
+    setNewsletterSubmitted(true);
+    showToast?.('Thanks! We\u2019ll notify you at ' + newsletterEmail);
+  };
 
   const filteredFeatures = activeCategory === 'All'
     ? FEATURES
@@ -207,6 +248,34 @@ export default function Home({ setCurrentView, showToast, darkMode }) {
         ))}
       </div>
 
+      {/* ── All-in-One Coverage Banner — MCC + AACC + every state, NEET & AYUSH ── */}
+      <div className={`mb-8 p-5 sm:p-6 rounded-2xl border ${
+        dm ? 'bg-[#0D1829] border-slate-700' : 'bg-white border-slate-200 shadow-sm'
+      }`}>
+        <div className="flex items-center gap-2 mb-2">
+          <Layers3 className="w-4 h-4" style={{ color: INTERACTIVE }} />
+          <p className="text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: INTERACTIVE }}>
+            One Platform. Everything Covered.
+          </p>
+        </div>
+        <h2 className={`text-lg sm:text-xl font-black tracking-tight mb-4 ${dm ? 'text-white' : 'text-slate-900'}`}>
+          Not just MCC. Not just AYUSH. <span style={{ color: INTERACTIVE }}>Everything, in one place.</span>
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {COVERAGE.map((c) => (
+            <div key={c.tag} className={`flex items-start gap-2.5 p-3.5 rounded-xl border ${
+              dm ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200'
+            }`}>
+              <span className="mt-1 w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: INTERACTIVE }} />
+              <div>
+                <p className={`text-xs font-black mb-0.5 ${dm ? 'text-white' : 'text-slate-900'}`}>{c.tag}</p>
+                <p className={`text-[11px] leading-relaxed ${dm ? 'text-slate-400' : 'text-slate-500'}`}>{c.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* ── College Directory Banner — new flagship feature, called out on its own ── */}
       <button
         onClick={() => setCurrentView('college-info')}
@@ -234,7 +303,7 @@ export default function Home({ setCurrentView, showToast, darkMode }) {
               </span>
             </div>
             <p className={`text-sm leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
-              700+ medical colleges, each with its own page — cutoffs, fee structure, seat matrix and admission
+              991 medical colleges, each with its own page — cutoffs, fee structure, seat matrix and admission
               details, all in one place. Search by name or filter by state and college type.
             </p>
           </div>
@@ -288,6 +357,27 @@ export default function Home({ setCurrentView, showToast, darkMode }) {
           </div>
         </div>
       </button>
+
+      {/* ── Popular Searches ─────────────────────────────────────────── */}
+      <div className="mb-8">
+        <p className={`text-xs font-bold mb-2.5 ${dm ? 'text-slate-500' : 'text-slate-400'}`}>Popular searches</p>
+        <div className="flex flex-wrap gap-2">
+          {POPULAR_SEARCHES.map(({ label, view }) => (
+            <button
+              key={label}
+              onClick={() => setCurrentView(view)}
+              className={`text-xs font-bold px-3.5 py-2 rounded-full border transition-colors cursor-pointer ${
+                dm
+                  ? 'border-slate-700 text-slate-300 hover:border-blue-500/50 hover:bg-slate-800'
+                  : 'border-slate-200 text-slate-600 hover:border-blue-300 hover:bg-blue-50/50'
+              }`}
+            >
+              <Search className="w-3 h-3 inline mr-1.5 -mt-0.5 opacity-60" />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* ── Platform Highlights ──────────────────────────────────────── */}
       <div className={`mb-8 p-5 rounded-2xl border ${dm ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
@@ -499,12 +589,81 @@ export default function Home({ setCurrentView, showToast, darkMode }) {
         })}
       </div>
 
+      {/* ── Success Stories (placeholder — real testimonials go here) ──── */}
+
+{/*       
+      <div className="mt-10 mb-8">
+        <p className="text-[11px] font-black uppercase tracking-[0.18em] mb-3" style={{ color: PRIMARY }}>
+          Success Stories
+        </p>
+        <div
+          className={`rounded-2xl border-2 border-dashed p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left ${
+            dm ? 'border-slate-700 bg-slate-800/30' : 'border-slate-300 bg-slate-50'
+          }`}
+        >
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 mx-auto sm:mx-0"
+            style={{ backgroundColor: dm ? 'rgba(37,99,235,0.15)' : 'rgba(26,60,110,0.08)' }}
+          >
+            <Quote className="w-6 h-6" style={{ color: INTERACTIVE }} />
+          </div>
+          <div>
+            <p className={`text-sm font-bold mb-1 ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+              Student success stories are coming soon
+            </p>
+            <p className={`text-xs leading-relaxed ${dm ? 'text-slate-500' : 'text-slate-500'}`}>
+              This space is reserved for real testimonials from students who used RankSetu during their
+              counselling. Once a few are collected, they&rsquo;ll be featured here — no design changes needed.
+            </p>
+          </div>
+        </div>
+      </div>
+ */}
+
+
+
+
+      {/* ── Quick FAQ ──────────────────────────────────────────────────── */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: PRIMARY }}>
+            Quick Questions
+          </p>
+          <button
+            onClick={() => setCurrentView('how-to-use')}
+            className="text-[11px] font-bold flex items-center gap-1 cursor-pointer hover:underline"
+            style={{ color: INTERACTIVE }}
+          >
+            More FAQs <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
+        <div className={`rounded-2xl border overflow-hidden ${dm ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+          {HOME_FAQS.map((f, i) => (
+            <div key={f.q} className={`border-b last:border-b-0 ${dm ? 'border-slate-700' : 'border-slate-100'}`}>
+              <button
+                onClick={() => setOpenFaq(openFaq === i ? -1 : i)}
+                className="w-full flex items-center justify-between gap-3 px-5 py-3.5 text-left cursor-pointer"
+              >
+                <span className={`text-sm font-bold flex items-center gap-2 ${dm ? 'text-white' : 'text-slate-900'}`}>
+                  <HelpCircle className="w-3.5 h-3.5 shrink-0" style={{ color: PRIMARY }} />
+                  {f.q}
+                </span>
+                <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${dm ? 'text-slate-400' : 'text-slate-400'} ${openFaq === i ? 'rotate-180' : ''}`} />
+              </button>
+              {openFaq === i && (
+                <p className={`px-5 pb-3.5 pl-11 text-sm leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{f.a}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* ── Quick Stats Banner ───────────────────────────────────────── */}
       <div className={`mt-8 grid grid-cols-3 gap-3 p-5 rounded-2xl border ${
         dm ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200 shadow-sm'
       }`}>
         {[
-          { value: '700+', label: 'Medical Colleges Mapped', icon: MapPin },
+          { value: '991', label: 'Medical Colleges Mapped', icon: MapPin },
           // { value: '1.4L+', label: 'Students Guided', icon: Users },
           { value: 'Built For', label: 'NEET Aspirants', icon: Users },
           { value: '5 Yrs', label: 'Historical Cutoff Data', icon: FileText },
@@ -513,6 +672,30 @@ export default function Home({ setCurrentView, showToast, darkMode }) {
             <Icon className="w-4 h-4 mx-auto mb-1.5" style={{ color: PRIMARY, opacity: 0.6 }} />
             <p className={`text-lg font-black ${dm ? 'text-white' : 'text-slate-900'}`}>{value}</p>
             <p className={`text-[10px] font-bold leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>{label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Security & Privacy strip ─────────────────────────────────── */}
+      <div className={`mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3`}>
+        {[
+          { icon: ShieldCheck, title: 'No Data Selling', desc: 'We never sell, rent, or share your personal data.', color: '#16A34A' },
+          { icon: CheckCircle, title: 'No Login Needed', desc: 'Use every tool without creating an account.', color: INTERACTIVE },
+          { icon: Database,    title: 'Verified Sources Only', desc: 'Every number traces back to an official PDF.', color: PRIMARY },
+        ].map(({ icon: Icon, title, desc, color }) => (
+          <div key={title} className={`flex items-start gap-3 p-4 rounded-xl border ${
+            dm ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200 shadow-sm'
+          }`}>
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+              style={{ backgroundColor: `${color}18`, color }}
+            >
+              <Icon className="w-4 h-4" />
+            </div>
+            <div>
+              <p className={`text-sm font-black mb-0.5 ${dm ? 'text-white' : 'text-slate-900'}`}>{title}</p>
+              <p className={`text-xs leading-relaxed ${dm ? 'text-slate-400' : 'text-slate-500'}`}>{desc}</p>
+            </div>
           </div>
         ))}
       </div>
@@ -526,10 +709,138 @@ export default function Home({ setCurrentView, showToast, darkMode }) {
         <ShieldCheck className="w-5 h-5 shrink-0 mt-0.5" style={{ color: '#16A34A' }} />
         <p className={`text-sm ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
           <strong className={dm ? 'text-white' : 'text-slate-900'}>100% Authentic Data:</strong>{' '}
-          All Opening & Closing Rank data is extracted directly from official MCC seat allotment result PDFs
-          published on <strong>mcc.nic.in</strong>. No estimates, no approximations.
+          All Opening & Closing Rank data is extracted directly from official MCC, AACC, and State seat
+          allotment result PDFs published on <strong>mcc.nic.in</strong>, the AACC portal, and respective
+          State Counselling Authority websites. No estimates, no approximations.
+          <span className={`block mt-1 text-xs font-bold ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
+            Data last verified: 1 July 2026
+          </span>
         </p>
       </div>
+
+      {/* ── Newsletter signup ────────────────────────────────────────── */}
+
+{/*       
+      <div
+        className={`mt-8 p-6 sm:p-8 rounded-2xl border flex flex-col sm:flex-row items-center gap-5 ${
+          dm ? 'bg-gradient-to-r from-[#102347] to-[#0B0F19] border-blue-500/30' : 'bg-gradient-to-r from-[#EEF4FF] to-white border-blue-200'
+        }`}
+      >
+        <div
+          className="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
+          style={{ backgroundColor: dm ? 'rgba(37,99,235,0.15)' : 'rgba(26,60,110,0.08)' }}
+        >
+          <Mail className="w-6 h-6" style={{ color: INTERACTIVE }} />
+        </div>
+        <div className="flex-1">
+          <p className={`text-base font-black ${dm ? 'text-white' : 'text-slate-900'}`}>
+            Get counselling deadline reminders
+          </p>
+          <p className={`text-sm ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+            One email when a new round opens or a key MCC deadline is near. No spam.
+          </p>
+        </div>
+        {newsletterSubmitted ? (
+          <div className={`flex items-center gap-2 text-sm font-bold shrink-0 ${dm ? 'text-emerald-400' : 'text-emerald-600'}`}>
+            <CheckCircle className="w-4 h-4" /> You&rsquo;re on the list
+          </div>
+        ) : (
+          <form onSubmit={handleNewsletterSubmit} className="flex w-full sm:w-auto gap-2 shrink-0">
+            <input
+              type="email"
+              required
+              value={newsletterEmail}
+              onChange={(e) => setNewsletterEmail(e.target.value)}
+              placeholder="you@email.com"
+              className={`flex-1 sm:w-56 text-sm px-4 py-2.5 rounded-xl border outline-none focus:ring-2 focus:ring-blue-400/40 ${
+                dm ? 'bg-slate-900/60 border-slate-600 text-white placeholder-slate-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
+              }`}
+            />
+            <button
+              type="submit"
+              className="text-sm font-black px-5 py-2.5 rounded-xl text-white cursor-pointer shrink-0"
+              style={{ backgroundColor: PRIMARY }}
+            >
+              Notify Me
+            </button>
+          </form>
+        )}
+      </div> 
+
+       */}
+
+      {/* ── Founder credibility strip ────────────────────────────────── */}
+      <button
+        onClick={() => setCurrentView('about-us')}
+        className={`w-full mt-4 text-left rounded-2xl border overflow-hidden group transition-all cursor-pointer ${
+          dm
+            ? 'bg-slate-800/40 border-slate-700 hover:border-blue-500/40'
+            : 'bg-white border-slate-200 shadow-sm hover:border-blue-300'
+        }`}
+      >
+        <div className="flex items-center gap-4 p-5">
+          <div
+            className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 border text-sm font-black"
+            style={{ backgroundColor: `${PRIMARY}14`, borderColor: `${PRIMARY}28`, color: PRIMARY }}
+          >
+            U
+          </div>
+          <div className="flex-1">
+            <p className={`text-sm font-black ${dm ? 'text-white' : 'text-slate-900'}`}>
+              Built for aspirants, by an aspirant.
+            </p>
+            <p className={`text-xs leading-relaxed ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+              RankSetu was founded by Umashankar after helping his own brother and friends through
+              NEET counselling. Read the full story behind the platform.
+            </p>
+          </div>
+          <div
+            className="flex items-center gap-1.5 text-xs font-black shrink-0 transition-transform group-hover:translate-x-0.5"
+            style={{ color: INTERACTIVE }}
+          >
+            Meet the Founder <ArrowRight className="w-3.5 h-3.5" />
+          </div>
+        </div>
+      </button>
+
+      {/* ── Quick contact strip ──────────────────────────────────────── */}
+
+      {/* <div className={`mt-4 p-4 rounded-xl border flex items-center justify-between flex-wrap gap-3 ${
+        dm ? 'border-slate-700 bg-slate-800/30' : 'border-slate-200 bg-slate-50'
+      }`}>
+        <p className={`text-xs ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+          Spotted an error in the data, or have feedback for us?
+        </p>
+        <a
+          href="mailto:support@ranksetu.com"
+          className="inline-flex items-center gap-1.5 text-xs font-black cursor-pointer hover:underline"
+          style={{ color: INTERACTIVE }}
+        >
+          <Mail className="w-3.5 h-3.5" />
+          support@ranksetu.com
+        </a>
+      </div> */}
+
+
+      {/* ── SEO content block ────────────────────────────────────────── */}
+      <div className={`mt-8 pt-6 border-t text-xs leading-relaxed ${dm ? 'border-slate-800 text-slate-500' : 'border-slate-200 text-slate-500'}`}>
+        <p>
+          <strong className={dm ? 'text-slate-300' : 'text-slate-700'}>NEET UG Counselling</strong> is the
+          centralised process through which MBBS, BDS, BAMS, BHMS, BUMS and BNYS seats across India are
+          allotted based on NEET UG rank, category and quota eligibility. RankSetu brings together MCC All-India
+          Quota cutoffs, AIIMS and JIPMER cutoffs, AACC AYUSH &amp; Nursing cutoffs, and every state&rsquo;s NEET
+          and AYUSH counselling data — including UP NEET and UP AYUSH — in one place, along with an AI-powered
+          choice optimizer and a choice list builder — helping NEET aspirants and parents make informed,
+          data-backed decisions during MBBS/BDS/AYUSH admission and medical counselling.
+        </p>
+      </div>
+      {/* ── Disclaimer ────────────────────────────────────────────────── */}
+      <p className={`mt-6 text-[11px] leading-relaxed ${dm ? 'text-slate-600' : 'text-slate-400'}`}>
+        RankSetu is an independent, student-run platform and is not affiliated with, endorsed by, or
+        officially connected to MCC, NMC, AACC, DGHS, or any State Counselling Authority. Data shown is
+        compiled from publicly available official sources for informational purposes — always cross-verify
+        with the official portal before making final decisions.
+      </p>
     </div>
   );
 }

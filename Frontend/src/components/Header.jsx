@@ -380,9 +380,11 @@ const SvgIcon = ({ name, color, size = 16 }) => {
 // ── Nav Data ──────────────────────────────────────────────────────────────────
 // Tools dropdown — counselling decision-making tools
 const HUB_ITEMS = [
+  
   { view: "optimizer", icon: "sliders", color: "#1A3C6E", label: "Choice Optimizer",     sub: "Best college order for your rank" },
   { view: "upgrade",   lucideIcon: ArrowUpCircle, color: "#1A3C6E", label: "Upgrade Checker", sub: "Round 2 seat upgrade probability", badge: "New" },
   { view: "lab",       icon: "sliders", color: "#1A3C6E", label: "Choice List Builder",  sub: "Build & reorder your final preference list" },
+  { view: "predictor",    icon: "activity", color: "#047857", label: "Rank Predictor",      sub: "Expected NEET rank from your score", badge: "New" },
 ];
 
 // Cutoffs dropdown — previous year opening/closing rank data, one clear
@@ -413,7 +415,7 @@ const OR_CR_ITEMS = [
 const RESOURCE_ITEMS = [
   { view: "how-to-use",   icon: "file",     color: "#2563EB", label: "How to Use RankSetu", sub: "Complete beginner-friendly platform guide", badge: "New" },
   { view: "counselling",  icon: "users",    color: "#1A3C6E", label: "Counselling Process", sub: "Round-wise allotment & joining steps" },
-  { view: "predictor",    icon: "activity", color: "#047857", label: "Rank Predictor",      sub: "Expected NEET rank from your score", badge: "New" },
+  
   { view: "about-us",     icon: "heart",    color: "#1A3C6E", label: "About RankSetu",      sub: "Our mission & the team" },
 ];
 

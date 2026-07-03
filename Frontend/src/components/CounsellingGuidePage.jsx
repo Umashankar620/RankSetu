@@ -385,6 +385,9 @@ const GLOSSARY = [
   { term: "OCI", def: "Overseas Citizen of India — a status for certain foreign nationals of Indian origin. Following a 2023 Supreme Court judgment, OCI cardholders are treated at par with Indian citizens and are eligible for both UR and NRI category seats." },
   { term: "PwD / PwBD", def: "Person with Disability — candidates with at least 40% benchmark disability get 5% horizontal reservation across all categories, verified through a disability certificate from an authorized government medical board." },
   { term: "EWS", def: "Economically Weaker Section — 10% reservation for General category candidates whose family income is below ₹8 lakh/year and who don't own specified amounts of land/property." },
+  { term: "Registration Unlocking (AACCC)", def: "A one-time, OTP-verified 'final chance' option on the AACCC portal to correct your registration details. Using it wipes out all your previously filled/locked choices, so you must refill everything again." },
+  { term: "Choice Interchange (AACCC)", def: "An AACCC portal tool that lets you swap the preference-rank of two specific choices directly (e.g. swap what's currently choice #1 with choice #3) without retyping your whole list." },
+  { term: "Choice Rearrange (AACCC)", def: "An AACCC portal tool that lets you renumber your entire choice list in one go, rather than moving choices up/down one at a time." },
 ];
 
 // ══════════════════════════════════════════════════════════════════════
@@ -478,23 +481,238 @@ const FAQS = [
 ];
 
 // ══════════════════════════════════════════════════════════════════════
-// COMPARISON — MCC (verified from official bulletin) vs State Counselling
-// (kept general/high-level since state rules vary a lot state-to-state and
-// aren't covered by this MCC bulletin — always check your own state's
-// official counselling website for exact figures)
+// COMPARISON — MCC (verified from official MCC bulletin) vs AACCC (verified
+// from the official AACCC Candidate User Manual, Ayush UG Counselling 2025)
+// vs State Counselling (kept general/high-level since state rules vary a lot
+// state-to-state and no state bulletin has been provided — always check your
+// own state's official counselling website for exact figures)
 // ══════════════════════════════════════════════════════════════════════
 const COMPARISON_ROWS = [
-  { label: "Conducting Authority", mcc: "Medical Counselling Committee (MCC), DGHS, MoHFW, Govt. of India", state: "Each state's own Directorate of Medical Education / State Counselling Committee" },
-  { label: "Official Website", mcc: "www.mcc.nic.in", state: "Varies by state (each state has its own portal)" },
-  { label: "Seats Covered", mcc: "15% AIQ + 100% AIIMS + 100% JIPMER + 100% Deemed Universities + 100% Central Universities (BHU, AMU, DU internal, Jamia) + ESIC + B.Sc. Nursing (central institutes)", state: "85% State Quota of government colleges + 100% private medical/dental colleges within that state" },
-  { label: "Domicile Requirement", mcc: "None for AIQ, AIIMS, JIPMER Open, Deemed, and most Central seats (fully domicile-free)", state: "Yes — almost always requires proof of domicile/residence in that state" },
-  { label: "Reservation Policy", mcc: "Central Government norms: SC 15%, ST 7.5%, OBC-NCL 27%, EWS 10%, PwD 5% (no reservation in Deemed Universities except possible minority quota)", state: "State's own reservation policy — percentages and categories can differ significantly from Central norms" },
-  { label: "Number of Rounds", mcc: "4 rounds — Round 1, Round 2, Round 3 (Mop-Up), and Stray Vacancy Round", state: "Varies by state — some states run 3 rounds, some run more, including their own stray/mop-up rounds" },
-  { label: "Registration Fee & Security Deposit", mcc: "Fixed nationwide — e.g. ₹1,000+₹10,000 (UR/EWS) or ₹500+₹5,000 (SC/ST/OBC/PwD) for AIQ/Central seats; ₹5,000+₹2,00,000 for Deemed Universities", state: "Set independently by each state — amounts differ widely" },
-  { label: "Choice Locking", mcc: "Once locked, cannot be modified under any circumstances, even by MCC", state: "Similar strict-lock rule in most states, but exact windows/processes vary" },
-  { label: "Seat Upgradation", mcc: "Allowed up to Round 3 while keeping your current seat as backup, by giving 'willingness' at the time of reporting", state: "Most states allow similar upgrade options, but the process and terminology can differ" },
-  { label: "Who Should Apply", mcc: "Every NEET-qualified student in India — since AIQ, AIIMS, JIPMER, Deemed & Central Universities are open to all states", state: "Only students who meet that specific state's domicile rules, for 85% state-quota government seats and private colleges in that state" },
-  { label: "Best For", mcc: "Trying for AIQ seats in ANY state, plus AIIMS/JIPMER/BHU/Deemed options nationwide", state: "Securing the much larger pool of state-quota seats within your own home state, usually at lower fees than Deemed Universities" },
+  { label: "Conducting Authority", mcc: "Medical Counselling Committee (MCC), DGHS, MoHFW, Govt. of India", aaccc: "Ayush Admissions Central Counselling Committee (AACCC), under NCISM (National Commission for Indian System of Medicine)", state: "Each state's own Directorate of Medical Education / State Counselling Committee — e.g. in Uttar Pradesh, the Directorate of Medical Education & Training (DGME), UP, Lucknow" },
+  { label: "Official Website", mcc: "www.mcc.nic.in", aaccc: "aaccc.admissions.nic.in", state: "Varies by state (each state has its own portal) — Uttar Pradesh uses https://upneet.gov.in" },
+  { label: "Courses Covered", mcc: "MBBS / BDS / B.Sc. Nursing", aaccc: "BAMS, BHMS, BUMS, BSMS, and B.Pharm (Ayurveda) — the AYUSH undergraduate courses", state: "Depends on state — typically MBBS/BDS state-quota seats, sometimes AYUSH courses too. UP's counselling covers MBBS and BDS in Government and Private colleges/institutions/universities." },
+  { label: "Seats Covered", mcc: "15% AIQ + 100% AIIMS + 100% JIPMER + 100% Deemed Universities + 100% Central Universities (BHU, AMU, DU internal, Jamia) + ESIC + B.Sc. Nursing (central institutes)", aaccc: "All India Quota Government, All India Quota Government Aided, Central Universities/National Institutions, and Deemed Universities for AYUSH courses", state: "85% State Quota of government colleges + 100% private medical/dental colleges within that state. In UP, this means the State Quota seats of all Government medical colleges (44 colleges, ~4,443 State Quota MBBS seats) plus 100% seats of all Private medical (36 colleges) and dental (22 colleges) institutions." },
+  { label: "Domicile Requirement", mcc: "None for AIQ, AIIMS, JIPMER Open, Deemed, and most Central seats (fully domicile-free)", aaccc: "None for the All India Quota categories listed above (domicile-free, same principle as MCC's AIQ)", state: "Yes, for Government college State Quota seats — almost always requires proof of domicile/residence in that state. UP is a partial exception: UP domicile is required for Government college seats, but NOT required for Private college/university or minority-institution seats — students from any state who passed High School/Intermediate anywhere in India can compete for UP's private-sector seats." },
+  { label: "Special Eligibility Quirks", mcc: "Standard NEET-UG marks criteria only (see Eligibility section above)", aaccc: "Course-specific language requirements apply — e.g. BUMS requires Urdu/Arabic/Persian as a 10th/12th subject (or Urdu + Arabic + Mantiq wa Falsafa in the 1st professional year); BSMS requires Tamil as a subject in 10th/12th or the 1st professional year", state: "Set independently by each state. UP-specific quirk: a reserved-category candidate from another state can register in UP counselling only against UP's Unreserved cut-off (NTA's unreserved cut-off score) — UP's own reserved-category cut-off benefit is only for UP-domicile reserved candidates." },
+  { label: "Registration Fee & Security Deposit", mcc: "Fixed nationwide — e.g. ₹1,000+₹10,000 (UR/EWS) or ₹500+₹5,000 (SC/ST/OBC/PwD) for AIQ/Central seats; ₹5,000+₹2,00,000 for Deemed Universities", aaccc: "Paid online via the designated bank payment gateway at registration (the AACCC portal's own manual shows a sample/demo amount — always confirm the exact current-year fee on aaccc.admissions.nic.in before paying, since demo screenshots aren't a reliable source for real fee figures)", state: "Set independently by each state — amounts differ widely. UP NEET UG 2025: registration fee ₹2,000 per round (non-refundable); security deposit ₹30,000 for Government colleges, ₹2,00,000 for Private medical colleges, or ₹1,00,000 for Private dental colleges (only the higher amount is charged once if applying to more than one sector)." },
+  { label: "Login / Registration Security", mcc: "Roll number + password + OTP verification (per MCC bulletin's general password-safety instructions)", aaccc: "Roll number + password + CAPTCHA (\"Security Pin\") + OTP sent to registered mobile or email; password must be 8–13 characters with at least one uppercase, one lowercase, one number, and one special character", state: "Varies by state portal. UP logs candidates in with their NEET UG roll number and application number." },
+  { label: "Choice Locking", mcc: "Once locked, cannot be modified under any circumstances, even by MCC", aaccc: "Once locked, cannot be modified — the portal explicitly warns: \"Early locking does not mean early allotment or first claim on the seat; seat allotment is strictly based on Rank Lists\"", state: "Similar strict-lock rule in most states, but exact windows/processes vary. UP: without locking your choices, no seat will be allotted at all — locking is compulsory, not optional." },
+  { label: "Fixing a Registration Mistake", mcc: "One-time RESET option on the registration page (per MCC's own FAQ), followed by fresh registration with full payment", aaccc: "One-time \"Registration Unlocking\" option, OTP-verified — but it deletes all previously submitted/locked choices and requires the candidate to refill and resubmit choices from scratch; described as the FINAL opportunity for such a reset", state: "Varies by state." },
+  { label: "Choice-List Management Tools", mcc: "Add / remove / reorder choices before locking (standard choice-filling grid)", aaccc: "More granular tools than MCC's portal: Choice Interchange (swap the rank of two specific choices directly), Choice Rearrange (renumber the whole list at once), and Multiple Deletion (bulk-remove several choices together) — each of these also requires re-entering your password and OTP as a safety check", state: "Varies by state." },
+  { label: "Seat Upgradation", mcc: "Allowed up to Round 3 while keeping your current seat as backup, by giving 'willingness' at the time of reporting", aaccc: "Not detailed in the AACCC user manual reviewed here (it focuses on registration/choice-filling/locking screens) — refer to the AACCC counselling scheme document for round-wise upgrade rules", state: "Most states allow similar upgrade options, but the process and terminology can differ. UP allows upgradation from Round 1/Round 2 up to Round 3 through its 'Reshuffle' mechanism — if a better seat comes through your fresh choices, your earlier seat is automatically released to another candidate." },
+  { label: "Refund of Security Deposit", mcc: "Refunded only to the same account/card originally used, after all rounds complete (per MCC bulletin)", aaccc: "Same principle — the portal's fee-payment consent explicitly states the candidate agrees not to raise a chargeback claim, and that any refund of security money goes back to the same account/card the payment was made from", state: "Varies by state. UP refunds the security deposit only to the same bank account it was paid from, and only for candidates who don't get any seat after all rounds (or on a valid free-exit/resignation) — see the UP-specific section below for exact round-wise forfeiture rules." },
+  { label: "Who Should Apply", mcc: "Every NEET-qualified student in India — since AIQ, AIIMS, JIPMER, Deemed & Central Universities are open to all states", aaccc: "Every NEET-qualified student in India wanting a BAMS/BHMS/BUMS/BSMS/B.Pharm(Ayurveda) seat at a central/deemed/AIQ AYUSH institution", state: "Only students who meet that specific state's domicile rules, for 85% state-quota government seats and private colleges in that state. UP is more open than most: any student from any state can apply for UP's Private college/university and minority-institution seats." },
+  { label: "Best For", mcc: "Trying for AIQ seats in ANY state, plus AIIMS/JIPMER/BHU/Deemed options nationwide (allopathic MBBS/BDS)", aaccc: "Students specifically targeting AYUSH (Ayurveda/Homeopathy/Unani/Siddha/Ayurvedic Pharmacy) undergraduate seats nationwide", state: "Securing the much larger pool of state-quota seats within your own home state, usually at lower fees than Deemed Universities. UP alone offers roughly 4,443 State Quota MBBS seats across 44 government colleges — much bigger than its 15% AIQ share." },
+];
+
+// ══════════════════════════════════════════════════════════════════════
+// AACCC — facts verified from the official AACCC Candidate User Manual
+// (Ayush UG Counselling 2025). This manual is a step-by-step portal guide
+// (screens for login, registration, choice filling, locking, fee payment),
+// not a policy bulletin — so items like exact reservation %, number of
+// rounds, and round-wise upgrade rules are NOT covered here. Only what is
+// actually shown/stated in the manual is included below.
+// ══════════════════════════════════════════════════════════════════════
+const AACCC_SCOPE = [
+  "AACCC (Ayush Admissions Central Counselling Committee), functioning under NCISM, conducts centralised online counselling for UG AYUSH seats — BAMS, BSMS, BUMS, BHMS, and B.Pharm (Ayurveda).",
+  "The quota categories offered during choice filling are: All India Quota Government, All India Quota Government Aided, Central Universities / National Institutions, and Deemed Universities.",
+  "Your eligibility, category, and NEET-UG All India Rank are pulled into your AACCC profile automatically — same principle as MCC, based on your original NTA registration data.",
+  "BUMS-specific eligibility: you must have passed Urdu, Arabic, or Persian as a subject in your 10th or 12th standard — OR be willing to study Urdu along with Arabic and Mantiq wa Falsafa (Logic & Philosophy) as a subject during your 1st Professional BUMS year.",
+  "BSMS-specific eligibility: you must have passed Tamil as a subject in 10th/12th standard, or during the 1st Professional course.",
+  "Choices, once locked, cannot be modified — and the portal explicitly clarifies that locking early does NOT give you an early claim on any seat; allotment is purely rank-based.",
+  "A one-time 'Registration Unlocking' facility exists as a final safety net if you need to correct earlier details — but using it deletes all your previously filled/locked choices, so you must refill everything from scratch afterward.",
+  "At fee payment, you must explicitly agree that you will not raise a bank chargeback claim against the fee paid, and that any refund of the security amount will go back to the same account/card used for payment.",
+];
+
+// ══════════════════════════════════════════════════════════════════════
+// UP STATE NEET UG COUNSELLING — verified from the official UP NEET UG 2025
+// Brochure (विवरण पुस्तिका), Directorate of Medical Education & Training,
+// Uttar Pradesh, Lucknow. Original document is in Hindi; simplified into
+// plain English below. Figures such as fees, reservation %, seat counts,
+// and round-wise rules are translated as-is, not estimated.
+// ══════════════════════════════════════════════════════════════════════
+
+const UP_ELIGIBILITY = [
+  {
+    title: "Qualify NEET UG 2025",
+    text: "You must have been declared qualified in the NEET UG 2025 exam by NTA.",
+  },
+  {
+    title: "Category cut-off rule depends on your home state",
+    text: "UP-domicile reserved-category (SC/ST/OBC/EWS) candidates are eligible per the reserved-category cut-off score released by NTA. Reserved-category candidates from OTHER states are eligible for UP counselling only as per NTA's Unreserved cut-off score — UP's relaxed reserved-category cut-off does not apply to them.",
+  },
+  {
+    title: "Domicile needed for Government colleges only",
+    text: "For Government sector medical/dental colleges/institutions/universities, you must be a bona fide resident of Uttar Pradesh. If you passed BOTH High School and Intermediate (or an equivalent exam) from UP, no separate domicile certificate is needed. If you passed either exam from outside UP but are otherwise a UP domicile, you must submit a Domicile/Residence certificate issued by a competent UP authority in the prescribed format.",
+  },
+  {
+    title: "No domicile needed for Private colleges",
+    text: "For admission to Private sector medical/dental colleges/universities and minority institutions, UP domicile is NOT required. Candidates who passed High School and Intermediate from anywhere else in India are also eligible to compete in this counselling for private-sector seats.",
+  },
+  {
+    title: "2024 Stray Vacancy allottees who skipped admission are barred",
+    text: "Candidates who were allotted a seat in the UP NEET UG 2024 Stray/Special Vacancy Round but did not take admission are NOT eligible to participate in UP NEET UG 2025 counselling.",
+  },
+  {
+    title: "NTA's academic eligibility applies",
+    text: "The academic qualification criteria issued by NTA for NEET UG 2025 (minimum PCB marks, age, subject requirements, etc. — the same criteria used nationally) apply for admission to the undergraduate course in UP as well.",
+  },
+];
+
+const UP_RESERVATION_VERTICAL = [
+  { cat: "Scheduled Caste (SC)", pct: "21%" },
+  { cat: "Scheduled Tribe (ST)", pct: "2%" },
+  { cat: "Other Backward Class (OBC)", pct: "27%" },
+  { cat: "Economically Weaker Section (EWS)", pct: "10%" },
+];
+
+const UP_RESERVATION_HORIZONTAL = [
+  { cat: "Dependents of Freedom Fighters", pct: "2%" },
+  { cat: "Children of Ex-servicemen (war-disabled / retired / martyred)", pct: "2%" },
+  { cat: "Divyang (PwD) candidates", pct: "5%" },
+  { cat: "NCC Cadets (minimum 'B' grading with 'C' certificate)", pct: "1%" },
+  { cat: "Women candidates", pct: "20%" },
+];
+
+const UP_EMCP_SEATS = [
+  { cat: "Scheduled Caste", seats: 62 },
+  { cat: "Scheduled Tribe", seats: 5 },
+  { cat: "Other Backward Class", seats: 11 },
+  { cat: "Unreserved", seats: 7 },
+];
+
+const UP_ROUNDS = [
+  {
+    num: "R1", name: "Round 1",
+    purpose: "First round with the widest choice of seats across Government and Private colleges.",
+    strategy: "Fill every college/course you'd genuinely accept — this round offers the free-exit safety net, so there's little downside to keeping your options open.",
+    important: "Free Exit is available: if you don't take admission on your Round 1 allotted seat, your security deposit is NOT forfeited.",
+    process: [
+      "Register on https://upneet.gov.in with your NEET UG 2025 roll number and application number.",
+      "Pay the ₹2,000 registration fee (non-refundable) online.",
+      "Pay the security deposit online — ₹30,000 (Government colleges), ₹2,00,000 (Private medical colleges), or ₹1,00,000 (Private dental colleges). Only the higher amount is charged once if you want both Government and Private options.",
+      "Choose one Nodal Centre for online document verification and upload High School marksheet/certificate, Intermediate marksheet, reservation certificate (if applicable), and domicile certificate (if applicable).",
+      "Fill choices in genuine order of preference, then LOCK them — a seat cannot be allotted without locking.",
+      "Check the Round 1 result and, if allotted, complete admission at the allotted college / private-college nodal centre.",
+    ],
+    note: "If you don't get a seat in Round 1, you don't need to re-register — you carry forward automatically into Round 2.",
+  },
+  {
+    num: "R2", name: "Round 2",
+    purpose: "Seats vacated after Round 1 (free exits, non-admissions, resignations) plus any newly released seats.",
+    strategy: "Fresh choice filling is required — your Round 1 choices don't carry forward. If you already have a Round 1 seat, you can try to upgrade through the Reshuffle process while your current seat stays safe unless a better one is confirmed.",
+    important: "If you are allotted a seat in Round 2 and don't take admission, your ENTIRE security deposit is forfeited, and you must pay it again to join Round 3.",
+    process: [
+      "Candidates who didn't get a seat in Round 1 (or exited free) do not need to pay the security deposit again.",
+      "Fill and lock fresh choices for Round 2.",
+      "If allotted, take admission compulsorily — non-admission after Round 2 leads to full forfeiture of the security deposit.",
+    ],
+    note: null,
+  },
+  {
+    num: "R3", name: "Round 3",
+    purpose: "Further mop-up of seats after Round 1 and Round 2, across both Government and Private colleges.",
+    strategy: "This is your last chance to change colleges — after Round 3 ends, seat-vacation is not allowed at all except through the resignation process, and Round 3 admissions cannot be given up once joined.",
+    important: "Government college candidates from R1/R2 who don't join after a Round 3 upgrade forfeit the full deposit. Private college candidates in the same situation forfeit the full deposit PLUS 50% of the tuition fee already paid.",
+    process: [
+      "No fresh registration needed for candidates carried forward unallotted from R1/R2.",
+      "Fill and lock fresh choices for Round 3.",
+      "If any reserved-category seats remain vacant after Round 3 processing, they are converted to other categories using UP's fixed Conversion Algorithm (see table below) before final Round 3 allotment.",
+    ],
+    note: "Once you take admission on a Round 3 seat, you cannot vacate it except by resigning before the Stray Vacancy Round's choice-filling begins — and even then, your deposit and fees are forfeited.",
+  },
+  {
+    num: "SV", name: "Stray Vacancy Round",
+    purpose: "The final round, for candidates who received no seat allotment in any of Round 1, 2, or 3.",
+    strategy: "Fresh registration (with a new ₹2,000 fee) is compulsory for everyone in this round, even if you registered earlier. BDS-admitted candidates from earlier rounds can also apply here for an MBBS seat, but must pay a fresh security deposit to do so.",
+    important: "Candidates already admitted through the All India Quota counselling, or through any round of another state's counselling, are NOT eligible for UP's Stray Vacancy Round.",
+    process: [
+      "Complete fresh ₹2,000 registration (mandatory for all).",
+      "Candidates who already paid the security deposit in an earlier round and remained unallotted do not need to pay it again.",
+      "Fill and lock choices for available vacant seats.",
+      "If allotted, submit all original certificates at the allotted college/nodal centre and take admission.",
+    ],
+    note: "If you don't take admission after a Stray Vacancy Round allotment, your deposit is forfeited AND you are barred from participating in UP NEET UG counselling for 2026–27.",
+  },
+];
+
+const UP_CONVERSION_ALGORITHM = [
+  { from: "ST (PwD, Ex-Servicemen, Freedom Fighter, NCC)", to: "ST" },
+  { from: "SC (PwD, Ex-Servicemen, Freedom Fighter, NCC)", to: "SC" },
+  { from: "UR (PwD, Ex-Servicemen, Freedom Fighter, NCC)", to: "UR" },
+  { from: "OBC (PwD, Ex-Servicemen, Freedom Fighter, NCC)", to: "OBC" },
+  { from: "EWS (PwD, Ex-Servicemen, Freedom Fighter, NCC)", to: "EWS" },
+  { from: "ST", to: "SC" },
+  { from: "SC", to: "OBC" },
+  { from: "OBC", to: "UR" },
+  { from: "EWS", to: "UR" },
+  { from: "Minority", to: "UR" },
+];
+
+const UP_FEES = [
+  {
+    group: "Registration Fee (every round, incl. Stray Vacancy)",
+    amount: "₹2,000 — non-refundable",
+  },
+  {
+    group: "Security Deposit — Government sector colleges",
+    amount: "₹30,000 — refundable",
+  },
+  {
+    group: "Security Deposit — Private sector medical colleges",
+    amount: "₹2,00,000 — refundable",
+  },
+  {
+    group: "Security Deposit — Private sector dental colleges",
+    amount: "₹1,00,000 — refundable",
+  },
+  {
+    group: "Security Deposit — applying for BOTH Government + Private seats",
+    amount: "Only ₹2,00,000 is charged once (not both amounts separately)",
+  },
+  {
+    group: "Security Deposit — applying for BOTH Government + Private DENTAL seats only",
+    amount: "Only ₹1,00,000 is charged once",
+  },
+];
+
+const UP_RESIGNATION = [
+  {
+    round: "Round 1",
+    rule: "You can resign up to 2 days before Round 2's choice filling begins. This is a Free Exit — your full security deposit is refunded. Government-college admission fee (other than that) is also refunded; private-college tuition fee already paid is refunded in full.",
+  },
+  {
+    round: "Round 2",
+    rule: "You can resign up to 2 days before Round 3's choice filling begins. Your security deposit is fully forfeited. Government-college fees (other than the admission fee) are refunded; private-college tuition fee already paid is refunded.",
+  },
+  {
+    round: "Round 3",
+    rule: "Seat vacation is not normally allowed after Round 3 ends. If you still resign before the Stray Vacancy Round's choice filling begins: Government college — full deposit AND all fees paid are forfeited. Private college — full deposit forfeited PLUS 50% of the tuition fee paid is forfeited.",
+  },
+  {
+    round: "Stray Vacancy Round",
+    rule: "Resigning after this round, or before completing the course, results in full forfeiture of the security deposit and all fees paid. If the deposit was already refunded to you, you must pay it back.",
+  },
+];
+
+const UP_SERVICE_BOND = {
+  duration: "2 years",
+  amount: "₹10,00,000 (Rupees Ten Lakh)",
+  where: "Non-PG/JR government medical colleges outside metro cities (as far as possible/needed) and as a contract Medical Officer at Primary Health Centres under the Department of Medical Health, as required by the state government.",
+  debarment: "If a candidate vacates their seat after joining in the last round without completing the course, they are debarred from the admission process of the next academic session (per Shasanadesh No. I/676928/2024 dated 26 June 2024).",
+};
+
+const UP_HELP_CENTRE = [
+  { org: "SBI Bank (payment issues)", contact: "Mobile: 9919443034, 9798900340 · Email: sbi.06144@sbi.co.in" },
+  { org: "ICICI Bank (payment issues)", contact: "Mobile: 7080558993, 7753942974 · Email: pravesh.saxena@icicibank.com, abhinay.patel@icicibank.com" },
+  { org: "Directorate of Medical Education & Training (general queries)", contact: "Mobile: 8189011696, 8189011697, 8189011698, 8189011699, 8189011700 · Email: upneetcounselling2025@gmail.com" },
+];
+
+const UP_COLLEGE_SUMMARY = [
+  { type: "Government Medical Colleges", count: "44 colleges", seats: "5,250 total seats (786 AIQ + 21 Central Pool + 4,443 State Quota)" },
+  { type: "Government Dental College", count: "1 college (KGMU, Lucknow)", seats: "70 total seats (9 AIQ + 10 Central Pool + 51 State Quota; seat count can vary)" },
+  { type: "Private Medical Colleges", count: "36 colleges", seats: "6,600 total seats (variable)" },
+  { type: "Private Dental Colleges", count: "22 colleges", seats: "2,150 total seats (variable)" },
 ];
 
 // ══════════════════════════════════════════════════════════════════════
@@ -787,8 +1005,9 @@ function RoundCard({ round, dm }) {
   );
 }
 
-// ── Comparison Table (MCC vs State) ─────────────────────────────────────
+// ── Comparison Table (MCC AACC vs State) ─────────────────────────────────────
 function ComparisonTable({ dm }) {
+  const aacccColor = dm ? '#c084fc' : '#7e22ce';
   return (
     <div className={`rounded-xl border overflow-hidden ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
       <div className="overflow-x-auto">
@@ -796,7 +1015,8 @@ function ComparisonTable({ dm }) {
           <thead>
             <tr className={dm ? 'bg-slate-800/80' : 'bg-slate-50'}>
               <th className={`text-left p-3 font-bold text-xs uppercase tracking-wide ${dm ? 'text-slate-400' : 'text-slate-500'}`}>Aspect</th>
-              <th className="text-left p-3 font-bold text-xs uppercase tracking-wide" style={{ color: accent(dm) }}>MCC (Central Counselling)</th>
+              <th className="text-left p-3 font-bold text-xs uppercase tracking-wide" style={{ color: accent(dm) }}>MCC (Medical)</th>
+              <th className="text-left p-3 font-bold text-xs uppercase tracking-wide" style={{ color: aacccColor }}>AACCC (Ayush)</th>
               <th className="text-left p-3 font-bold text-xs uppercase tracking-wide" style={{ color: accent2(dm) }}>State Counselling</th>
             </tr>
           </thead>
@@ -805,6 +1025,7 @@ function ComparisonTable({ dm }) {
               <tr key={r.label} className={`border-t ${dm ? 'border-slate-700' : 'border-slate-100'} ${i % 2 === 1 ? (dm ? 'bg-slate-800/30' : 'bg-slate-50/60') : ''}`}>
                 <td className={`p-3 font-semibold align-top ${dm ? 'text-white' : 'text-slate-900'}`}>{r.label}</td>
                 <td className={`p-3 align-top leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{r.mcc}</td>
+                <td className={`p-3 align-top leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{r.aaccc}</td>
                 <td className={`p-3 align-top leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{r.state}</td>
               </tr>
             ))}
@@ -813,9 +1034,13 @@ function ComparisonTable({ dm }) {
       </div>
       <div className="p-3 border-t" style={{ borderColor: tint(dm, '25'), backgroundColor: tint(dm, '06') }}>
         <p className="text-xs leading-relaxed" style={{ color: accent(dm) }}>
-          <strong>Note:</strong> The MCC column above is verified directly from MCC's official Information Bulletin.
-          The State Counselling column is a general overview — exact rules, fees, reservation percentages, and
-          round counts differ from state to state, so always cross-check with your own state's official counselling website too.
+          <strong>Note:</strong> The MCC column is verified from MCC's official Information Bulletin. The AACCC
+          column is verified from AACCC's official Candidate User Manual for Ayush UG Counselling 2025 — since that
+          manual is a portal walkthrough (not a policy bulletin), a few rows like round-wise upgrade rules and exact
+          reservation percentages aren't covered by it and are marked accordingly. The State Counselling column now
+          includes verified Uttar Pradesh-specific figures (from the official UP NEET UG 2025 Brochure) alongside
+          the general pattern — other states may differ, so always cross-check with your own state's official
+          counselling website too. See the dedicated "Uttar Pradesh NEET UG Counselling" section below for full detail.
         </p>
       </div>
     </div>
@@ -884,10 +1109,10 @@ function BulletCard({ items, dm, numbered = false }) {
 }
 
 // ── Eligibility card list (title + text) ────────────────────────────────
-function EligibilityList({ dm }) {
+function EligibilityList({ dm, items = ELIGIBILITY }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {ELIGIBILITY.map((e, i) => (
+      {items.map((e, i) => (
         <div key={i} className={`p-4 rounded-xl border ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
           <div className="text-sm font-bold mb-1.5" style={{ color: accent(dm) }}>{e.title}</div>
           <p className={`text-xs leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{e.text}</p>
@@ -945,6 +1170,132 @@ function FAQAccordion({ dm }) {
   );
 }
 
+// ── UP Reservation Table (Vertical + Horizontal) ─────────────────────────
+function UPReservationTables({ dm }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className={`rounded-xl border overflow-hidden ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+        <div className="p-3 border-b" style={{ borderColor: tint(dm, '22'), backgroundColor: tint(dm, '06') }}>
+          <span className="text-sm font-bold" style={{ color: accent(dm) }}>Vertical Reservation (Category-wise)</span>
+        </div>
+        <table className="w-full text-sm">
+          <tbody>
+            {UP_RESERVATION_VERTICAL.map((r, i) => (
+              <tr key={r.cat} className={`border-t ${dm ? 'border-slate-700' : 'border-slate-100'} ${i % 2 === 1 ? (dm ? 'bg-slate-800/30' : 'bg-slate-50/60') : ''}`}>
+                <td className={`p-3 ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{r.cat}</td>
+                <td className="p-3 text-right font-bold" style={{ color: accent(dm) }}>{r.pct}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div className="p-3 border-t text-xs italic leading-relaxed" style={{ borderColor: tint(dm, '20'), color: dm ? '#94a3b8' : '#64748b' }}>
+          Applies to State Quota seats in Government medical colleges/universities/autonomous institutions (except the 4 Special Composite Scheme colleges below, which use their own fixed seat split).
+        </div>
+      </div>
+
+      <div className={`rounded-xl border overflow-hidden ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+        <div className="p-3 border-b" style={{ borderColor: tint2(dm, '22'), backgroundColor: tint2(dm, '06') }}>
+          <span className="text-sm font-bold" style={{ color: accent2(dm) }}>Horizontal Reservation (Cuts across all categories)</span>
+        </div>
+        <table className="w-full text-sm">
+          <tbody>
+            {UP_RESERVATION_HORIZONTAL.map((r, i) => (
+              <tr key={r.cat} className={`border-t ${dm ? 'border-slate-700' : 'border-slate-100'} ${i % 2 === 1 ? (dm ? 'bg-slate-800/30' : 'bg-slate-50/60') : ''}`}>
+                <td className={`p-3 ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{r.cat}</td>
+                <td className="p-3 text-right font-bold" style={{ color: accent2(dm) }}>{r.pct}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div className="p-3 border-t text-xs italic leading-relaxed" style={{ borderColor: tint2(dm, '20'), color: dm ? '#94a3b8' : '#64748b' }}>
+          EWS and OBC certificates must be dated 1 April 2025 or later to be valid for this counselling.
+        </div>
+      </div>
+
+      <div className={`md:col-span-2 rounded-xl border overflow-hidden ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+        <div className="p-3 border-b" style={{ borderColor: tint(dm, '22'), backgroundColor: tint(dm, '06') }}>
+          <span className="text-sm font-bold" style={{ color: accent(dm) }}>
+            Special Composite Scheme (EMCP) Colleges — Fixed State Quota Seat Split
+          </span>
+          <p className={`text-xs mt-1 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+            Applies only at Government Medical College, Ambedkarnagar, Kannauj, Jalaun, and Saharanpur (85 State Quota seats per college)
+          </p>
+        </div>
+        <table className="w-full text-sm">
+          <tbody>
+            {UP_EMCP_SEATS.map((r, i) => (
+              <tr key={r.cat} className={`border-t ${dm ? 'border-slate-700' : 'border-slate-100'} ${i % 2 === 1 ? (dm ? 'bg-slate-800/30' : 'bg-slate-50/60') : ''}`}>
+                <td className={`p-3 ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{r.cat}</td>
+                <td className="p-3 text-right font-bold" style={{ color: accent(dm) }}>{r.seats} seats</td>
+              </tr>
+            ))}
+            <tr className={`border-t font-bold ${dm ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
+              <td className={`p-3 ${dm ? 'text-white' : 'text-slate-900'}`}>Total</td>
+              <td className="p-3 text-right" style={{ color: accent(dm) }}>85 seats</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ── UP Conversion Algorithm Table ─────────────────────────────────────────
+function UPConversionTable({ dm }) {
+  return (
+    <div className={`rounded-xl border overflow-hidden ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+      <table className="w-full text-sm">
+        <thead>
+          <tr className={dm ? 'bg-slate-800/80' : 'bg-slate-50'}>
+            <th className={`text-left p-3 font-bold text-xs uppercase tracking-wide ${dm ? 'text-slate-400' : 'text-slate-500'}`}>If This Category's Seat Stays Vacant</th>
+            <th className="text-left p-3 font-bold text-xs uppercase tracking-wide" style={{ color: accent(dm) }}>It Converts To</th>
+          </tr>
+        </thead>
+        <tbody>
+          {UP_CONVERSION_ALGORITHM.map((r, i) => (
+            <tr key={i} className={`border-t ${dm ? 'border-slate-700' : 'border-slate-100'} ${i % 2 === 1 ? (dm ? 'bg-slate-800/30' : 'bg-slate-50/60') : ''}`}>
+              <td className={`p-3 ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{r.from}</td>
+              <td className="p-3 font-semibold" style={{ color: accent(dm) }}>{r.to}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="p-3 border-t text-xs leading-relaxed" style={{ borderColor: tint(dm, '25'), backgroundColor: tint(dm, '06'), color: accent(dm) }}>
+        This conversion happens only after Round 3 seat processing is complete, and only for seats that genuinely have no eligible candidate left in that category.
+      </div>
+    </div>
+  );
+}
+
+// ── UP Resignation Table ─────────────────────────────────────────────────
+function UPResignationTable({ dm }) {
+  return (
+    <div className={`rounded-xl border overflow-hidden ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+      {UP_RESIGNATION.map((r, i) => (
+        <div key={r.round} className={`p-4 ${i < UP_RESIGNATION.length - 1 ? `border-b ${dm ? 'border-slate-700/60' : 'border-slate-100'}` : ''} ${i % 2 === 1 ? (dm ? 'bg-slate-800/30' : 'bg-slate-50/60') : ''}`}>
+          <div className="text-sm font-bold mb-1" style={{ color: accent2(dm) }}>{r.round}</div>
+          <p className={`text-xs leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{r.rule}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── UP College Summary Cards ──────────────────────────────────────────────
+function UPCollegeSummary({ dm }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {UP_COLLEGE_SUMMARY.map((c) => (
+        <div key={c.type} className={`p-4 rounded-xl border ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+          <div className="text-sm font-bold mb-1" style={{ color: accent(dm) }}>{c.type}</div>
+          <div className={`text-xs font-semibold mb-1 ${dm ? 'text-slate-300' : 'text-slate-700'}`}>{c.count}</div>
+          <p className={`text-xs leading-relaxed ${dm ? 'text-slate-400' : 'text-slate-500'}`}>{c.seats}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ══════════════════════════════════════════════════════════════════════
 // MAIN PAGE COMPONENT
 // ══════════════════════════════════════════════════════════════════════
@@ -984,7 +1335,7 @@ export default function CounsellingGuidePage({ darkMode: dm = false, setCurrentV
                   className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-full border mb-4"
                   style={{ backgroundColor: tint(dm, '10'), borderColor: tint(dm, '30'), color: accent(dm) }}
                 >
-                  {IC.shield} MCC Official Guide
+                  {IC.shield} NEET UG Official Guide
                 </div>
                 <h1 className={`text-2xl md:text-3xl font-bold tracking-tight ${dm ? 'text-white' : 'text-slate-900'}`}
                   style={{ color: dm ? undefined : PRIMARY }}>
@@ -993,7 +1344,7 @@ export default function CounsellingGuidePage({ darkMode: dm = false, setCurrentV
                 </h1>
                 <p className={`text-sm mt-3 max-w-xl leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
                   Every quota code, category benefit, and round strategy — explained in simple English with real numbers.
-                  All data sourced from MCC's official information brochures and seat allotment PDFs (mcc.nic.in).
+                  All data sourced from MCC, AACCC, STATE's official information brochures and seat allotment PDFs (mcc.nic.in, aaccc, state).
                 </p>
               </div>
 
@@ -1013,7 +1364,7 @@ export default function CounsellingGuidePage({ darkMode: dm = false, setCurrentV
                 </div>
                 <div className="space-y-2">
                   {[
-                    { icon: "📄", text: "Source: mcc.nic.in" },
+                    { icon: "📄", text: "Source: mcc.nic.in,aaccc.gov.in, state" },
                     { icon: "🔄", text: "Updated for 2025 Counselling" },
                     { icon: "📊", text: "All Rounds Covered" },
                     { icon: "🏷️", text: "All Quota Codes Explained" },
@@ -1045,7 +1396,8 @@ export default function CounsellingGuidePage({ darkMode: dm = false, setCurrentV
           <div className="flex flex-wrap gap-2">
             {[
               { href: "#sec-scope", label: "What MCC Handles" },
-              { href: "#sec-compare", label: "MCC vs State" },
+              { href: "#sec-compare", label: "MCC vs AACCC vs State" },
+              { href: "#sec-aaccc", label: "What is AACCC" },
               { href: "#sec-eligibility", label: "Eligibility" },
               { href: "#sec-allotment", label: "How Allotment Works" },
               { href: "#sec-quotas", label: "Quota Codes" },
@@ -1053,6 +1405,7 @@ export default function CounsellingGuidePage({ darkMode: dm = false, setCurrentV
               { href: "#sec-rounds", label: "Counselling Rounds" },
               { href: "#sec-fees", label: "Fees & Refund" },
               { href: "#sec-documents", label: "Documents Required" },
+              { href: "#sec-up-state", label: "Uttar Pradesh State Counselling" },
               { href: "#sec-glossary", label: "Glossary" },
               { href: "#sec-faq", label: "FAQs" },
             ].map(link => (
@@ -1117,34 +1470,67 @@ export default function CounsellingGuidePage({ darkMode: dm = false, setCurrentV
           </div>
         </div>
 
-        {/* ── SECTION: MCC vs STATE COMPARISON ────────────────────── */}
+        {/* ── SECTION: MCC vs AACCC vs STATE COMPARISON ───────────── */}
         <div id="sec-compare" className="mb-8 scroll-mt-24">
           <SectionHeader
             icon={IC.trophy}
-            title="MCC vs State Counselling — What's the Difference?"
+            title="MCC vs AACCC vs State Counselling — What's the Difference?"
             subtitle="The single most confusing thing for first-timers. This table clears it up in one glance."
             dm={dm}
           />
           <ComparisonTable dm={dm} />
 
           {/* Decision guide */}
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className={`p-4 rounded-xl border ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
               <div className="text-sm font-bold mb-1.5" style={{ color: accent(dm) }}>Should I register for MCC?</div>
               <p className={`text-xs leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
-                Yes — almost every NEET-qualified student should register for MCC counselling. It's your only route to
-                AIQ seats in EVERY state (not just your own), plus AIIMS, JIPMER, BHU, AMU, and Deemed Universities. There's
-                no domicile restriction, so you lose nothing by registering.
+                Yes — almost every NEET-qualified student aiming for MBBS/BDS should register for MCC counselling. It's
+                your only route to AIQ seats in EVERY state (not just your own), plus AIIMS, JIPMER, BHU, AMU, and Deemed
+                Universities. There's no domicile restriction, so you lose nothing by registering.
+              </p>
+            </div>
+            <div className={`p-4 rounded-xl border ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+              <div className="text-sm font-bold mb-1.5" style={{ color: dm ? '#c084fc' : '#7e22ce' }}>Should I register for AACCC?</div>
+              <p className={`text-xs leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+                Only if you're genuinely interested in an AYUSH course — BAMS, BHMS, BUMS, BSMS, or B.Pharm (Ayurveda).
+                It's a completely separate counselling process from MCC with its own registration, fee, and portal — it
+                doesn't affect or get affected by your MCC registration.
               </p>
             </div>
             <div className={`p-4 rounded-xl border ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
               <div className="text-sm font-bold mb-1.5" style={{ color: accent2(dm) }}>Should I also register for State Counselling?</div>
               <p className={`text-xs leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
                 Yes, if you meet your state's domicile rules — State Quota is 85% of every government college's seats,
-                a much bigger pool than the 15% AIQ. Most students register for BOTH MCC and their home state's counselling
-                at the same time, since the two processes run independently and don't block each other.
+                a much bigger pool than the 15% AIQ. Most students register for MCC, AACCC (if AYUSH-interested), and
+                their home state's counselling all at once, since these processes run independently and don't block each other.
+                UP students in particular should note that UP's Private-sector seats don't even need UP domicile, so out-of-state
+                candidates can also register for UP counselling if targeting a private UP college.
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* ── SECTION: AACCC SCOPE ────────────────────────────────── */}
+        <div id="sec-aaccc" className="mb-8 scroll-mt-24">
+          <SectionHeader
+            icon={IC.shield}
+            title="What Is AACCC? — Ayush Counselling Explained"
+            subtitle="Verified from AACCC's official Candidate User Manual for Ayush UG Counselling 2025"
+            dm={dm}
+          />
+          <BulletCard items={AACCC_SCOPE} dm={dm} />
+          <div
+            className="mt-3 p-3.5 rounded-xl border"
+            style={{ backgroundColor: tint2(dm, '08'), borderColor: tint2(dm, '30') }}
+          >
+            <p className="text-xs leading-relaxed" style={{ color: accent2(dm) }}>
+              ⚠ The AACCC document reviewed here is a portal user manual (screenshots of the login, registration,
+              choice-filling, and locking screens) — not a full policy bulletin. So details like exact reservation
+              percentages, total number of rounds, and round-wise upgrade rules aren't covered in this section. If
+              you can share AACCC's official Counselling Scheme/Information Bulletin (like the MCC one), this section
+              can be expanded with the same depth as the MCC sections above.
+            </p>
           </div>
         </div>
 
@@ -1330,6 +1716,162 @@ export default function CounsellingGuidePage({ darkMode: dm = false, setCurrentV
           </p>
         </div>
 
+        {/* ── SECTION: UTTAR PRADESH STATE COUNSELLING ────────────── */}
+        <div id="sec-up-state" className="mb-8 scroll-mt-24">
+          <SectionHeader
+            icon={IC.shield}
+            title="Uttar Pradesh NEET UG Counselling — Complete Guide"
+            subtitle="Simplified from the official UP NEET UG 2025 Brochure (Directorate of Medical Education & Training, UP, Lucknow) — originally published in Hindi"
+            dm={dm}
+          />
+
+          <div
+            className="mb-5 p-4 rounded-xl border"
+            style={{ backgroundColor: tint(dm, '07'), borderColor: tint(dm, '25') }}
+          >
+            <p className="text-sm leading-relaxed" style={{ color: accent(dm) }}>
+              Uttar Pradesh runs its own counselling for MBBS &amp; BDS admission in Government and Private
+              medical/dental colleges/institutions/universities of the state, on{' '}
+              <strong>https://upneet.gov.in</strong>. This is separate from MCC's All India Quota counselling —
+              this covers the <strong>State Quota</strong> seats of Government colleges plus 100% of Private
+              college seats within UP.
+            </p>
+          </div>
+
+          {/* UP college scope */}
+          <div className="mb-6">
+            <div className="text-sm font-bold mb-3" style={{ color: accent(dm) }}>UP Medical &amp; Dental College Landscape</div>
+            <UPCollegeSummary dm={dm} />
+          </div>
+
+          {/* UP Eligibility */}
+          <div className="mb-6">
+            <div className="text-sm font-bold mb-3" style={{ color: accent(dm) }}>Eligibility for UP Counselling</div>
+            <EligibilityList dm={dm} items={UP_ELIGIBILITY} />
+          </div>
+
+          {/* UP Reservation */}
+          <div className="mb-6">
+            <div className="text-sm font-bold mb-3" style={{ color: accent(dm) }}>Reservation in UP (per Shasanadesh No. I/995234/2025, dated 18-06-2025)</div>
+            <UPReservationTables dm={dm} />
+          </div>
+
+          {/* UP Registration & Fees */}
+          <div className="mb-6">
+            <div className="text-sm font-bold mb-3" style={{ color: accent(dm) }}>Registration Fee &amp; Security Deposit</div>
+            <div className={`rounded-xl border overflow-hidden ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+              {UP_FEES.map((f, i) => (
+                <div
+                  key={f.group}
+                  className={`flex flex-wrap items-center justify-between gap-2 p-4 ${i < UP_FEES.length - 1 ? `border-b ${dm ? 'border-slate-700/60' : 'border-slate-100'}` : ''}
+                    ${i % 2 === 1 ? (dm ? 'bg-slate-800/30' : 'bg-slate-50/60') : ''}`}
+                >
+                  <span className={`text-sm ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{f.group}</span>
+                  <span className="text-sm font-bold" style={{ color: accent(dm) }}>{f.amount}</span>
+                </div>
+              ))}
+            </div>
+            <p className={`mt-3 text-xs italic leading-relaxed ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+              The registration fee (₹2,000) is charged separately for every round, including the Stray Vacancy Round. It is non-refundable in all cases.
+            </p>
+          </div>
+
+          {/* UP document verification */}
+          <div className="mb-6">
+            <div className="text-sm font-bold mb-3" style={{ color: accent(dm) }}>Online Document Verification</div>
+            <BulletCard
+              dm={dm}
+              items={[
+                "At the time of registration, you must choose one Nodal Centre (out of 20 designated centres across UP) for online verification of your documents.",
+                "Documents to upload: High School marksheet/certificate, Intermediate marksheet, reservation-related certificate (OBC/SC/ST/EWS/Ex-Servicemen/NCC/Freedom Fighter/PwD, if applicable), and Domicile certificate (if applicable).",
+              ]}
+            />
+          </div>
+
+          {/* UP Rounds */}
+          <div className="mb-6">
+            <div className="text-sm font-bold mb-3" style={{ color: accent(dm) }}>Choice Filling &amp; Counselling Rounds</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {UP_ROUNDS.map(r => <RoundCard key={r.num} round={r} dm={dm} />)}
+            </div>
+          </div>
+
+          {/* UP Conversion Algorithm */}
+          <div className="mb-6">
+            <div className="text-sm font-bold mb-3" style={{ color: accent(dm) }}>Conversion Algorithm for Vacant Reserved Seats (After Round 3)</div>
+            <UPConversionTable dm={dm} />
+          </div>
+
+          {/* UP Admission process */}
+          <div className="mb-6">
+            <div className="text-sm font-bold mb-3" style={{ color: accent(dm) }}>Admission Process</div>
+            <BulletCard
+              dm={dm}
+              items={[
+                "Government sector: admission formalities are completed directly at the allotted college/institution/university.",
+                "Private sector (medical/dental/university/minority institutions): per the Hon'ble Supreme Court's order dated 09.05.2017 in WP (Civil) No. 267/2017, admission is completed through designated Nodal Centres, not directly at the private college.",
+                "At private colleges, the tuition fee must be paid via a Demand Draft in favour of 'Director General, Medical Education & Training, UP Lucknow', deposited at the Nodal Centre.",
+                "Documents needed at reporting: copy of the allotment letter, NEET UG 2025 admit card & scorecard, High School & Intermediate marksheets/certificates, Domicile certificate (if applicable), reservation certificate (if applicable), and a photocopy of an ID proof (Aadhaar/Driving Licence/PAN/Passport).",
+                "All original documents plus self-attested photocopies must be submitted in person. If documents are missing, incorrect, or later found to be fake, the admission/allotment is cancelled and legal action can follow — the candidate bears full responsibility.",
+              ]}
+            />
+          </div>
+
+          {/* UP Resignation */}
+          <div className="mb-6">
+            <div className="text-sm font-bold mb-3" style={{ color: accent(dm) }}>Resignation Rules — Round by Round</div>
+            <UPResignationTable dm={dm} />
+          </div>
+
+          {/* UP Service Bond */}
+          <div className="mb-6">
+            <div className="text-sm font-bold mb-3" style={{ color: accent(dm) }}>Mandatory Government Service Bond</div>
+            <div className={`rounded-xl border overflow-hidden ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+              <div className="p-4 space-y-3">
+                <p className={`text-sm leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+                  Every MBBS/BDS candidate admitted through UP counselling must sign a mandatory government-service
+                  bond (per Shasanadesh No. 350/71-2-82/2017 dated 07.03.2018, as amended).
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="p-3 rounded-lg border" style={{ backgroundColor: tint(dm, '07'), borderColor: tint(dm, '22') }}>
+                    <div className="text-xs font-bold uppercase mb-1" style={{ color: accent(dm) }}>Bond Duration</div>
+                    <p className={`text-sm ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{UP_SERVICE_BOND.duration}</p>
+                  </div>
+                  <div className="p-3 rounded-lg border" style={{ backgroundColor: tint(dm, '07'), borderColor: tint(dm, '22') }}>
+                    <div className="text-xs font-bold uppercase mb-1" style={{ color: accent(dm) }}>Bond Amount (if not served)</div>
+                    <p className={`text-sm ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{UP_SERVICE_BOND.amount}</p>
+                  </div>
+                  <div className="p-3 rounded-lg border" style={{ backgroundColor: tint(dm, '07'), borderColor: tint(dm, '22') }}>
+                    <div className="text-xs font-bold uppercase mb-1" style={{ color: accent(dm) }}>Where You May Serve</div>
+                    <p className={`text-xs leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{UP_SERVICE_BOND.where}</p>
+                  </div>
+                </div>
+                <div className="p-3 rounded-lg border" style={{ backgroundColor: tint2(dm, '08'), borderColor: tint2(dm, '30') }}>
+                  <p className="text-xs leading-relaxed" style={{ color: accent2(dm) }}>⚠ {UP_SERVICE_BOND.debarment}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* UP Help Centre */}
+          <div className="mb-2">
+            <div className="text-sm font-bold mb-3" style={{ color: accent(dm) }}>UP NEET 2025 Help Centre</div>
+            <div className={`rounded-xl border overflow-hidden ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+              {UP_HELP_CENTRE.map((h, i) => (
+                <div key={h.org} className={`p-4 ${i < UP_HELP_CENTRE.length - 1 ? `border-b ${dm ? 'border-slate-700/60' : 'border-slate-100'}` : ''} ${i % 2 === 1 ? (dm ? 'bg-slate-800/30' : 'bg-slate-50/60') : ''}`}>
+                  <div className="text-sm font-bold mb-1" style={{ color: accent(dm) }}>{h.org}</div>
+                  <p className={`text-xs leading-relaxed ${dm ? 'text-slate-300' : 'text-slate-600'}`}>{h.contact}</p>
+                </div>
+              ))}
+            </div>
+            <p className={`mt-3 text-xs italic leading-relaxed ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+              Office hours: 11:00 AM – 5:00 PM, working days only. Emails must include Name, Registration Number, Roll Number,
+              All India Rank, Mobile Number, and Email ID — emails missing this information are not considered.
+              Any dispute falls only under the jurisdiction of courts in Lucknow.
+            </p>
+          </div>
+        </div>
+
         {/* ── SECTION: GLOSSARY ───────────────────────────────────── */}
         <div id="sec-glossary" className="mb-8 scroll-mt-24">
           <SectionHeader
@@ -1370,6 +1912,7 @@ export default function CounsellingGuidePage({ darkMode: dm = false, setCurrentV
             <li>• Joining a Round 3 seat without being sure — once joined, there is NO exit; you cannot resign even with genuine reasons.</li>
             <li>• Giving wrong information at registration (name, category, etc.) — MCC pulls this directly from your NTA form and will not edit it under any circumstances, and wrong info can get your admission cancelled later.</li>
             <li>• Waiting until the last day to report to your allotted college — some colleges take 2–3 days to complete formalities, and missing the deadline cancels your seat with no extension.</li>
+            <li>• UP-specific: assuming your reserved-category rank helps you outside UP, or assuming an out-of-state reserved rank helps you inside UP — reserved-category cut-off benefit in UP counselling only applies to UP-domicile candidates.</li>
           </ul>
         </div>
 
@@ -1390,13 +1933,14 @@ export default function CounsellingGuidePage({ darkMode: dm = false, setCurrentV
               About Our Data — Accuracy &amp; Sources
             </div>
             <p className={`text-sm leading-relaxed mb-3 ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
-              All Opening and Closing Rank data on RankSetu is sourced directly from the official MCC seat allotment result PDFs
-              published on mcc.nic.in — no estimation or approximation involved. The Eligibility, Fees, Refund Policy, Documents,
-              Round-wise process, and FAQ sections above are paraphrased directly from MCC's official <strong>NEET-UG 2025 Information
-              Bulletin & Counselling Scheme</strong> — nothing in those sections is guessed or invented.
+              All Opening and Closing Rank data on RankSetu is sourced directly from the official MCC, AACCC, STATE's seat allotment result PDFs
+              published on mcc.nic.in aaccc,state — no estimation or approximation involved. The Eligibility, Fees, Refund Policy, Documents,
+              Round-wise process, and FAQ sections above are paraphrased directly from MCC, AACCC, STATE's official <strong>NEET-UG 2025 Information
+              Bulletin & Counselling Scheme</strong> — nothing in those sections is guessed or invented. The Uttar Pradesh section is paraphrased
+              directly from the official <strong>UP NEET UG 2025 Brochure</strong> issued by the Directorate of Medical Education &amp; Training, UP, Lucknow.
             </p>
             <div className="flex flex-wrap gap-2 mb-3">
-              {["Source: mcc.nic.in official PDFs", "No estimation involved", "Years 2020–2024 covered", "Round-wise data preserved", "Category-wise data preserved"].map(item => (
+              {["Source: mcc.nic.in official PDFs", "Source: UP NEET UG 2025 Brochure", "No estimation involved", "Years 2020–2024 covered", "Round-wise data preserved", "Category-wise data preserved"].map(item => (
                 <span
                   key={item}
                   className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border"
@@ -1407,8 +1951,9 @@ export default function CounsellingGuidePage({ darkMode: dm = false, setCurrentV
               ))}
             </div>
             <p className={`text-xs italic leading-relaxed ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
-              MCC guidelines and reservation rules are updated by the Government of India for each counselling year.
-              Always refer to the latest official MCC Information Brochure on mcc.nic.in for the current year's rules.
+              MCC, AACCC, STATE's guidelines and reservation rules are updated by the Government of India / respective state
+              government for each counselling year. Always refer to the latest official MCC, AACCC, and (for UP) upneet.gov.in
+              brochure for the current year's rules.
             </p>
           </div>
         </div>

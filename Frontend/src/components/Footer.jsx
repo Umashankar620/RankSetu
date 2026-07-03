@@ -419,7 +419,7 @@ const NAV_LINKS = {
 };
 
 const STATS = [
-  { value: "700+",  label: "Medical Colleges" },
+  { value: "991",  label: "Medical Colleges" },
   { value: "50,000+",  label: "NEET Records" },
   { value: "28",    label: "States Covered" },
   { value: "99.9%", label: "Data Accuracy" },
@@ -448,7 +448,7 @@ export default function Footer({ darkMode, showToast, setCurrentView }) {
       <div className={`flex items-center justify-center gap-2.5 py-3 px-6 border-b ${dm ? "border-white/6 bg-blue-900/10" : "border-black/7 bg-blue-50/60"}`}>
         <Icon paths={IC.shield} size={13} color="#2563EB" />
         <span className={`text-xs font-semibold tracking-wide ${dm ? "text-blue-300" : "text-primary"}`}>
-          Official data sourced from MCC, NMC & State Counselling Authorities
+          Official data sourced from MCC AACCC, NMC & State Counselling Authorities
         </span>
         <span className="text-xs font-bold px-2 py-0.5 rounded bg-primary text-white tracking-widest">VERIFIED</span>
       </div>
@@ -469,7 +469,11 @@ export default function Footer({ darkMode, showToast, setCurrentView }) {
             <FooterLogo darkMode={dm} />
 
             <p className={`text-[13.5px] leading-relaxed mb-6 max-w-[250px] font-normal ${dm ? "text-slate-400" : "text-text-body"}`}>
-              India's most trusted NEET counselling intelligence platform — helping aspirants find their right medical college, faster.
+
+              India's Complete Medical College Intelligence Platform — Every medical college, every counselling insight, and every verified data point — all in one place.
+           
+           
+           
             </p>
 
             {/* Socials */}
@@ -525,7 +529,7 @@ export default function Footer({ darkMode, showToast, setCurrentView }) {
               Get cutoff alerts & counselling round updates directly in your inbox.
             </p>
 
-            <div className={`rounded-xl overflow-hidden mb-3.5 border ${dm ? "border-blue-500/20 bg-white/3" : "border-blue-200/60 bg-white/80"}`}>
+            {/* <div className={`rounded-xl overflow-hidden mb-3.5 border ${dm ? "border-blue-500/20 bg-white/3" : "border-blue-200/60 bg-white/80"}`}>
               <input
                 type="email"
                 className={`ms-nl-input w-full px-3.5 py-3 text-[13.5px] bg-transparent border-none border-b outline-none font-sans ${dm ? "text-slate-100 border-white/7" : "text-slate-800 border-black/7"}`}
@@ -537,7 +541,7 @@ export default function Footer({ darkMode, showToast, setCurrentView }) {
               >
                 Subscribe to Alerts →
               </button>
-            </div>
+            </div> */}
 
             {[
               "No spam — unsubscribe anytime",
