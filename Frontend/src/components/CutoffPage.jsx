@@ -897,7 +897,7 @@ export default function CutoffPage({
           {ldT
             ? <span className="flex items-center gap-2 text-xs text-slate-400"><Ic.Spin/>Loading types from database…</span>
             : allTypes.length===0
-              ? <p className={`text-xs ${dm?'text-slate-500':'text-slate-400'}`}>No types found. Run the uploader first.</p>
+              ? <p className={`text-xs ${dm?'text-slate-500':'text-slate-400'}`}>The server is slow. Please refresh or reopen this page</p>
               : <div className="flex flex-wrap gap-2">
                   {allTypes.map((t,i)=>{
                     const c=pal(i); const on=ctId===t.id;
