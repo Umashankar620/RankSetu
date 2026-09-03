@@ -92,9 +92,9 @@ This is the part of the project I'd most want to talk through in an interview �
 
 ### The symptom
 
-MCC publishes every counselling round as a **PDF**, not as structured data. When you extract text from a PDF programmatically, the extraction doesn't always respect word boundaries — it reads based on character/glyph positions on the page, not on what a human would call a "word." The result: **the same real-world college could come out of different PDFs looking like different strings.**
+MCC publishes every counselling round as a **PDF**, not as structured data. When I extract text from a PDF programmatically, the extraction doesn't always respect word boundaries - it reads based on character/glyph positions on the page, not on what a human would call a "word." The result: **the same real-world college could come out of different PDFs looking like different strings.**
 
-This wasn't a one-off — it was a **recurring pattern across the entire dataset**, showing up differently for different institutes. A few representative examples, out of many similar cases found while auditing the data:
+This wasn't a one-off - it was a **recurring pattern across the entire dataset**, showing up differently for different institutes. A few representative examples, out of many similar cases found while auditing the data:
 
 ```
 PDF Round 1 (2022):  "AIIMS Mangala giri"     ← stray space inserted mid-word
@@ -109,7 +109,7 @@ PDF Round 2 (2021):  "AIIMS, Vijaypur"        ← comma-separated variant
 # rule could catch all of them at once.
 ```
 
-In just this small sample, what should be **2 real institutes** (AIIMS Mangalagiri, AIIMS Vijaypur) plus one normally-formatted one (AIIMS New Delhi) were appearing as **5 different strings** to the database. Scaled across the full dataset, this pattern affected a meaningful share of the 600+ institutes on record — each with its own specific variant, which is exactly why a single generic rule couldn't solve it (more on that below).
+In just this small sample, what should be **2 real institutes** (AIIMS Mangalagiri, AIIMS Vijaypur) plus one normally-formatted one (AIIMS New Delhi) were appearing as **5 different strings** to the database. Scaled across the full dataset, this pattern affected a meaningful share of the 600+ institutes on record - each with its own specific variant, which is exactly why a single generic rule couldn't solve it (more on that below).
 
 ### Why this is more dangerous than it sounds
 
